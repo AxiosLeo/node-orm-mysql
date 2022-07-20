@@ -6,42 +6,42 @@ import {
   ConnectionOptions
 } from 'mysql2';
 
-type Clients = {
+export type Clients = {
   [key: string]: Connection
 }
 
-type ConditionValueType = null | string | number | boolean | Date | Array<string | number | boolean | Date>;
+export type ConditionValueType = null | string | number | boolean | Date | Array<string | number | boolean | Date>;
 
-type OptType = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE'
+export type OptType = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE'
   | 'NOT LIKE' | 'IN' | 'NOT IN' | 'BETWEEN' | 'NOT BETWEEN' | 'IS' | 'IS NOT' | 'REGEXP' | 'NOT REGEXP'
   | 'AND' | 'OR' | 'GROUP' | 'like' | 'not like' | 'in' | 'not in' | 'between' | 'not between' | 'is' | 'is not' | 'regexp' | 'not regexp' | 'group';
 
-interface WhereOptions {
+export interface WhereOptions {
   key: string | null;
   opt: OptType;
   value: ConditionValueType | WhereOptions[];
 }
 
-interface OrderByOptions {
+export interface OrderByOptions {
   sortField: string,
   sortOrder: 'asc' | 'desc'
 }
 
-type OperatorType = 'select' | 'find' | 'insert' | 'update' | 'delete' | 'count';
+export type OperatorType = 'select' | 'find' | 'insert' | 'update' | 'delete' | 'count';
 
-interface JoinOption {
+export interface JoinOption {
   table: string;
   alias: string;
   on: string;
   type: 'left' | 'right' | 'inner';
 }
 
-interface TableOption {
+export interface TableOption {
   tableName: string;
   alias: string | null;
 }
 
-interface QueryOperatorOptions {
+export interface QueryOperatorOptions {
   sql: string;
   values: any[];
   conditions: WhereOptions[];
