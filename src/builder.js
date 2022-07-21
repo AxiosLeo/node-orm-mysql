@@ -162,7 +162,7 @@ const buildSql = (options) => {
     case 'update': {
       const buildValueRes = _buildValues(options.data);
       sql = `UPDATE ${_buildTables(options.tables)} SET ${buildValueRes.fields.map(f => `${_buildFieldKey(f)} = ?`).join(',')}`;
-      values = values.concat(values);
+      values = values.concat(buildValueRes.values);
       const buildConditionRes = _buildContidion(options.conditions);
       sql += buildConditionRes.sql;
       values = values.concat(buildConditionRes.values);
