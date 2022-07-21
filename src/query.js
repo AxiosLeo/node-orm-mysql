@@ -60,6 +60,11 @@ class QueryOperator {
     return this;
   }
 
+  whereObject(object = {}) {
+    Object.keys(object).forEach((key) => this.where(key, object[key]));
+    return this;
+  }
+
   whereConditions(...condition) {
     if (this.options.conditions.length) {
       this.options.conditions.push({ key: null, opt: 'AND', value: null });
@@ -102,7 +107,7 @@ class QueryOperator {
     return this;
   }
 
-  orderBy(sortField, sortOrder) {
+  orderBy(sortField, sortOrder = 'asc') {
     this.options.orders.push({ sortField, sortOrder });
     return this;
   }
@@ -165,8 +170,7 @@ class QueryOperator {
 
   async find() {
     this.options.operator = 'find';
-    const [res] = await this.exec();
-    return res;
+    return await this.exec();
   }
 
   async update(data) {
@@ -187,8 +191,7 @@ class QueryOperator {
 
   async count() {
     this.options.operator = 'count';
-    const res = await this.exec();
-    return res;
+    return await this.exec();
   }
 }
 
@@ -216,12 +219,12 @@ class QueryHandler {
     });
   }
 
-  async upsert(tableName, obj, condition = []) {
-    const [row] = await this.table(tableName).whereConditions(...condition).select();
-    if (row) {
-      return await this.table(tableName).update(obj);
+  async upsert(tableName, data, condition = {}) {
+    const count = await this.table(tableName).whereObject(condition).count();
+    if (count) {
+      return await this.table(tableName).whereObject(condition).update(data);
     }
-    return await this.table(tableName).insert(obj);
+    return await this.table(tableName).insert(data);
   }
 }
 
