@@ -3,6 +3,9 @@
 const is = require('@axiosleo/cli-tool/src/helper/is');
 
 const _buildFieldWithTableName = (key) => {
+  if (key.indexOf('$') !== -1) {
+    return key;
+  }
   return key.split('.').map((k) => k.indexOf('`') !== -1 ? k : `\`${k}\``).join('.');
 };
 
@@ -37,6 +40,19 @@ const _buildContidion = (conditions, prefix) => {
       }
       if (c.value === null) {
         return c.opt === '=' ? `ISNULL(${_buildFieldKey(c.key)})` : `!ISNULL(${_buildFieldKey(c.key)})`;
+      }
+      if (c.key && c.key.indexOf('->') !== -1) {
+        const keys = c.key.split('->');
+        values.push(c.value);
+        const res = _buildContidion([
+          {
+            key: `JSON_EXTRACT(${_buildFieldKey(keys[0])}, '${keys[1]}')`,
+            opt: c.opt,
+            value: c.value
+          }
+        ], '');
+        values.push(...res.values);
+        return res.sql;
       }
       const opt = c.opt.toLowerCase();
       if (opt === 'in' && Array.isArray(c.value)) {
