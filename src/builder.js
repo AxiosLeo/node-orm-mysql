@@ -2,15 +2,33 @@
 
 const is = require('@axiosleo/cli-tool/src/helper/is');
 
+const _buildFieldWithTableName = (key) => {
+  return key.split('.').map((k) => k.indexOf('`') !== -1 ? k : `\`${k}\``).join('.');
+};
+
 const _buildFieldKey = (key) => {
-  if (!key) {
+  if (key === null) {
     return '';
   }
-  return key.split('.').map((k) => `\`${k}\``).join('.');
+  if (key.indexOf('(') !== -1 && key.indexOf(')') !== -1) {
+    let field = key.substring(key.indexOf('(') + 1, key.indexOf(')'));
+    key = key.substring(0, key.indexOf('(')) + '(' + _buildFieldWithTableName(field) + ')' + key.substring(key.indexOf(')') + 1);
+  }
+  if (key.indexOf(' as ') !== -1) {
+    const field = key.substring(key.indexOf(' as ') + 4);
+    key = key.substring(0, key.indexOf(' as ')) + ' AS ' + _buildFieldWithTableName(field);
+  } else if (key.indexOf(' AS ') !== -1) {
+    const field = key.substring(key.indexOf(' AS ') + 4);
+    key = key.substring(0, key.indexOf(' AS ')) + ' AS ' + _buildFieldWithTableName(field);
+  }
+  return _buildFieldWithTableName(key);
 };
 
 const _buildContidion = (conditions, prefix) => {
   const values = [];
+  if (is.empty(conditions)) {
+    return { sql: '', values };
+  }
   let sql = typeof prefix === 'undefined' ? ' WHERE ' : '';
   if (conditions.length) {
     sql += `${conditions.map((c) => {
