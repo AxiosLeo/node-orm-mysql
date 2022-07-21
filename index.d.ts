@@ -70,6 +70,8 @@ export declare class QueryOperator {
 
   where(key: string | null, value: ConditionValueType | WhereOptions[], opt?: OptType): this;
 
+  whereObject(obj: Record<string, ConditionValueType>): this;
+
   whereConditions(...condition: WhereOptions[]): this;
 
   orWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
@@ -112,7 +114,7 @@ export declare class QueryHandler {
 
   query(options: QueryOptions): Promise<any>;
 
-  upsert(tableName: string, obj: any, condition: WhereOptions[]): Promise<OkPacket>;
+  upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
 }
 
 export function createClient(options: ConnectionOptions): Connection;
