@@ -10,16 +10,15 @@ const clients = {};
  * @param {mysql.ConnectionOptions} options
  * @returns {mysql.Connection}
  */
-const createClient = (options) => {
+const createClient = (options, name = null) => {
   validate(options, {
-    name: 'string',
     host: 'required|string',
     user: 'required|string',
     password: 'required|string',
     port: 'required|integer',
     database: 'required|string',
   });
-  const key = options.name ? options.name :
+  const key = name ? name :
     `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
   if (clients[key]) {
     return clients[key];
