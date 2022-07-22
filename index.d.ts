@@ -117,6 +117,6 @@ export declare class QueryHandler {
   upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
 }
 
-export function createClient(options: ConnectionOptions): Connection;
+export function createClient(options: ConnectionOptions, name?: string | null | undefined): Connection;
 
 export function getClient(name: string): Connection;
