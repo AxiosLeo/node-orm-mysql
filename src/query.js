@@ -193,6 +193,14 @@ class QueryOperator {
     this.options.operator = 'count';
     return await this.exec();
   }
+
+  async delete(id) {
+    if (id) {
+      this.where('id', id);
+    }
+    this.options.operator = 'delete';
+    return await this.exec();
+  }
 }
 
 class QueryHandler {

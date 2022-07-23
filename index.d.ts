@@ -103,6 +103,8 @@ export declare class QueryOperator {
   insert(data?: any): Promise<OkPacket>;
 
   count(): Promise<number>;
+
+  delete(id?: number): Promise<OkPacket>;
 }
 
 export declare class QueryHandler {
