@@ -79,4 +79,7 @@ async function deleteExample(){
     result = await query.delete(1);
 }
 ```
-```
+
+## License
+
+This project is open-sourced software licensed under the [MIT](LICENSE).
