@@ -78,7 +78,9 @@ const _buildValues = (obj) => {
   const values = [];
   Object.keys(obj).forEach((key) => {
     fields.push(`${key}`);
-    if (Array.isArray(obj[key]) || is.object(obj[key])) {
+    if (obj[key] instanceof Date) {
+      values.push(obj[key]);
+    } else if (Array.isArray(obj[key]) || is.object(obj[key])) {
       values.push(JSON.stringify(obj[key]));
     } else {
       values.push(obj[key]);
