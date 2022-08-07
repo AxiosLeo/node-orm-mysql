@@ -1,7 +1,7 @@
 'use strict';
 
 const expect = require('chai').expect;
-const { buildSql } = require('../src/builder');
+const { Builder } = require('../src/builder');
 
 describe('builder test case', () => {
   it('select table should be ok', () => {
@@ -17,7 +17,7 @@ describe('builder test case', () => {
     };
     options.tables.push({ tableName: 'table1', alias: 't1' });
     options.operator = 'select';
-    expect(buildSql(options).sql).to.be.equal('SELECT * FROM `table1` AS `t1`');
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` AS `t1`');
   });
 
   it('where should be ok', () => {
@@ -48,6 +48,6 @@ describe('builder test case', () => {
       opt: '>',
       value: 1,
     });
-    expect(buildSql(options).sql).to.be.equal('SELECT * FROM `table1` AS `t1` WHERE `t1`.`id` = ? AND ? OR `id` > ?');
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` AS `t1` WHERE `t1`.`id` = ? AND ? OR `id` > ?');
   });
 });
