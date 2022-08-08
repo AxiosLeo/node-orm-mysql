@@ -3,7 +3,7 @@
 const mm = require('mm');
 const expect = require('chai').expect;
 const mysql = require('mysql2');
-const { QueryHandler } = require('../src/query');
+const { QueryHandler, Query } = require('../src/operator');
 
 describe('query test case', () => {
   let hanlder;
@@ -43,5 +43,13 @@ describe('query test case', () => {
     query.set({ updated_at: date });
     const res = query.buildSql('update');
     expect(res.sql).to.be.equal('UPDATE `users` AS `u` SET `updated_at` = ?');
+  });
+
+  it('sub query', () => {
+    const query = hanlder.table('users', 'u');
+    const subQuery = new Query('select');
+    subQuery.table('users');
+    const res = query.where('name', subQuery, 'IN').buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `name` IN (SELECT * FROM `users`)');
   });
 });
