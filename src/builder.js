@@ -23,6 +23,7 @@ class Builder {
         if (options.groupField.length) {
           sql += ` GROUP BY ${options.groupField.join(',')}`;
         }
+        sql += this._buildHaving(options.having);
         break;
       }
       case 'insert': {
@@ -57,6 +58,10 @@ class Builder {
     }
 
     this.sql = sql;
+  }
+
+  _buildHaving(having) {
+    return this._buildContidion(having, ' HAVING ');
   }
 
   _buildJoins(joins = []) {
@@ -127,7 +132,7 @@ class Builder {
     if (is.empty(conditions)) {
       return '';
     }
-    let sql = typeof prefix === 'undefined' ? ' WHERE ' : '';
+    let sql = typeof prefix === 'undefined' ? ' WHERE ' : prefix;
     if (conditions.length) {
       sql += `${conditions.map((c) => {
         if (c.key === null && c.value === null) {

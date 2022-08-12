@@ -11,6 +11,7 @@ class Query {
       operator,
       data: null,
       groupField: [],
+      having: []
     };
   }
 
@@ -93,6 +94,22 @@ class Query {
 
   groupBy(...groupField) {
     this.options.groupField.push(...groupField);
+    return this;
+  }
+
+  having(key, opt = '=', value = null) {
+    let optUpper = opt.toUpperCase();
+    if (optUpper === 'AND' || optUpper === 'OR') {
+      this.options.having.push({ key: null, opt: optUpper, value: null });
+      return this;
+    }
+    if (this.options.having.length) {
+      let lastOpt = this.options.having[this.options.having.length - 1].opt.toUpperCase();
+      if (lastOpt !== 'AND' && lastOpt !== 'OR') {
+        this.options.having.push({ key: null, opt: 'AND', value: null });
+      }
+    }
+    this.options.having.push({ key, opt, value });
     return this;
   }
 
