@@ -136,6 +136,7 @@ class Builder {
       this.values = this.values.concat(builder.values);
       return builder.sql;
     }
+    this.values.push(val);
     return null;
   }
 
