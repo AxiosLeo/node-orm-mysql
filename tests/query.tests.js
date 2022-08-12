@@ -52,4 +52,17 @@ describe('query test case', () => {
     const res = query.where('name', subQuery, 'IN').buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `name` IN (SELECT * FROM `users`)');
   });
+
+  it('having', () => {
+    const query = hanlder.table('users', 'u');
+    const subQuery = new Query('select');
+    subQuery.table('users').having('COUNT(*)', '>', 1);
+    expect(() => {
+      query.where('u.name', subQuery, 'IN').buildSql('select');
+    }).to.be.throw('having is not allowed without "GROUP BY"');
+
+    subQuery.groupBy('u.name');
+    const res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`name` IN (SELECT * FROM `users` GROUP BY `u`.`name` HAVING `COUNT(*)` > ?)');
+  });
 });
