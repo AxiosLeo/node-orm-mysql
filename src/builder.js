@@ -21,9 +21,11 @@ class Builder {
         sql += options.orders.length > 0 ? this._buildOrders(options.orders) : '';
         sql += this._buldPagenation(options.pageLimit, options.pageOffset);
         if (options.groupField.length) {
-          sql += ` GROUP BY ${options.groupField.join(',')}`;
+          sql += ` GROUP BY ${options.groupField.map(f => this._buildFieldKey(f)).join(',')}`;
+          sql += this._buildHaving(options.having);
+        } else if (options.having && options.having.length) {
+          throw new Error('having is not allowed without "GROUP BY"');
         }
-        sql += this._buildHaving(options.having);
         break;
       }
       case 'insert': {
@@ -49,7 +51,10 @@ class Builder {
         sql = `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`;
         sql += this._buildContidion(options.conditions);
         if (options.groupField.length) {
-          sql += ` GROUP BY ${options.groupField.join(',')}`;
+          sql += ` GROUP BY ${options.groupField.map(f => this._buildFieldKey(f)).join(',')}`;
+          sql += this._buildHaving(options.having);
+        } else if (options.having && options.having.length) {
+          throw new Error('having is not allowed without "GROUP BY"');
         }
         break;
       }
@@ -61,6 +66,9 @@ class Builder {
   }
 
   _buildHaving(having) {
+    if (!having.length) {
+      return '';
+    }
     return this._buildContidion(having, ' HAVING ');
   }
 
@@ -129,7 +137,7 @@ class Builder {
   }
 
   _buildContidion(conditions, prefix) {
-    if (is.empty(conditions)) {
+    if (!conditions.length) {
       return '';
     }
     let sql = typeof prefix === 'undefined' ? ' WHERE ' : prefix;
@@ -184,7 +192,7 @@ class Builder {
   }
 
   _buildFieldWithTableName(key) {
-    if (key.indexOf('$') !== -1) {
+    if (key.indexOf('$') !== -1 || key === '*') {
       return key;
     }
     return key.split('.').map((k) => k.indexOf('`') !== -1 ? k : `\`${k}\``).join('.');
