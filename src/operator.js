@@ -18,9 +18,8 @@ const query = async (conn, options) => {
 class QueryOperator extends Query {
   /**
    * @param {*} conn 
-   * @param {TableOption} table 
    */
-  constructor(conn, table) {
+  constructor(conn) {
     super(null);
     this.conn = conn;
   }
