@@ -93,6 +93,9 @@ class Builder {
   }
 
   _buildTables(tables) {
+    if (!tables.length) {
+      throw new Error('At least one table is required');
+    }
     return tables.map((t) => {
       if (t.alias) {
         return `\`${t.tableName}\` AS \`${t.alias}\``;
@@ -192,7 +195,7 @@ class Builder {
   }
 
   _buildFieldWithTableName(key) {
-    if (key.indexOf('$') !== -1 || key === '*') {
+    if (key.indexOf('$') !== -1 || key.indexOf('*') !== -1) {
       return key;
     }
     return key.split('.').map((k) => k.indexOf('`') !== -1 ? k : `\`${k}\``).join('.');

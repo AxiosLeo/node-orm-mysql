@@ -63,6 +63,6 @@ describe('query test case', () => {
 
     subQuery.groupBy('u.name');
     const res = query.buildSql('select');
-    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`name` IN (SELECT * FROM `users` GROUP BY `u`.`name` HAVING `COUNT(*)` > ?)');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`name` IN (SELECT * FROM `users` GROUP BY `u`.`name` HAVING COUNT(*) > ?)');
   });
 });
