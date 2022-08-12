@@ -10,7 +10,7 @@ export type Clients = {
   [key: string]: Connection
 }
 
-export type ConditionValueType = null | string | number | boolean | Date | Array<string | number | boolean | Date>;
+export type ConditionValueType = null | string | number | boolean | Date | Array<string | number | boolean | Date> | Query;
 
 export type OptType = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE'
   | 'NOT LIKE' | 'IN' | 'NOT IN' | 'BETWEEN' | 'NOT BETWEEN' | 'IS' | 'IS NOT' | 'REGEXP' | 'NOT REGEXP'
@@ -53,14 +53,12 @@ export interface QueryOperatorOptions {
   operator: OperatorType | null;
   data: any | null;
   groupField: string[];
-  joins: JoinOption[]
+  joins: JoinOption[];
+  having: WhereOptions[];
 }
 
-export declare class QueryOperator {
-  conn: Connection;
-  options: QueryOperatorOptions
-
-  constructor(conn: Connection, table: TableOption);
+export declare class Query {
+  constructor(operator?: OperatorType);
 
   table(tableName: string, alias: string | null): this;
 
@@ -84,11 +82,20 @@ export declare class QueryOperator {
 
   groupBy(...groupField: string[]): this;
 
+  having(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
+
   page(limit: number, offset?: number): this;
 
   set(data: any): this;
 
   join(table: string, alias: string, on: string, type: 'left' | 'right' | 'inner'): this;
+}
+
+export declare class QueryOperator extends Query {
+  conn: Connection;
+  options: QueryOperatorOptions
+
+  constructor(conn: Connection);
 
   buildSql(operator: OperatorType): { sql: string, values: any[] };
 
