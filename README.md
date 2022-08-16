@@ -8,6 +8,46 @@ npm install @axiosleo/orm-mysql
 
 ## Usage
 
+### Create mysql client
+
+```javascript
+const { createClient } = require("@axiosleo/orm-mysql");
+
+const client = createClient({
+  host: process.env.MYSQL_HOST,
+  port: process.env.MYSQL_PORT,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASS,
+  database: process.env.MYSQL_DB,
+});
+```
+
+### Initialize database handler
+
+```javascript
+const { QueryHandler } = require("@axiosleo/orm-mysql");
+
+const db = new QueryHandler(client);
+```
+
+### Initialize query
+
+```javascript
+const query = db.table('<table-name>');
+
+query.attr("id", "name", "age"); // set attributes
+query.where("name", "Joe");      // set where condition
+query.orWhere("age", ">", 18);   // set or where condition
+query.andWhere("age", "<", 30);  // set and where condition
+query.orderBy("age", "desc");    // set order by
+query.limit(10);                 // set limit
+query.offset(0);                 // set offset
+
+let rows = await query.select(); // select
+```
+
+### Some Examples
+
 ```javascript
 const { createClient, QueryHandler, Query } = require("@axiosleo/orm-mysql");
 
