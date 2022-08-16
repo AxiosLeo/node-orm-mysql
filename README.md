@@ -25,12 +25,12 @@ async function selectExample() {
   const query = handler.table("users"); // init QueryOperator by table name
 
   query.attr("id", "name", "age"); // set attributes
-  query.where("name", "Joe"); // set where condition
-  query.orWhere("age", ">", 18); // set or where condition
-  query.andWhere("age", "<", 30); // set and where condition
-  query.orderBy("age", "desc"); // set order by
-  query.limit(10); // set limit
-  query.offset(0); // set offset
+  query.where("name", "Joe");      // set where condition
+  query.orWhere("age", ">", 18);   // set or where condition
+  query.andWhere("age", "<", 30);  // set and where condition
+  query.orderBy("age", "desc");    // set order by
+  query.limit(10);                 // set limit
+  query.offset(0);                 // set offset
 
   let rows = await query.select(); // select
 }
@@ -38,15 +38,15 @@ async function selectExample() {
 async function findExample() {
   const query = handler.table("users"); // init QueryOperator by table name
 
-  query.attr("id", "name", "age"); // set attributes
-  query.where("name", "Joe"); // set where condition
-  query.orWhere("age", ">", 18); // set or where condition
-  query.andWhere("age", "<", 30); // set and where condition
-  query.orderBy("age", "desc"); // set order by
-  // query.limit(10);               // not supported set limit
-  // query.offset(10);              // not supported set offset
+  query.attr("id", "name", "age");      // set attributes
+  query.where("name", "Joe");           // set where condition
+  query.orWhere("age", ">", 18);        // set or where condition
+  query.andWhere("age", "<", 30);       // set and where condition
+  query.orderBy("age", "desc");         // set order by
+  // query.limit(10);                   // not supported set limit
+  // query.offset(10);                  // not supported set offset
 
-  let row = await query.find(); // find single row
+  let row = await query.find();         // find single row
 }
 
 async function insertExample() {
