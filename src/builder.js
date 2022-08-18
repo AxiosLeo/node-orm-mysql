@@ -36,6 +36,9 @@ class Builder {
       case 'update': {
         const fields = this._buildValues(options.data);
         sql = `UPDATE ${this._buildTables(options.tables)} SET ${fields.map(f => `${this._buildFieldKey(f)} = ?`).join(',')}`;
+        if (!options.conditions.length) {
+          throw new Error('At least one condition is required for update operation');
+        }
         sql += this._buildContidion(options.conditions);
         break;
       }
