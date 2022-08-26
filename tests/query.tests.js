@@ -3,6 +3,7 @@
 const mm = require('mm');
 const expect = require('chai').expect;
 const mysql = require('mysql2');
+const { Builder } = require('../src/builder');
 const { QueryHandler, Query } = require('../src/operator');
 
 describe('query test case', () => {
@@ -41,8 +42,9 @@ describe('query test case', () => {
     const query = hanlder.table('users', 'u');
     const date = new Date();
     query.set({ updated_at: date });
+    query.where('id', 1);
     const res = query.buildSql('update');
-    expect(res.sql).to.be.equal('UPDATE `users` AS `u` SET `updated_at` = ?');
+    expect(res.sql).to.be.equal('UPDATE `users` AS `u` SET `updated_at` = ? WHERE `id` = ?');
   });
 
   it('sub query', () => {
@@ -64,5 +66,17 @@ describe('query test case', () => {
     subQuery.groupBy('u.name');
     const res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`name` IN (SELECT * FROM `users` GROUP BY `u`.`name` HAVING COUNT(*) > ?)');
+  });
+
+  it('build sql not connect mysql', () => {
+    const query = new Query('insert');
+    query.table('users').set({
+      test: 'a',
+      a: 1,
+      b: null
+    });
+    const builder = new Builder(query.options);
+    expect(builder.sql).to.be.equal('INSERT INTO `users`(`test`,`a`,`b`) VALUES (?,?,?)');
+    expect(JSON.stringify(builder.values)).to.be.includes(JSON.stringify(['a', 1, null]));
   });
 });
