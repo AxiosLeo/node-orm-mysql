@@ -79,4 +79,9 @@ describe('query test case', () => {
     expect(builder.sql).to.be.equal('INSERT INTO `users`(`test`,`a`,`b`) VALUES (?,?,?)');
     expect(JSON.stringify(builder.values)).to.be.includes(JSON.stringify(['a', 1, null]));
   });
+
+  it('set attr', () => {
+    const query = hanlder.table('users', 'u').attr(...[]);
+    expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u`');
+  });
 });

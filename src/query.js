@@ -80,6 +80,9 @@ class Query {
   }
 
   attr(...attr) {
+    if (!attr.length) {
+      return this;
+    }
     if (!this.options.attrs) {
       this.options.attrs = [];
     }
