@@ -11,7 +11,8 @@ class Query {
       operator,
       data: null,
       groupField: [],
-      having: []
+      having: [],
+      joins: []
     };
   }
 
@@ -131,6 +132,15 @@ class Query {
   }
 
   join(table, alias, on, type) {
+    if (!alias) {
+      throw new Error('Alias is required');
+    }
+    if (!on) {
+      throw new Error('On is required');
+    }
+    if (['left', 'right', 'inner'].indexOf(type) === -1) {
+      throw new Error('Invalid join type : ' + type + '; only supported left, right, inner');
+    }
     this.options.joins.push({ table, alias, on, type });
     return this;
   }
