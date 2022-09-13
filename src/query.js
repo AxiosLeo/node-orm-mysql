@@ -3,8 +3,6 @@
 class Query {
   constructor(operator = 'select') {
     this.options = {
-      sql: '',
-      values: [],
       conditions: [],
       orders: [],
       tables: [],
@@ -31,7 +29,17 @@ class Query {
     return this;
   }
 
+  /**
+   * 
+   * @param {string} key 
+   * @param {any} value 
+   * @param {*} opt 
+   * @returns 
+   */
   where(key, value, opt = '=') {
+    if (!key) {
+      throw new Error('key is required');
+    }
     if (this.options.conditions.length) {
       this.options.conditions.push({ key: null, opt: 'AND', value: null });
     }
@@ -131,17 +139,25 @@ class Query {
     return this;
   }
 
-  join(table, alias, on, type) {
-    if (!alias) {
-      throw new Error('Alias is required');
+  /**
+   * @param {{table:string,table_alias?:string,self_column: string,foreign_column: string,join_type?: 'left' | 'right' | 'inner'}} opt 
+   * @returns 
+   */
+  join(opt = {}) {
+    let { table, table_alias, self_column, foreign_column, join_type } = opt;
+    if (!table) {
+      throw new Error('table is required');
     }
-    if (!on) {
-      throw new Error('On is required');
+    if (!self_column) {
+      throw new Error('self_column is required');
     }
-    if (['left', 'right', 'inner'].indexOf(type) === -1) {
-      throw new Error('Invalid join type : ' + type + '; only supported left, right, inner');
+    if (!foreign_column) {
+      throw new Error('foreign_column is required');
     }
-    this.options.joins.push({ table, alias, on, type });
+    if (join_type && ['left', 'right', 'inner'].indexOf(join_type) === -1) {
+      throw new Error('Invalid join type : ' + join_type + '; only supported left, right, inner');
+    }
+    this.options.joins.push({ table, alias: table_alias, self_column, foreign_column, join_type });
     return this;
   }
 }

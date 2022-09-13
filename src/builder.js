@@ -5,9 +5,8 @@ const is = require('@axiosleo/cli-tool/src/helper/is');
 
 class Builder {
   constructor(options) {
-    let sql = options.sql;
-    this.values = options.values || [];
-
+    let sql = '';
+    this.values = [];
     switch (options.operator) {
       case 'find': {
         options.pageLimit = 1;
@@ -77,14 +76,26 @@ class Builder {
 
   _buildJoins(joins = []) {
     return joins.map((j) => {
-      switch (j.type) {
-        case 'left':
-          return ` LEFT JOIN \`${j.table}\` AS \`${j.alias}\` ON ${j.on}`;
-        case 'inner':
-          return ` INNER JOIN \`${j.table}\` AS \`${j.alias}\` ON ${j.on}`;
-        case 'right':
-          return ` RIGHT JOIN \`${j.table}\` AS \`${j.alias}\` ON ${j.on}`;
+      let { table, alias, self_column, foreign_column, join_type } = j;
+      if (alias) {
+        table = `\`${table}\` AS \`${alias}\``;
+      } else {
+        table = `\`${table}\``;
       }
+      let sql = '';
+      switch (join_type) {
+        case 'left':
+          sql = ' LEFT JOIN ';
+          break;
+        case 'right':
+          sql = ' RIGHT JOIN ';
+          break;
+        default:
+          sql = ' INNER JOIN ';
+          break;
+      }
+      sql += `${table} ON ${this._buildFieldWithTableName(self_column)} = ${this._buildFieldWithTableName(foreign_column)}`;
+      return sql;
     }).join(' ');
   }
 

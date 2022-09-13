@@ -31,9 +31,10 @@ export type OperatorType = 'select' | 'find' | 'insert' | 'update' | 'delete' | 
 
 export interface JoinOption {
   table: string;
-  alias: string;
-  on: string;
-  type: 'left' | 'right' | 'inner';
+  table_alias?: string;
+  self_column: string;
+  foreign_column: string;
+  join_type?: 'left' | 'right' | 'inner';
 }
 
 export interface TableOption {
@@ -42,8 +43,6 @@ export interface TableOption {
 }
 
 export interface QueryOperatorOptions {
-  sql: string;
-  values: any[];
   conditions: WhereOptions[];
   attrs?: string[] | null;
   orders: OrderByOptions[];
@@ -88,7 +87,7 @@ export declare class Query {
 
   set(data: any): this;
 
-  join(table: string, alias: string, on: string, type: 'left' | 'right' | 'inner'): this;
+  join(opt: JoinOption): this;
 }
 
 export declare class QueryOperator extends Query {
