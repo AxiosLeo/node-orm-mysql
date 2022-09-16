@@ -119,6 +119,7 @@ class Query {
       let lastOpt = this.options.having[this.options.having.length - 1].opt.toUpperCase();
       if (lastOpt !== 'AND' && lastOpt !== 'OR') {
         this.options.having.push({ key: null, opt: 'AND', value: null });
+        return this;
       }
     }
     this.options.having.push({ key, opt, value });
