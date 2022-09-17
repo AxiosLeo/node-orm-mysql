@@ -90,6 +90,8 @@ export declare class Query {
   join(opt: JoinOption): this;
 }
 
+export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | OkPacket;
+
 export declare class QueryOperator extends Query {
   conn: Connection;
   options: QueryOperatorOptions
@@ -98,7 +100,7 @@ export declare class QueryOperator extends Query {
 
   buildSql(operator: OperatorType): { sql: string, values: any[] };
 
-  exec(): Promise<any | undefined | RowDataPacket[] | RowDataPacket | OkPacket>;
+  exec(): Promise<QueryResult>;
 
   select<T>(): Promise<T[]>;
 
@@ -128,3 +130,38 @@ export declare class QueryHandler {
 export function createClient(options: ConnectionOptions, name?: string | null | undefined): Connection;
 
 export function getClient(name: string): Connection;
+
+export type HookPreCallback = (options: QueryOperatorOptions) => void;
+
+export type HookPostCallback = (options: QueryOperatorOptions, result: QueryResult | Error) => void;
+
+export declare class Hook {
+
+  static pre: (option: { table?: string, opt?: OptType, callback: HookPreCallback }) => string;
+
+  static preInsert: (option: { table?: string, allback: HookPreCallback }) => string;
+
+  static preUpdate: (option: { table?: string, allback: HookPreCallback }) => string;
+
+  static preDelete: (option: { table?: string, allback: HookPreCallback }) => string;
+
+  static preSelect: (option: { table?: string, allback: HookPreCallback }) => string;
+
+  static preFind: (option: { table?: string, allback: HookPreCallback }) => string;
+
+  static preCount: (option: { table?: string, allback: HookPreCallback }) => string;
+
+  static post: (option: { table?: string, opt?: OptType, callback: HookPostCallback }) => string;
+
+  static postInsert: (option: { table?: string, allback: HookPostCallback }) => string;
+
+  static postUpdate: (option: { table?: string, allback: HookPostCallback }) => string;
+
+  static postDelete: (option: { table?: string, allback: HookPostCallback }) => string;
+
+  static postSelect: (option: { table?: string, allback: HookPostCallback }) => string;
+
+  static postFind: (option: { table?: string, allback: HookPostCallback }) => string;
+
+  static postCount: (option: { table?: string, allback: HookPostCallback }) => string;
+}
