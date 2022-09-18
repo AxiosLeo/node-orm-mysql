@@ -3,10 +3,21 @@
 const Query = require('./query');
 const is = require('@axiosleo/cli-tool/src/helper/is');
 
+/**
+ * @param {array} arr 
+ * @param {string} res 
+ */
+const emit = (arr, res) => {
+  if (res) {
+    arr.push(res);
+  }
+};
+
 class Builder {
   constructor(options) {
     let sql = '';
     this.values = [];
+    let tmp = [];
     switch (options.operator) {
       case 'find': {
         options.pageLimit = 1;
@@ -14,51 +25,56 @@ class Builder {
       }
       // eslint-disable-next-line no-fallthrough
       case 'select': {
-        sql = `SELECT ${options.attrs ? options.attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`;
-        sql += this._buildJoins(options.joins);
-        sql += this._buildContidion(options.conditions);
-        sql += options.orders.length > 0 ? this._buildOrders(options.orders) : '';
-        sql += this._buldPagenation(options.pageLimit, options.pageOffset);
-        if (options.groupField.length) {
-          sql += ` GROUP BY ${options.groupField.map(f => this._buildFieldKey(f)).join(',')}`;
-          sql += this._buildHaving(options.having);
-        } else if (options.having && options.having.length) {
+        emit(tmp, `SELECT ${options.attrs ? options.attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
+        emit(tmp, this._buildJoins(options.joins));
+        emit(tmp, this._buildContidion(options.conditions));
+        emit(tmp, this._buildOrders(options.orders));
+        emit(tmp, this._buldPagenation(options.pageLimit, options.pageOffset));
+        if (options.having && options.having.length && !options.groupField.length) {
           throw new Error('having is not allowed without "GROUP BY"');
         }
+        emit(tmp, this._buildGroupField(options.groupField));
+        emit(tmp, this._buildHaving(options.having));
+        sql = tmp.join(' ');
         break;
       }
       case 'insert': {
         const fields = this._buildValues(options.data);
-        sql = `INSERT INTO ${this._buildTables(options.tables)}(${fields.map((f) => this._buildFieldKey(f))}) VALUES (${fields.map(() => '?').join(',')})`;
+        emit(tmp, `INSERT INTO ${this._buildTables(options.tables)}(${fields.map((f) => `\`${f}\``).join(',')})`);
+        emit(tmp, `VALUES (${fields.map((f) => '?').join(',')})`);
+        sql = tmp.join(' ');
         break;
       }
       case 'update': {
         const fields = this._buildValues(options.data);
-        sql = `UPDATE ${this._buildTables(options.tables)} SET ${fields.map(f => `${this._buildFieldKey(f)} = ?`).join(',')}`;
+        emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
+        emit(tmp, `SET ${fields.map((f) => `\`${f}\` = ?`).join(',')}`);
         if (!options.conditions.length) {
           throw new Error('At least one condition is required for update operation');
         }
-        sql += this._buildContidion(options.conditions);
+        emit(tmp, this._buildContidion(options.conditions));
+        sql = tmp.join(' ');
         break;
       }
       case 'delete': {
-        sql = `DELETE FROM ${this._buildTables(options.tables)}`;
+        emit(tmp, `DELETE FROM ${this._buildTables(options.tables)}`);
         if (!options.conditions.length) {
           throw new Error('At least one where condition is required for delete operation');
         }
-        sql += this._buildContidion(options.conditions);
+        emit(tmp, this._buildContidion(options.conditions));
+        sql = tmp.join(' ');
         break;
       }
       case 'count': {
-        sql = `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`;
-        sql += this._buildJoins(options.joins);
-        sql += this._buildContidion(options.conditions);
-        if (options.groupField.length) {
-          sql += ` GROUP BY ${options.groupField.map(f => this._buildFieldKey(f)).join(',')}`;
-          sql += this._buildHaving(options.having);
-        } else if (options.having && options.having.length) {
+        emit(tmp, `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`);
+        emit(tmp, this._buildJoins(options.joins));
+        emit(tmp, this._buildContidion(options.conditions));
+        if (options.having && options.having.length && !options.groupField.length) {
           throw new Error('having is not allowed without "GROUP BY"');
         }
+        emit(tmp, this._buildGroupField(options.groupField));
+        emit(tmp, this._buildHaving(options.having));
+        sql = tmp.join(' ');
         break;
       }
       default:
@@ -68,11 +84,18 @@ class Builder {
     this.sql = sql;
   }
 
-  _buildHaving(having) {
-    if (!having.length) {
+  _buildGroupField(groupFields = []) {
+    if (!groupFields || !groupFields.length) {
       return '';
     }
-    return this._buildContidion(having, ' HAVING ');
+    return `GROUP BY ${groupFields.map(f => this._buildFieldKey(f)).join(',')}`;
+  }
+
+  _buildHaving(having) {
+    if (!having || !having.length) {
+      return '';
+    }
+    return this._buildContidion(having, 'HAVING ');
   }
 
   _buildJoins(joins = []) {
@@ -86,13 +109,13 @@ class Builder {
       let sql = '';
       switch (join_type) {
         case 'left':
-          sql = ' LEFT JOIN ';
+          sql = 'LEFT JOIN ';
           break;
         case 'right':
-          sql = ' RIGHT JOIN ';
+          sql = 'RIGHT JOIN ';
           break;
         default:
-          sql = ' INNER JOIN ';
+          sql = 'INNER JOIN ';
           break;
       }
       sql += `${table} ON ${this._buildFieldWithTableName(self_column)} = ${this._buildFieldWithTableName(foreign_column)}`;
@@ -101,14 +124,17 @@ class Builder {
   }
 
   _buildOrders(orders = []) {
-    const sql = ' ORDER BY ' + orders.map((o) => {
+    if (!orders || !orders.length) {
+      return '';
+    }
+    const sql = 'ORDER BY ' + orders.map((o) => {
       return `${this._buildFieldKey(o.sortField)} ${o.sortOrder}`;
     }).join(',');
     return sql;
   }
 
   _buildTables(tables) {
-    if (!tables.length) {
+    if (!tables || !tables.length) {
       throw new Error('At least one table is required');
     }
     return tables.map((t) => {
@@ -156,10 +182,10 @@ class Builder {
   }
 
   _buildContidion(conditions, prefix) {
-    if (!conditions.length) {
+    if (!conditions || !conditions.length) {
       return '';
     }
-    let sql = typeof prefix === 'undefined' ? ' WHERE ' : prefix;
+    let sql = typeof prefix === 'undefined' ? 'WHERE ' : prefix;
     if (conditions.length) {
       sql += `${conditions.map((c) => {
         if (c.key === null && c.value === null) {
