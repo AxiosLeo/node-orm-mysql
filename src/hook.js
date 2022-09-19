@@ -48,87 +48,15 @@ const handleEvent = (label, table, opt, ...args) => {
 };
 
 class Hook {
-  static pre({ table, callback, opt }) {
+  static pre(callback, { table, opt }) {
     return pushEvent({
       label: 'pre', table, opt, callback
     });
   }
 
-  static preInsert({ table, callback }) {
-    return pushEvent({
-      label: 'pre', table, opt: 'insert', callback
-    });
-  }
-
-  static preUpdate({ table, callback }) {
-    return pushEvent({
-      label: 'pre', table, opt: 'update', callback
-    });
-  }
-
-  static preDelete({ table, callback }) {
-    return pushEvent({
-      label: 'pre', table, opt: 'delete', callback
-    });
-  }
-
-  static preFind({ table, callback }) {
-    return pushEvent({
-      label: 'pre', table, opt: 'find', callback
-    });
-  }
-
-  static preSelect({ table, callback }) {
-    return pushEvent({
-      label: 'pre', table, opt: 'select', callback
-    });
-  }
-
-  static preCount({ table, callback }) {
-    return pushEvent({
-      label: 'pre', table, opt: 'count', callback
-    });
-  }
-
-  static post({ table, callback, opt }) {
+  static post(callback, { table, opt }) {
     return pushEvent({
       label: 'post', table, opt, callback
-    });
-  }
-
-  static postInsert({ table, callback }) {
-    return pushEvent({
-      label: 'post', table, opt: 'insert', callback
-    });
-  }
-
-  static postUpdate({ table, callback }) {
-    return pushEvent({
-      label: 'post', table, opt: 'update', callback
-    });
-  }
-
-  static postDelete({ table, callback }) {
-    return pushEvent({
-      label: 'post', table, opt: 'delete', callback
-    });
-  }
-
-  static postFind({ table, callback }) {
-    return pushEvent({
-      label: 'post', table, opt: 'find', callback
-    });
-  }
-
-  static postSelect({ table, callback }) {
-    return pushEvent({
-      label: 'post', table, opt: 'select', callback
-    });
-  }
-
-  static postCount({ table, callback }) {
-    return pushEvent({
-      label: 'post', table, opt: 'count', callback
     });
   }
 }

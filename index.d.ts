@@ -131,37 +131,15 @@ export function createClient(options: ConnectionOptions, name?: string | null | 
 
 export function getClient(name: string): Connection;
 
-export type HookPreCallback = (options: QueryOperatorOptions) => void;
-
-export type HookPostCallback = (options: QueryOperatorOptions, result: QueryResult | Error) => void;
-
 export declare class Hook {
 
-  static pre: (option: { table?: string, opt?: OptType, callback: HookPreCallback }) => string;
+  static pre: (
+    callback: (options: QueryOperatorOptions) => void,
+    option: { table?: string, opt?: OptType }
+  ) => string;
 
-  static preInsert: (option: { table?: string, allback: HookPreCallback }) => string;
-
-  static preUpdate: (option: { table?: string, allback: HookPreCallback }) => string;
-
-  static preDelete: (option: { table?: string, allback: HookPreCallback }) => string;
-
-  static preSelect: (option: { table?: string, allback: HookPreCallback }) => string;
-
-  static preFind: (option: { table?: string, allback: HookPreCallback }) => string;
-
-  static preCount: (option: { table?: string, allback: HookPreCallback }) => string;
-
-  static post: (option: { table?: string, opt?: OptType, callback: HookPostCallback }) => string;
-
-  static postInsert: (option: { table?: string, allback: HookPostCallback }) => string;
-
-  static postUpdate: (option: { table?: string, allback: HookPostCallback }) => string;
-
-  static postDelete: (option: { table?: string, allback: HookPostCallback }) => string;
-
-  static postSelect: (option: { table?: string, allback: HookPostCallback }) => string;
-
-  static postFind: (option: { table?: string, allback: HookPostCallback }) => string;
-
-  static postCount: (option: { table?: string, allback: HookPostCallback }) => string;
+  static post: (
+    callback: (options: QueryOperatorOptions, result: QueryResult | Error) => void,
+    option: { table?: string, opt?: OptType }
+  ) => string;
 }
