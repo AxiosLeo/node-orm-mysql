@@ -2,6 +2,7 @@
 
 const { Builder } = require('./builder');
 const Query = require('./query');
+const { handleEvent } = require('./hook');
 
 const query = async (conn, options) => {
   return new Promise((resolve, reject) => {
@@ -38,18 +39,30 @@ class QueryOperator extends Query {
     const options = {
       sql, values
     };
-    switch (this.options.operator) {
-      case 'find': {
-        const res = await query(this.conn, options);
-        return res[0];
+    const from = this.options.tables.map(t => t.tableName).join(',');
+    handleEvent('pre', from, this.options.operator, this.options);
+    let res;
+    try {
+      switch (this.options.operator) {
+        case 'find': {
+          const tmp = await query(this.conn, options);
+          res = tmp[0];
+          break;
+        }
+        case 'count': {
+          const [tmp] = await query(this.conn, options);
+          res = tmp.count;
+          break;
+        }
+        default:
+          res = await query(this.conn, options);
       }
-      case 'count': {
-        const [res] = await query(this.conn, options);
-        return res.count;
-      }
-      default:
-        return query(this.conn, options);
+      handleEvent('post', from, this.options.operator, this.options, res);
+    } catch (err) {
+      handleEvent('post', from, this.options.operator, this.options, err);
+      throw err;
     }
+    return res;
   }
 
   async select() {
