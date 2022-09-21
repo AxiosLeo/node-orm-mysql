@@ -8,7 +8,11 @@ const {
 
 const { createClient, getClient } = require('./src/client');
 
+const { Hook } = require('./src/hook');
+
 module.exports = {
+  Hook,
+
   Query,
   QueryHandler,
   QueryOperator,

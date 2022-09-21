@@ -132,7 +132,6 @@ export function createClient(options: ConnectionOptions, name?: string | null | 
 export function getClient(name: string): Connection;
 
 export declare class Hook {
-
   static pre: (
     callback: (options: QueryOperatorOptions) => void,
     option: { table?: string, opt?: OptType }
