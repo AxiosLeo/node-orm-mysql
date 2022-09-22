@@ -14,6 +14,7 @@ describe('builder test case', () => {
       operator: null,
       data: null,
       groupField: [],
+      having: []
     };
     options.tables.push({ tableName: 'table1', alias: 't1' });
     options.operator = 'select';
@@ -30,6 +31,7 @@ describe('builder test case', () => {
       operator: 'select',
       data: null,
       groupField: [],
+      having: []
     };
     options.conditions.push({
       key: 't1.id',
