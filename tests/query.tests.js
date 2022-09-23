@@ -22,6 +22,36 @@ describe('query test case', () => {
     query.where('u.id', 1);
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`id` = ?');
   });
+  it('join select order should be ok', () => {
+    const query = hanlder.table('meta_items_relationship', 'mir')
+      .join({
+        table: 'meta_items',
+        table_alias: 'mi',
+        self_column: 'mi.id',
+        foreign_column: 'mir.item_child',
+        join_type: 'left'
+      })
+      .where('mir.item_parent', 1)
+      .where('mir.disabled', 0)
+      .where('mi.disabled', 0)
+      .orderBy('mi.id', 'desc');
+    expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `meta_items_relationship` AS `mir` LEFT JOIN `meta_items` AS `mi` ON `mi`.`id` = `mir`.`item_child` WHERE `mir`.`item_parent` = ? AND `mir`.`disabled` = ? AND `mi`.`disabled` = ? ORDER BY `mi`.`id` desc');
+  });
+  it('join count should be ok', () => {
+    const query = hanlder.table('meta_items_relationship', 'mir')
+      .join({
+        table: 'meta_items',
+        table_alias: 'mi',
+        self_column: 'mi.id',
+        foreign_column: 'mir.item_child',
+        join_type: 'left'
+      })
+      .where('mir.item_parent', 1)
+      .where('mir.disabled', 0)
+      .where('mi.disabled', 0)
+      .orderBy('mi.id', 'desc');
+    expect(query.buildSql('count').sql).to.be.equal('SELECT COUNT(*) AS count FROM `meta_items_relationship` AS `mir` LEFT JOIN `meta_items` AS `mi` ON `mi`.`id` = `mir`.`item_child` WHERE `mir`.`item_parent` = ? AND `mir`.`disabled` = ? AND `mi`.`disabled` = ?');
+  });
 
   it('sql functions', () => {
     const query = hanlder.table('users', '');
