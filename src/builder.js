@@ -51,6 +51,7 @@ class Builder {
       }
       case 'count': {
         sql = `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`;
+        sql += this._buildJoins(options.joins);
         sql += this._buildContidion(options.conditions);
         if (options.groupField.length) {
           sql += ` GROUP BY ${options.groupField.map(f => this._buildFieldKey(f)).join(',')}`;
@@ -101,7 +102,7 @@ class Builder {
 
   _buildOrders(orders = []) {
     const sql = ' ORDER BY ' + orders.map((o) => {
-      return `\`${o.sortField}\` ${o.sortOrder}`;
+      return `${this._buildFieldKey(o.sortField)} ${o.sortOrder}`;
     }).join(',');
     return sql;
   }
