@@ -46,7 +46,7 @@ query.offset(0);                 // set offset
 let rows = await query.select(); // select
 ```
 
-### Some Examples
+### Some Query Examples
 
 ```javascript
 const { createClient, QueryHandler, Query } = require("@axiosleo/orm-mysql");
@@ -127,6 +127,20 @@ async function subqueryExample() {
   const sql = query.where("u.name", subQuery, "IN").buildSql("select").sql;
   // SELECT * FROM `users` AS `u` WHERE `u`.`name` IN (SELECT * FROM `users` GROUP BY `u`.`name` HAVING COUNT(*) > ?)
 }
+```
+
+### Hook
+
+```javascript
+const { Hook } = require("@axiosleo/orm-mysql");
+
+Hook.pre(async (options) => {
+  debug.log('options', options);
+}, { table: 'table_name', opt: 'insert'});
+
+Hook.post(async (options, result) => {
+  throw new Error('some error');
+}, { table: 'table_name', opt: 'insert' });
 ```
 
 ## License
