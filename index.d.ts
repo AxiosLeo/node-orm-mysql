@@ -134,11 +134,11 @@ export function getClient(name: string): Connection;
 export declare class Hook {
   static pre: (
     callback: (options: QueryOperatorOptions) => void,
-    option: { table?: string, opt?: OptType }
+    option: { table?: string, opt?: OperatorType }
   ) => string;
 
   static post: (
     callback: (options: QueryOperatorOptions, result: QueryResult | Error) => void,
-    option: { table?: string, opt?: OptType }
+    option: { table?: string, opt?: OperatorType }
   ) => string;
 }
