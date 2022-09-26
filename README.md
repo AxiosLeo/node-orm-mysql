@@ -134,6 +134,8 @@ async function subqueryExample() {
 ```javascript
 const { Hook } = require("@axiosleo/orm-mysql");
 
+// opt: 'select' | 'find' | 'insert' | 'update' | 'delete' | 'count'
+
 Hook.pre(async (options) => {
   debug.log('options', options);
 }, { table: 'table_name', opt: 'insert'});
