@@ -30,7 +30,7 @@ export interface OrderByOptions {
 export type OperatorType = 'select' | 'find' | 'insert' | 'update' | 'delete' | 'count';
 
 export interface JoinOption {
-  table: string;
+  table: string | Query;
   table_alias?: string;
   self_column: string;
   foreign_column: string;

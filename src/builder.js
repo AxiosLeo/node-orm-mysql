@@ -101,6 +101,14 @@ class Builder {
   _buildJoins(joins = []) {
     return joins.map((j) => {
       let { table, alias, self_column, foreign_column, join_type } = j;
+      if (table instanceof Query) {
+        if (!alias) {
+          throw new Error('Alias is required for subquery');
+        }
+        const builder = new Builder(table.options);
+        this.values = this.values.concat(builder.values);
+        table = `(${builder.sql})`;
+      }
       if (alias) {
         table = `\`${table}\` AS \`${alias}\``;
       } else {
