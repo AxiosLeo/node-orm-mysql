@@ -7,6 +7,9 @@ const { Builder } = require('../src/builder');
 const { QueryHandler, Query } = require('../src/operator');
 
 describe('query test case', () => {
+  /**
+   * @type {QueryHandler}
+   */
   let hanlder;
   beforeEach(() => {
     mm(mysql, 'createConnection', (options) => {
@@ -84,11 +87,26 @@ describe('query test case', () => {
   });
 
   it('sub query', () => {
+    // subquery in conditions
     const query = hanlder.table('users', 'u');
     const subQuery = new Query('select');
     subQuery.table('users');
     const res = query.where('name', subQuery, 'IN').buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `name` IN (SELECT * FROM `users`)');
+
+    // subquery in joins
+    const query2 = hanlder.table('users', 'u').attr('id', 'name');
+    const subQuery2 = new Query('select');
+    subQuery2.table('users').where('name', 'johny');
+    query2.join({
+      table: subQuery2,
+      table_alias: 'sub_query',
+      self_column: 'id',
+      foreign_column: 'sub_query.id',
+      join_type: 'left'
+    });
+    const res2 = query2.buildSql('select');
+    expect(res2.sql).to.be.equal('SELECT `id`,`name` FROM `users` AS `u` LEFT JOIN `(SELECT * FROM `users` WHERE `name` = ?)` AS `sub_query` ON `id` = `sub_query`.`id`');
   });
 
   it('having', () => {
