@@ -112,7 +112,12 @@ export declare class QueryOperator extends Query {
 
   count(): Promise<number>;
 
-  delete(id?: number): Promise<OkPacket>;
+  /**
+   * delete data
+   * @param id 
+   * @param index_field_name default is 'id'
+   */
+  delete(id?: number, index_field_name?: string): Promise<OkPacket>;
 }
 
 export declare class QueryHandler {

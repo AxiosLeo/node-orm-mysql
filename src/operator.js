@@ -96,9 +96,9 @@ class QueryOperator extends Query {
     return await this.exec();
   }
 
-  async delete(id) {
+  async delete(id, index_field_name = 'id') {
     if (id) {
-      this.where('id', id);
+      this.where(index_field_name, id);
     }
     this.options.operator = 'delete';
     return await this.exec();
