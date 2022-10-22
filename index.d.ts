@@ -6,6 +6,10 @@ import {
   ConnectionOptions
 } from 'mysql2';
 
+import {
+  Connection as PromiseConnection,
+} from 'mysql2/promise';
+
 export type Clients = {
   [key: string]: Connection
 }
@@ -54,6 +58,8 @@ export interface QueryOperatorOptions {
   groupField: string[];
   joins: JoinOption[];
   having: WhereOptions[];
+  suffix?: string | null;
+  transaction: boolean;
 }
 
 export declare class Query {
@@ -128,6 +134,35 @@ export declare class QueryHandler {
   table(table: string, alias?: string | null): QueryOperator;
 
   query(options: QueryOptions): Promise<any>;
+
+  upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
+}
+
+export declare class TransactionOperator extends QueryOperator {
+  append(suffix: string): this;
+}
+
+export declare class TransactionHandler {
+  constructor(conn: PromiseConnection, options?: {
+    level: 'READ UNCOMMITTED' | 'RU'
+    | 'READ COMMITTED' | 'RC'
+    | 'REPEATABLE READ' | 'RR'
+    | 'SERIALIZABLE' | 'S'
+  });
+
+  query(options: QueryOptions): Promise<any>;
+
+  execute(sql: string, values: any[]): Promise<any>;
+
+  lastInsertId(alias?: string): Promise<number>;
+
+  table(table: string, alias?: string | null): TransactionOperator;
+
+  begin(): Promise<void>;
+
+  commit(): Promise<void>;
+
+  rollback(): Promise<void>;
 
   upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
 }
