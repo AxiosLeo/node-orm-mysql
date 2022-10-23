@@ -36,6 +36,9 @@ class Builder {
         emit(tmp, this._buildGroupField(options.groupField));
         emit(tmp, this._buildHaving(options.having));
         sql = tmp.join(' ');
+        if (options.suffix) {
+          sql += ' ' + options.suffix;
+        }
         break;
       }
       case 'insert': {
