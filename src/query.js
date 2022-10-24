@@ -10,7 +10,9 @@ class Query {
       data: null,
       groupField: [],
       having: [],
-      joins: []
+      joins: [],
+      suffix: null,
+      transaction: false
     };
   }
 
