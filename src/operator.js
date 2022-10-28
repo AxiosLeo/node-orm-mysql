@@ -4,15 +4,21 @@ const { Builder } = require('./builder');
 const Query = require('./query');
 const { handleEvent } = require('./hook');
 
-const query = async (conn, options) => {
+const query = async (conn, options, transaction) => {
   return new Promise((resolve, reject) => {
-    conn.query(options, (err, result) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(result);
-      }
-    });
+    if (transaction) {
+      conn.execute(options)
+        .then((res) => resolve(res))
+        .catch((err) => reject(err));
+    } else {
+      conn.query(options, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    }
   });
 };
 
@@ -45,17 +51,17 @@ class QueryOperator extends Query {
     try {
       switch (this.options.operator) {
         case 'find': {
-          const tmp = await query(this.conn, options);
+          const tmp = await query(this.conn, options, this.options.transaction);
           res = tmp[0];
           break;
         }
         case 'count': {
-          const [tmp] = await query(this.conn, options);
+          const [tmp] = await query(this.conn, options, this.options.transaction);
           res = tmp.count;
           break;
         }
         default:
-          res = await query(this.conn, options);
+          res = await query(this.conn, options, this.options.transaction);
       }
       handleEvent('post', from, this.options.operator, this.options, res);
     } catch (err) {
