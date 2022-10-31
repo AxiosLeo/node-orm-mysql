@@ -1,6 +1,7 @@
 'use strict';
 
 const mysql = require('mysql2');
+const mysqlPromise = require('mysql2/promise');
 const { validate } = require('./utils');
 
 const clients = {};
@@ -25,6 +26,23 @@ const createClient = (options, name = null) => {
   }
   clients[key] = mysql.createConnection(options);
   clients[key].connect();
+  return clients[key];
+};
+
+const createPromiseClient = async (options, name = null) => {
+  validate(options, {
+    host: 'required|string',
+    user: 'required|string',
+    password: 'required|string',
+    port: 'required|integer',
+    database: 'required|string',
+  });
+  const key = name ? name :
+    `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
+  if (clients[key]) {
+    return clients[key];
+  }
+  clients[key] = await mysqlPromise.createConnection(options);
   return clients[key];
 };
 
@@ -69,5 +87,6 @@ const getClient = (name) => {
 module.exports = {
   getClient,
   createPool,
-  createClient
+  createClient,
+  createPromiseClient
 };
