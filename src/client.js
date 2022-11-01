@@ -29,6 +29,11 @@ const createClient = (options, name = null) => {
   return clients[key];
 };
 
+/**
+ * @param {mysql.ConnectionOptions} options 
+ * @param {string|null} name 
+ * @returns {mysqlPromise.Connection}
+ */
 const createPromiseClient = async (options, name = null) => {
   validate(options, {
     host: 'required|string',
