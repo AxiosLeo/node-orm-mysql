@@ -105,4 +105,7 @@ class TransactionHandler {
   }
 }
 
-module.exports = { TransactionHandler };
+module.exports = {
+  TransactionOperator,
+  TransactionHandler
+};

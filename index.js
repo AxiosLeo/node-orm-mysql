@@ -6,7 +6,17 @@ const {
   Query
 } = require('./src/operator');
 
-const { createClient, getClient } = require('./src/client');
+const {
+  TransactionOperator,
+  TransactionHandler
+} = require('./src/transaction');
+
+const {
+  getClient,
+  createPool,
+  createClient,
+  createPromiseClient
+} = require('./src/client');
 
 const { Hook } = require('./src/hook');
 
@@ -17,6 +27,11 @@ module.exports = {
   QueryHandler,
   QueryOperator,
 
+  TransactionOperator,
+  TransactionHandler,
+
   getClient,
-  createClient
+  createPool,
+  createClient,
+  createPromiseClient
 };
