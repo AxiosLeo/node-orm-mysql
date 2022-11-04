@@ -1,6 +1,8 @@
 import {
+  Pool,
   OkPacket,
   Connection,
+  PoolOptions,
   QueryOptions,
   RowDataPacket,
   ConnectionOptions
@@ -170,6 +172,10 @@ export declare class TransactionHandler {
 export function createClient(options: ConnectionOptions, name?: string | null | undefined): Connection;
 
 export function getClient(name: string): Connection;
+
+export function createPool(options: PoolOptions, name?: string | null | undefined): Pool;
+
+export function createPromiseClient(options: ConnectionOptions, name?: string | null | undefined): PromiseConnection;
 
 export declare class Hook {
   static pre: (
