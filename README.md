@@ -151,6 +151,40 @@ Hook.post(async (options, result) => {
 }, { table: 'table_name', opt: 'insert' });
 ```
 
+### Transaction
+
+```javascript
+const { TransactionHandler, createPromiseClient } = require("@axiosleo/orm-mysql");
+
+const conn = createPromiseClient({
+  host: process.env.MYSQL_HOST,
+  port: process.env.MYSQL_PORT,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASS,
+  database: process.env.MYSQL_DB,
+});
+
+const transaction = new TransactionHandler(connection);
+
+try {
+  // insert user info
+  let row = await transaction.table("users").insert({
+    name: "Joe",
+    age: 18,
+  });
+  const lastInsertId = row[0].insertId;
+
+  // insert student info
+  await transaction.table("students").insert({
+    user_id: lastInsertId,
+  });
+  await transaction.commit();
+} catch (e) {
+  await transaction.rollback();
+  throw e;
+}
+```
+
 ## License
 
 This project is open-sourced software licensed under the [MIT](LICENSE).
