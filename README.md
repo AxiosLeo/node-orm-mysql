@@ -164,7 +164,8 @@ const conn = createPromiseClient({
   database: process.env.MYSQL_DB,
 });
 
-const transaction = new TransactionHandler(connection);
+const transaction = new TransactionHandler(conn);
+await transaction.begin();
 
 try {
   // insert user info
