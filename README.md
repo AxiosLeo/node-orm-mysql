@@ -164,11 +164,20 @@ const conn = createPromiseClient({
   database: process.env.MYSQL_DB,
 });
 
-const transaction = new TransactionHandler(conn);
+const transaction = new TransactionHandler(conn, {
+  /*
+  level = 'READ UNCOMMITTED' | 'RU'
+        | 'READ COMMITTED' | 'RC'
+        | 'REPEATABLE READ' | 'RR'
+        | 'SERIALIZABLE' | 'S'
+  */
+  level: "SERIALIZABLE", // 'SERIALIZABLE' as default value
+});
 await transaction.begin();
 
 try {
   // insert user info
+  // will not really create a record.
   let row = await transaction.table("users").insert({
     name: "Joe",
     age: 18,
