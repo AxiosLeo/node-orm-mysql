@@ -1,4 +1,5 @@
 runtime/*
+runtimes/*
 .github/*
 tests/*
 coverage/*
@@ -8,3 +9,6 @@ nyc.config.js
 .idea/*
 node_modules/*
 .appveyor.yml
+.env
+.prettierignore
+README.md
