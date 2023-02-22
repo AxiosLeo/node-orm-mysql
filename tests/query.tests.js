@@ -73,7 +73,7 @@ describe('query test case', () => {
     query = hanlder.table('users', 'u');
     query.where('u.meta->$.id', [1, 2, 3], 'in');
     const res = query.buildSql('select');
-    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_EXTRACT(`u`.`meta`, \'$.id\') IN (?)');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))');
     expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
   });
 
