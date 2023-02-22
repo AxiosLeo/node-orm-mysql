@@ -192,6 +192,21 @@ class Builder {
     return null;
   }
 
+  _buildContidionIn(condition, isNot = false) {
+    if (!Array.isArray(condition.value) && !(condition.value instanceof Query)) {
+      throw new Error('Value must be an array for "IN" condition');
+    }
+    if (condition.key.indexOf('$') !== -1) {
+      let res = this._buildConditionValues(condition.value);
+      let sql = res ? `JSON_CONTAINS(JSON_ARRAY(${res}), ${this._buildFieldKey(condition.key)})` :
+        `JSON_CONTAINS(JSON_ARRAY(?), ${this._buildFieldKey(condition.key)})`;
+      return isNot ? `${sql}=0` : sql;
+    }
+    let res = this._buildConditionValues(condition.value);
+    const opt = isNot ? 'NOT IN' : 'IN';
+    return res ? `${this._buildFieldKey(condition.key)} ${opt} (${res})` : `${this._buildFieldKey(condition.key)} ${opt} (?)`;
+  }
+
   _buildContidion(conditions, prefix) {
     if (!conditions || !conditions.length) {
       return '';
@@ -216,9 +231,10 @@ class Builder {
           ], '');
         }
         const opt = c.opt.toLowerCase();
-        if (opt === 'in' && Array.isArray(c.value)) {
-          let res = this._buildConditionValues(c.value);
-          return res ? `${this._buildFieldKey(c.key)} IN (${res})` : `${this._buildFieldKey(c.key)} IN (?)`;
+        if (opt === 'in') {
+          return this._buildContidionIn(c);
+        } else if (opt === 'not in') {
+          return this._buildContidionIn(c, true);
         } else if (opt === 'group' && Array.isArray(c.value)) {
           return `(${this._buildContidion(c.value, '')})`;
         }
