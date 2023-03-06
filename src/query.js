@@ -57,6 +57,9 @@ class Query {
   }
 
   whereConditions(...condition) {
+    if (!condition.length) {
+      return this;
+    }
     if (this.options.conditions.length) {
       this.options.conditions.push({ key: null, opt: 'AND', value: null });
     }
