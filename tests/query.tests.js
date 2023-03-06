@@ -138,4 +138,9 @@ describe('query test case', () => {
     const query = hanlder.table('users', 'u').attr(...[]);
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u`');
   });
+
+  it('where opt', () => {
+    const query = hanlder.table('users', 'u').attr(...[]).where('id', 1).whereConditions();
+    expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?');
+  });
 });
