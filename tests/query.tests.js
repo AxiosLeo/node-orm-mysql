@@ -109,6 +109,13 @@ describe('query test case', () => {
     expect(res2.sql).to.be.equal('SELECT `id`,`name` FROM `users` AS `u` LEFT JOIN `(SELECT * FROM `users` WHERE `name` = ?)` AS `sub_query` ON `id` = `sub_query`.`id`');
   });
 
+  it('query with in condition', () => {
+    const query = hanlder.table('users', 'u');
+    expect(() => {
+      query.where('name', [], 'IN').buildSql('select');
+    }).to.be.throw('Value must not be empty for "IN" condition');
+  });
+
   it('having', () => {
     const query = hanlder.table('users', 'u');
     const subQuery = new Query('select');
