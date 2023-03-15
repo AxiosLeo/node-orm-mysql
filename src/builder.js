@@ -193,8 +193,10 @@ class Builder {
   }
 
   _buildContidionIn(condition, isNot = false) {
-    if (!Array.isArray(condition.value) && !(condition.value instanceof Query)) {
-      throw new Error('Value must be an array for "IN" condition');
+    if (Array.isArray(condition.value) && !condition.value.length) {
+      throw new Error('Value must not be empty for "IN" condition');
+    } else if (!Array.isArray(condition.value) && !(condition.value instanceof Query)) {
+      throw new Error('Value must be an array or sub-query for "IN" condition');
     }
     if (condition.key.indexOf('$') !== -1) {
       let res = this._buildConditionValues(condition.value);
