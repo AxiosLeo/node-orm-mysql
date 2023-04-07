@@ -156,7 +156,7 @@ Hook.post(async (options, result) => {
 ```javascript
 const { TransactionHandler, createPromiseClient } = require("@axiosleo/orm-mysql");
 
-const conn = createPromiseClient({
+const conn = await createPromiseClient({
   host: process.env.MYSQL_HOST,
   port: process.env.MYSQL_PORT,
   user: process.env.MYSQL_USER,
