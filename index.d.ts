@@ -144,12 +144,14 @@ export declare class TransactionOperator extends QueryOperator {
   append(suffix: string): this;
 }
 
+export type TransactionLevel = 'READ UNCOMMITTED' | 'RU'
+  | 'READ COMMITTED' | 'RC'
+  | 'REPEATABLE READ' | 'RR'
+  | 'SERIALIZABLE' | 'S';
+
 export declare class TransactionHandler {
   constructor(conn: PromiseConnection, options?: {
-    level: 'READ UNCOMMITTED' | 'RU'
-    | 'READ COMMITTED' | 'RC'
-    | 'REPEATABLE READ' | 'RR'
-    | 'SERIALIZABLE' | 'S'
+    level: TransactionLevel
   });
 
   query(options: QueryOptions): Promise<any>;
