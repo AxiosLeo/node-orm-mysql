@@ -126,7 +126,7 @@ async function deleteExample() {
 }
 
 async function subqueryExample() {
-  const query = hanlder.table("users", "u");
+  const query = handler.table("users", "u");
   const subQuery = new Query("select");
   subQuery.table("users").having("COUNT(*)", ">", 1);
 
