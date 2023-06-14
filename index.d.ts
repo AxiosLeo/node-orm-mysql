@@ -16,7 +16,8 @@ export type Clients = {
   [key: string]: Connection
 }
 
-export type ConditionValueType = null | string | number | boolean | Date | Array<string | number | boolean | Date> | Query;
+export type BasicValueType = null | string | number | boolean | Date;
+export type ConditionValueType = BasicValueType | Array<string | number | boolean | Date> | Query;
 
 export type OptType = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE'
   | 'NOT LIKE' | 'IN' | 'NOT IN' | 'BETWEEN' | 'NOT BETWEEN' | 'IS' | 'IS NOT' | 'REGEXP' | 'NOT REGEXP'
@@ -64,7 +65,7 @@ export interface QueryOperatorOptions {
   transaction: boolean;
 }
 
-export declare class Query {
+export declare class Query<T extends Entity = any> {
   constructor(operator?: OperatorType);
 
   table(tableName: string, alias: string | null): this;
@@ -73,34 +74,36 @@ export declare class Query {
 
   offset(offset: number): this;
 
-  where(key: string | null, value: ConditionValueType | WhereOptions[], opt?: OptType): this;
+  where<K extends EntityKey<T>>(key: K | null, value: EntityValue<T, K> | WhereOptions[], opt?: OptType): this;
 
-  whereObject(obj: Record<string, ConditionValueType>): this;
+  whereObject(obj: Partial<T>): this;
 
   whereConditions(...condition: WhereOptions[]): this;
 
-  orWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
+  orWhere<K extends EntityKey<T>>(key: K | null, opt: OptType, value: EntityValue<T, K> | WhereOptions[]): this;
 
-  andWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
+  andWhere<K extends EntityKey<T>>(key: K | null, opt: OptType, value: EntityValue<T, K> | WhereOptions[]): this;
 
   attr(...attr: string[]): this;
 
-  orderBy(sortField: string, sortOrder: 'asc' | 'desc'): this;
+  orderBy(sortField: EntityKey<T>, sortOrder: 'asc' | 'desc'): this;
 
-  groupBy(...groupField: string[]): this;
+  groupBy(...groupField: EntityKey<T>[]): this;
 
-  having(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
+  having<K extends EntityKey<T>>(key: K | null, opt: OptType, value: EntityValue<T, K> | WhereOptions[]): this;
 
   page(limit: number, offset?: number): this;
 
+  /* ?? */
   set(data: any): this;
 
+  /* TODO: JoinOption 泛型 */
   join(opt: JoinOption): this;
 }
 
 export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | OkPacket;
 
-export declare class QueryOperator extends Query {
+export declare class QueryOperator<T extends Entity> extends Query {
   conn: Connection;
   options: QueryOperatorOptions
 
@@ -110,13 +113,13 @@ export declare class QueryOperator extends Query {
 
   exec(): Promise<QueryResult>;
 
-  select<T>(): Promise<T[]>;
+  select(): Promise<T[]>;
 
-  find<T>(): Promise<T>;
+  find(): Promise<T>;
 
-  update(data?: any): Promise<OkPacket>;
+  update(data?: Partial<T>): Promise<OkPacket>;
 
-  insert(data?: any): Promise<OkPacket>;
+  insert(data?: T): Promise<OkPacket>;
 
   count(): Promise<number>;
 
@@ -128,19 +131,30 @@ export declare class QueryOperator extends Query {
   delete(id?: number, index_field_name?: string): Promise<OkPacket>;
 }
 
-export declare class QueryHandler {
+export declare type Entity = Record<string, BasicValueType>;
+
+export declare type EntityKey<T extends Entity> = keyof T;
+
+export declare type EntityValue<T extends Entity, K extends EntityKey<T>> = T[K];
+
+export declare type TableMap = Record<string, Entity>;
+
+export declare type TableName<T extends TableMap> = keyof T;
+
+export declare type TableEntity<T extends TableMap, N extends string> = T[N];
+export declare class QueryHandler<TM extends TableMap> {
   conn: Connection;
 
   constructor(conn: Connection);
 
-  table(table: string, alias?: string | null): QueryOperator;
+  table<T extends TableName<TM>>(table: T, alias?: string | null): QueryOperator<TableEntity<TM, T>>;
 
   query(options: QueryOptions): Promise<any>;
 
   upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
 }
 
-export declare class TransactionOperator extends QueryOperator {
+export declare class TransactionOperator<T extends Entity = any> extends QueryOperator<T> {
   append(suffix: string): this;
 }
 
@@ -149,7 +163,7 @@ export type TransactionLevel = 'READ UNCOMMITTED' | 'RU'
   | 'REPEATABLE READ' | 'RR'
   | 'SERIALIZABLE' | 'S';
 
-export declare class TransactionHandler {
+export declare class TransactionHandler<T extends Entity = any> {
   constructor(conn: PromiseConnection, options?: {
     level: TransactionLevel
   });
@@ -160,7 +174,7 @@ export declare class TransactionHandler {
 
   lastInsertId(alias?: string): Promise<number>;
 
-  table(table: string, alias?: string | null): TransactionOperator;
+  table(table: string, alias?: string | null): TransactionOperator<T>;
 
   begin(): Promise<void>;
 
@@ -168,7 +182,7 @@ export declare class TransactionHandler {
 
   rollback(): Promise<void>;
 
-  upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
+  upsert(tableName: string, data: T, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
 }
 
 export function createClient(options: ConnectionOptions, name?: string | null | undefined): Connection;
