@@ -133,14 +133,33 @@ export declare class QueryHandler {
 
   constructor(conn: Connection);
 
+  /**
+   * select table
+   * @param table 
+   * @param alias 
+   */
   table(table: string, alias?: string | null): QueryOperator;
 
+  /**
+   * execute sql
+   * @param options 
+   */
   query(options: QueryOptions): Promise<any>;
 
+  /**
+   * insert or update
+   * @param tableName 
+   * @param data 
+   * @param condition 
+   */
   upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
 }
 
 export declare class TransactionOperator extends QueryOperator {
+  /**
+   * @example LOCK IN SHARE MODE
+   * @example FOR UPDATE
+   */
   append(suffix: string): this;
 }
 
