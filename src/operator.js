@@ -26,7 +26,7 @@ class QueryOperator extends Query {
   /**
    * @param {*} conn 
    */
-  constructor(conn) {
+  constructor(conn = null) {
     super(null);
     this.conn = conn;
   }
@@ -39,6 +39,9 @@ class QueryOperator extends Query {
   async exec() {
     if (!this.options.operator) {
       throw new Error('Invalid operator: ' + this.options.operator);
+    }
+    if (this.conn === null) {
+      throw new Error('Connection is null');
     }
     const builder = this.buildSql(this.options.operator);
     const { sql, values } = builder;
