@@ -11,9 +11,9 @@ module.exports = {
     'src/helper/cmd.js',
   ],
   'watermarks': {
-    'lines': [80, 95],
-    'functions': [80, 95],
-    'branches': [80, 95],
-    'statements': [80, 95]
+    'lines': [0, 40],
+    'functions': [0, 40],
+    'branches': [0, 40],
+    'statements': [0, 40]
   }
 };
