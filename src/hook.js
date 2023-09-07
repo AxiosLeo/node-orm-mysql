@@ -2,7 +2,7 @@
 
 const EventEmitter = require('events');
 
-const events = {}; // event tree
+const events = new Map(); // event tree
 const hook = new EventEmitter();
 
 const push = (callback, trace = []) => {
@@ -11,11 +11,14 @@ const push = (callback, trace = []) => {
   let event_name_items = [];
   while (step < trace.length) {
     let curr_key = trace[step] || '*';
-    event_name_items.push(curr_key);
-    if (!curr[curr_key]) {
-      curr[curr_key] = {};
+    if (curr_key === '__proto__' || curr_key === 'constructor' || curr_key === 'prototype') {
+      curr_key = '*';
     }
-    curr = curr[curr_key];
+    event_name_items.push(curr_key);
+    if (!curr.has(curr_key)) {
+      curr.set(curr_key, new Map());
+    }
+    curr = curr.get(curr_key);
     step++;
   }
   let event_name = event_name_items.join('::');
