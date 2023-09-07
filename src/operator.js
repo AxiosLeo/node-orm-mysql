@@ -2,7 +2,7 @@
 
 const { Builder } = require('./builder');
 const Query = require('./query');
-const { handleEvent } = require('./hook');
+const Hook = require('./hook');
 
 const query = async (conn, options, transaction) => {
   return new Promise((resolve, reject) => {
@@ -49,7 +49,7 @@ class QueryOperator extends Query {
       sql, values
     };
     const from = this.options.tables.map(t => t.tableName).join(',');
-    handleEvent('pre', from, this.options.operator, this.options);
+    Hook.listen({ label: 'pre', table: from, opt: this.options.operator }, this.options);
     let res;
     try {
       switch (this.options.operator) {
@@ -66,9 +66,9 @@ class QueryOperator extends Query {
         default:
           res = await query(this.conn, options, this.options.transaction);
       }
-      handleEvent('post', from, this.options.operator, this.options, res);
+      Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, res);
     } catch (err) {
-      handleEvent('post', from, this.options.operator, this.options, err);
+      Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, err);
       throw err;
     }
     return res;

@@ -18,7 +18,7 @@ const {
   createPromiseClient
 } = require('./src/client');
 
-const { Hook } = require('./src/hook');
+const Hook = require('./src/hook');
 
 module.exports = {
   Hook,

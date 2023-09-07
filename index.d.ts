@@ -48,7 +48,7 @@ export interface TableOption {
   alias: string | null;
 }
 
-export interface QueryOperatorOptions {
+export type QueryOperatorOptions = {
   conditions: WhereOptions[];
   attrs?: string[] | null;
   orders: OrderByOptions[];
@@ -199,13 +199,44 @@ export function createPool(options: PoolOptions, name?: string | null | undefine
 export function createPromiseClient(options: ConnectionOptions, name?: string | null | undefined): PromiseConnection;
 
 export declare class Hook {
+  /**
+   * pre hook for query operator
+   */
   static pre: (
     callback: (options: QueryOperatorOptions) => void,
     option: { table?: string, opt?: OperatorType }
   ) => string;
 
+  /**
+   * post hook for query operator
+   */
   static post: (
     callback: (options: QueryOperatorOptions, result: QueryResult | Error) => void,
     option: { table?: string, opt?: OperatorType }
   ) => string;
+
+  /**
+   * register hook
+   */
+  static register: (
+    callback: (options: QueryOperatorOptions) => void,
+    ...paths: string[]
+  ) => void;
+
+  /**
+   * listen event
+   */
+  static listen: (
+    options?: QueryOperatorOptions & { label?: string },
+    ...args: any[]
+  ) => void;
+
+  /**
+   * trigger event
+   */
+  static trigger: (
+    label: string,
+    options?: QueryOperatorOptions,
+    ...args: any[]
+  ) => void
 }

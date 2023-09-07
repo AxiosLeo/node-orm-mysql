@@ -5,22 +5,29 @@ const EventEmitter = require('events');
 const events = {}; // event tree
 const hook = new EventEmitter();
 
-const pushEvent = ({ label, table, opt, callback }) => {
-  label = label || '*';
-  if (!events[label]) {
-    events[label] = {};
+const push = (callback, trace = []) => {
+  let step = 0;
+  let curr = events;
+  let event_name_items = [];
+  while (step < trace.length) {
+    let curr_key = trace[step] || '*';
+    event_name_items.push(curr_key);
+    if (!curr[curr_key]) {
+      curr[curr_key] = {};
+    }
+    curr = curr[curr_key];
+    step++;
   }
-  table = table || '*';
-  if (!events[label][table]) {
-    events[label][table] = {};
-  }
-  opt = opt || '*';
-  if (!events[label][table][opt]) {
-    events[label][table][opt] = 0;
-  }
-  events[label][table][opt]++;
-  hook.on(`${label}::${table}::${opt}`, callback);
-  return { label, table, opt, callback };
+  let event_name = event_name_items.join('::');
+  hook.on(event_name, callback);
+  return event_name;
+};
+
+const pushEvent = (options = {}) => {
+  const { label, table, opt, callback } = options;
+  const trace = [label, table, opt];
+  const event_name = push(callback, trace);
+  return { event_name, label, table, opt, callback };
 };
 
 const eventRecur = (curr, trace, step, paths, args) => {
@@ -40,28 +47,36 @@ const eventRecur = (curr, trace, step, paths, args) => {
   return;
 };
 
-const handleEvent = (label, table, opt, ...args) => {
-  let curr = events;
-  let step = 0;
-  let trace = [label, table, opt];
-  eventRecur(curr, trace, step, [], args);
-};
-
 class Hook {
-  static pre(callback, { table, opt }) {
+  static pre(callback, options = {}) {
+    const { table, opt } = options;
     return pushEvent({
       label: 'pre', table, opt, callback
     });
   }
 
-  static post(callback, { table, opt }) {
+  static post(callback, options = {}) {
+    const { table, opt } = options;
     return pushEvent({
       label: 'post', table, opt, callback
     });
   }
+
+  static listen(options = {}, ...args) {
+    const { label, table, opt } = options;
+    Hook.trigger([label, table, opt], ...args);
+  }
+
+  static register(callback, ...paths) {
+    push(callback, paths);
+  }
+
+  static trigger(paths = [], ...args) {
+    let curr = events;
+    let step = 0;
+    let trace = paths;
+    eventRecur(curr, trace, step, [], args);
+  }
 }
 
-module.exports = {
-  Hook,
-  handleEvent
-};
+module.exports = Hook;
