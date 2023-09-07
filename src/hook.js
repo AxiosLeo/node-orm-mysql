@@ -65,13 +65,13 @@ class Hook {
     });
   }
 
+  static register(callback, ...paths) {
+    push(callback, paths);
+  }
+
   static listen(options = {}, ...args) {
     const { label, table, opt } = options;
     Hook.trigger([label, table, opt], ...args);
-  }
-
-  static register(callback, ...paths) {
-    push(callback, paths);
   }
 
   static trigger(paths = [], ...args) {

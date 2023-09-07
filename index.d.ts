@@ -234,9 +234,8 @@ export declare class Hook {
   /**
    * trigger event
    */
-  static trigger: (
-    label: string,
-    options?: QueryOperatorOptions,
+  static statictrigger: (
+    paths: string[],
     ...args: any[]
   ) => void
 }
