@@ -13,7 +13,7 @@ const push = (callback, trace = []) => {
     let curr_key = trace[step] || '*';
     event_name_items.push(curr_key);
     if (!curr[curr_key]) {
-      curr[curr_key] = {};
+      curr.__proto__[curr_key] = {};
     }
     curr = curr[curr_key];
     step++;
