@@ -2,7 +2,7 @@
 
 const EventEmitter = require('events');
 
-const events = new Map(); // event tree
+const events = {}; // event tree
 const hook = new EventEmitter();
 
 const push = (callback, trace = []) => {
@@ -15,10 +15,10 @@ const push = (callback, trace = []) => {
       curr_key = '*';
     }
     event_name_items.push(curr_key);
-    if (!curr.has(curr_key)) {
-      curr.set(curr_key, new Map());
+    if (!curr[curr_key]) {
+      curr[curr_key] = {};
     }
-    curr = curr.get(curr_key);
+    curr = curr[curr_key];
     step++;
   }
   let event_name = event_name_items.join('::');
@@ -33,6 +33,14 @@ const pushEvent = (options = {}) => {
   return { event_name, label, table, opt, callback };
 };
 
+/**
+ * @param {Map} curr 
+ * @param {*} trace 
+ * @param {*} step 
+ * @param {*} paths 
+ * @param {*} args 
+ * @returns 
+ */
 const eventRecur = (curr, trace, step, paths, args) => {
   if (step === trace.length) {
     hook.emit(paths.join('::'), ...args);
@@ -41,7 +49,7 @@ const eventRecur = (curr, trace, step, paths, args) => {
   const t = trace[step];
   if (curr['*']) {
     paths[step] = '*';
-    eventRecur(curr[t], trace, step + 1, paths, args);
+    eventRecur(curr['*'], trace, step + 1, paths, args);
   }
   if (curr[t]) {
     paths[step] = t;
