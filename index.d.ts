@@ -79,6 +79,8 @@ export declare class Query {
 
   whereConditions(...condition: WhereOptions[]): this;
 
+  groupWhere(...condition: WhereOptions[]): this;
+
   orWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 
   andWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;

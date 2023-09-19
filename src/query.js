@@ -69,6 +69,18 @@ class Query {
     return this;
   }
 
+  groupWhere(...conditions) {
+    if (!conditions.length) {
+      return this;
+    }
+    const condition = { key: null, opt: 'group', value: [] };
+    conditions.forEach((c) => {
+      condition.value.push(c);
+    });
+    this.options.conditions.push(condition);
+    return this;
+  }
+
   orWhere(key, opt, value) {
     if (!this.options.conditions.length) {
       throw new Error('At least one where condition is required');
