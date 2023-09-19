@@ -216,6 +216,12 @@ class Builder {
     let sql = typeof prefix === 'undefined' ? 'WHERE ' : prefix;
     if (conditions.length) {
       sql += `${conditions.map((c) => {
+        if (typeof c.key === 'undefined') {
+          c.key = null;
+        }
+        if (typeof c.value === 'undefined') {
+          c.value = null;
+        }
         if (c.key === null && c.value === null) {
           return ` ${c.opt} `;
         }
