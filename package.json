@@ -28,7 +28,7 @@
     "url": "https://github.com/AxiosLeo/node-orm-mysql"
   },
   "devDependencies": {
-    "@types/node": "^15.12.1",
+    "@types/node": "^20.8.3",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "eslint": "^7.0",
