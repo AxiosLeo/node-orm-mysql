@@ -125,8 +125,12 @@ describe('query test case', () => {
     }).to.be.throw('having is not allowed without "GROUP BY"');
 
     subQuery.groupBy('u.name');
-    const res = query.buildSql('select');
+    let res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`name` IN (SELECT * FROM `users` GROUP BY `u`.`name` HAVING COUNT(*) > ?)');
+
+    subQuery.having('test', '>', 1);
+    res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`name` IN (SELECT * FROM `users` GROUP BY `u`.`name` HAVING COUNT(*) > ? AND `test` > ?)');
   });
 
   it('build sql not connect mysql', () => {
@@ -149,5 +153,10 @@ describe('query test case', () => {
   it('where opt', () => {
     const query = hanlder.table('users', 'u').attr(...[]).where('id', 1).whereConditions();
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?');
+  });
+
+  it('limit&offset', () => {
+    const query = hanlder.table('users', 'u').attr(...[]).where('id', 1).whereConditions().limit(2).offset(1);
+    expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?  LIMIT 2 OFFSET 1');
   });
 });
