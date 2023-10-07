@@ -195,6 +195,39 @@ try {
 }
 ```
 
+### Custom query driver
+
+```javascript
+const { 
+  createClient, 
+  QueryHandler, 
+  Query,
+  Builder 
+} = require("@axiosleo/orm-mysql");
+
+const conn = createClient({
+  host: process.env.MYSQL_HOST,
+  port: process.env.MYSQL_PORT,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASS,
+  database: process.env.MYSQL_DB,
+});
+
+const hanlder = new QueryHandler(conn, {
+  driver: 'custom',
+  query_handler: (con, options) => {
+    const builder = new Builder(options);
+    return new Promise((resolve, reject) => {
+      if (options.operator === 'select') {
+        resolve([{ a: 1, b: 2 }]);
+      } else {
+        reject(new Error('some error'));
+      }
+    });
+  }
+});
+```
+
 ## License
 
 This project is open-sourced software licensed under the [MIT](LICENSE).
