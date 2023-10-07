@@ -138,19 +138,20 @@ class QueryOperator extends Query {
 }
 
 class QueryHandler {
-  constructor(conn) {
+  constructor(conn, options = {}) {
     this.conn = conn;
+    this.optinos = options;
   }
 
-  async query(options) {
-    if (!options) {
-      throw new Error('options is required');
+  async query(opt) {
+    if (!opt) {
+      throw new Error('opt is required');
     }
-    return await query(this.conn, this.options, options);
+    return await query(this.conn, this.options, opt);
   }
 
   table(table, alias = null) {
-    return (new QueryOperator(this.conn)).table(table, alias);
+    return (new QueryOperator(this.conn, this.optinos)).table(table, alias);
   }
 
   async upsert(tableName, data, condition = {}) {

@@ -137,8 +137,9 @@ export declare class QueryOperator extends Query {
 
 export declare class QueryHandler {
   conn: Connection;
+  options: QueryOperatorBaseOptions;
 
-  constructor(conn: Connection);
+  constructor(conn: Connection, options?: QueryOperatorBaseOptions);
 
   /**
    * select table
