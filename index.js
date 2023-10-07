@@ -19,9 +19,11 @@ const {
 } = require('./src/client');
 
 const Hook = require('./src/hook');
+const { Builder } = require('./src/builder');
 
 module.exports = {
   Hook,
+  Builder,
 
   Query,
   QueryHandler,

@@ -48,7 +48,12 @@ export interface TableOption {
   alias: string | null;
 }
 
-export type QueryOperatorOptions = {
+export type QueryOperatorBaseOptions = {
+  driver?: string | 'mysql';
+  query_handler?: QueryHandler;
+};
+
+export type QueryOperatorOptions = QueryOperatorBaseOptions & {
   conditions: WhereOptions[];
   attrs?: string[] | null;
   orders: OrderByOptions[];
@@ -106,7 +111,7 @@ export declare class QueryOperator extends Query {
   conn: Connection;
   options: QueryOperatorOptions
 
-  constructor(conn: Connection);
+  constructor(conn: Connection, opt?: QueryOperatorBaseOptions);
 
   buildSql(operator: OperatorType): { sql: string, values: any[] };
 
@@ -240,4 +245,10 @@ export declare class Hook {
     paths: string[],
     ...args: any[]
   ) => void
+}
+
+export declare class Builder {
+  sql: string;
+  values: any[];
+  constructor(options: QueryOperatorOptions);
 }
