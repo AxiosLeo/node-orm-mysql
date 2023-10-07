@@ -4,31 +4,59 @@ const { Builder } = require('./builder');
 const Query = require('./query');
 const Hook = require('./hook');
 
-const query = async (conn, options, transaction) => {
-  return new Promise((resolve, reject) => {
-    if (transaction) {
-      conn.execute(options)
-        .then((res) => resolve(res))
-        .catch((err) => reject(err));
-    } else {
-      conn.query(options, (err, result) => {
-        if (err) {
-          reject(err);
+const query = async (conn, options, opt = null) => {
+  switch (options.driver) {
+    case 'mysql': {
+      if (opt === null) {
+        const builder = new Builder(options);
+        opt = {
+          sql: builder.sql,
+          values: builder.values || [],
+        };
+      }
+      return new Promise((resolve, reject) => {
+        if (options.transaction) {
+          conn.execute(opt)
+            .then((res) => resolve(res))
+            .catch((err) => reject(err));
         } else {
-          resolve(result);
+          conn.query(opt, (err, result) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(result);
+            }
+          });
         }
       });
     }
-  });
+    default: {
+      const promise = options.query_handler(conn, options, opt);
+      if (!(promise instanceof Promise)) {
+        throw new Error('query_handler must return a promise');
+      }
+      return promise;
+    }
+  }
 };
 
 class QueryOperator extends Query {
   /**
    * @param {*} conn 
    */
-  constructor(conn = null) {
+  constructor(conn = null, options = {}) {
     super(null);
     this.conn = conn;
+    this.options.driver = options.driver || 'mysql';
+    this.options.query_handler = options.query_handler || null;
+    if (this.options.driver !== 'mysql') {
+      if (!this.options.query_handler) {
+        throw new Error('query_handler is required');
+      }
+      if (!(this.options.query_handler instanceof Function)) {
+        throw new Error('query_handler must be a function');
+      }
+    }
   }
 
   buildSql(operator) {
@@ -43,28 +71,23 @@ class QueryOperator extends Query {
     if (this.conn === null) {
       throw new Error('Connection is null');
     }
-    const builder = this.buildSql(this.options.operator);
-    const { sql, values } = builder;
-    const options = {
-      sql, values
-    };
     const from = this.options.tables.map(t => t.tableName).join(',');
     Hook.listen({ label: 'pre', table: from, opt: this.options.operator }, this.options);
     let res;
     try {
       switch (this.options.operator) {
         case 'find': {
-          const tmp = await query(this.conn, options, this.options.transaction);
+          const tmp = await query(this.conn, this.options);
           res = tmp[0];
           break;
         }
         case 'count': {
-          const [tmp] = await query(this.conn, options, this.options.transaction);
+          const [tmp] = await query(this.conn, this.options);
           res = tmp.count;
           break;
         }
         default:
-          res = await query(this.conn, options, this.options.transaction);
+          res = await query(this.conn, this.options);
       }
       Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, res);
     } catch (err) {
@@ -120,15 +143,10 @@ class QueryHandler {
   }
 
   async query(options) {
-    return new Promise((resolve, reject) => {
-      this.conn.query(options, (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
-    });
+    if (!options) {
+      throw new Error('options is required');
+    }
+    return await query(this.conn, this.options, options);
   }
 
   table(table, alias = null) {
