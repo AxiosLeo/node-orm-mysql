@@ -15,9 +15,19 @@ class TransactionOperator extends QueryOperator {
   /**
    * @param {*} conn 
    */
-  constructor(conn) {
+  constructor(conn, options) {
     super(conn);
     this.options.transaction = true;
+    this.options.driver = options.driver || 'mysql';
+    this.options.query_handler = options.query_handler || null;
+    if (this.options.driver !== 'mysql') {
+      if (!this.options.query_handler) {
+        throw new Error('query_handler is required');
+      }
+      if (!(this.options.query_handler instanceof Function)) {
+        throw new Error('query_handler must be a function');
+      }
+    }
   }
 
   /**
@@ -42,6 +52,7 @@ class TransactionHandler {
     if (levels[this.level]) {
       this.level = levels[this.level];
     }
+    this.options = options;
     if (!Object.values(levels).includes(this.level)) {
       throw new Error('Invalid transaction level: ' + this.level);
     }
@@ -79,7 +90,7 @@ class TransactionHandler {
     if (!this.isbegin) {
       throw new Error('Transaction is not begin');
     }
-    return (new TransactionOperator(this.conn)).table(table, alias);
+    return (new TransactionOperator(this.conn, this.options)).table(table, alias);
   }
 
   async upsert(tableName, data, condition = {}) {
