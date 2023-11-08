@@ -23,7 +23,7 @@ const createClient = (options, name = null) => {
   });
   const key = name ? name :
     `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
-  if (clients[key] && clients[key].ping()) {
+  if (clients[key]) {
     return clients[key];
   }
   if (options.auto_connection === true){
