@@ -21,17 +21,21 @@ const createClient = (options, name = null) => {
   });
   const key = name ? name :
     `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
-  if (clients[key]) {
+  if (clients[key] && clients[key].ping()) {
     return clients[key];
   }
   clients[key] = mysql.createConnection(options);
   clients[key].connect();
+
+  clients[key].on('error', (err) => {
+    clients[key].destroy();
+  });
   return clients[key];
 };
 
 /**
- * @param {mysql.ConnectionOptions} options 
- * @param {string|null} name 
+ * @param {mysql.ConnectionOptions} options
+ * @param {string|null} name
  * @returns {mysqlPromise.Connection}
  */
 const createPromiseClient = async (options, name = null) => {
@@ -76,7 +80,7 @@ const createPool = (options, name = null) => {
 
 /**
  * get client
- * @param {*} name 
+ * @param {*} name
  * @returns {mysql.Connection}
  */
 const getClient = (name) => {
