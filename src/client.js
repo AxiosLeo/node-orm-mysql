@@ -9,6 +9,7 @@ const clients = {};
 /**
  * initialize client
  * @param {mysql.ConnectionOptions} options
+ * @param name
  * @returns {mysql.Connection}
  */
 const createClient = (options, name = null) => {
@@ -18,18 +19,21 @@ const createClient = (options, name = null) => {
     password: 'required|string',
     port: 'required|integer',
     database: 'required|string',
+    auto_connection: 'boolean',
   });
   const key = name ? name :
     `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
   if (clients[key] && clients[key].ping()) {
     return clients[key];
   }
-  clients[key] = mysql.createConnection(options);
-  clients[key].connect();
-
-  clients[key].on('error', (err) => {
-    clients[key].destroy();
-  });
+  if (options.auto_connection === true){
+    delete options.auto_connection;
+    clients[key] = mysql.createPool(options);
+  }else {
+    delete options.auto_connection;
+    clients[key] = mysql.createConnection(options);
+    clients[key].connect();
+  }
   return clients[key];
 };
 
