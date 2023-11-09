@@ -140,7 +140,7 @@ class QueryOperator extends Query {
 class QueryHandler {
   constructor(conn, options = {}) {
     this.conn = conn;
-    this.optinos = options;
+    this.options = options;
   }
 
   async query(opt) {
@@ -151,7 +151,7 @@ class QueryHandler {
   }
 
   table(table, alias = null) {
-    return (new QueryOperator(this.conn, this.optinos)).table(table, alias);
+    return (new QueryOperator(this.conn, this.options)).table(table, alias);
   }
 
   async upsert(tableName, data, condition = {}) {
