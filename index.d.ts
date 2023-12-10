@@ -13,7 +13,7 @@ import {
 } from 'mysql2/promise';
 
 export type Clients = {
-  [key: string]: Connection
+  [key: string]: Connection | Pool
 }
 
 export type ConditionValueType = null | string | number | boolean | Date | Array<string | number | boolean | Date> | Query;
@@ -108,10 +108,10 @@ export declare class Query {
 export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | OkPacket;
 
 export declare class QueryOperator extends Query {
-  conn: Connection;
+  conn: Connection | Pool;
   options: QueryOperatorOptions
 
-  constructor(conn: Connection, opt?: QueryOperatorBaseOptions);
+  constructor(conn: Connection | Pool, opt?: QueryOperatorBaseOptions);
 
   buildSql(operator: OperatorType): { sql: string, values: any[] };
 
@@ -136,10 +136,10 @@ export declare class QueryOperator extends Query {
 }
 
 export declare class QueryHandler {
-  conn: Connection;
+  conn: Connection | Pool;
   options: QueryOperatorBaseOptions;
 
-  constructor(conn: Connection, options?: QueryOperatorBaseOptions);
+  constructor(conn: Connection | Pool, options?: QueryOperatorBaseOptions);
 
   /**
    * select table
@@ -200,7 +200,7 @@ export declare class TransactionHandler {
 
 export function createClient(options: ConnectionOptions, name?: string | null | undefined): Connection;
 
-export function getClient(name: string): Connection;
+export function getClient(name: string): Connection | Pool;
 
 export function createPool(options: PoolOptions, name?: string | null | undefined): Pool;
 
