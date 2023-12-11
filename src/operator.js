@@ -3,42 +3,7 @@
 const { Builder } = require('./builder');
 const Query = require('./query');
 const Hook = require('./hook');
-
-const query = async (conn, options, opt = null) => {
-  switch (options.driver) {
-    case 'mysql': {
-      if (opt === null) {
-        const builder = new Builder(options);
-        opt = {
-          sql: builder.sql,
-          values: builder.values || [],
-        };
-      }
-      return new Promise((resolve, reject) => {
-        if (options.transaction) {
-          conn.execute(opt)
-            .then((res) => resolve(res))
-            .catch((err) => reject(err));
-        } else {
-          conn.query(opt, (err, result) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(result);
-            }
-          });
-        }
-      });
-    }
-    default: {
-      const promise = options.query_handler(conn, options, opt);
-      if (!(promise instanceof Promise)) {
-        throw new Error('query_handler must return a promise');
-      }
-      return promise;
-    }
-  }
-};
+const { _query } = require('./utils');
 
 class QueryOperator extends Query {
   /**
@@ -77,17 +42,17 @@ class QueryOperator extends Query {
     try {
       switch (this.options.operator) {
         case 'find': {
-          const tmp = await query(this.conn, this.options);
+          const tmp = await _query(this.conn, this.options);
           res = tmp[0];
           break;
         }
         case 'count': {
-          const [tmp] = await query(this.conn, this.options);
+          const [tmp] = await _query(this.conn, this.options);
           res = tmp.count;
           break;
         }
         default:
-          res = await query(this.conn, this.options);
+          res = await _query(this.conn, this.options);
       }
       Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, res);
     } catch (err) {
@@ -143,11 +108,16 @@ class QueryHandler {
     this.options = options;
   }
 
+  /**
+   * 
+   * @param {import('mysql2').QueryOptions} opt 
+   * @returns 
+   */
   async query(opt) {
     if (!opt) {
       throw new Error('opt is required');
     }
-    return await query(this.conn, this.options, opt);
+    return await _query(this.conn, this.options, opt);
   }
 
   table(table, alias = null) {
