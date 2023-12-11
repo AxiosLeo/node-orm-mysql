@@ -253,3 +253,15 @@ export declare class Builder {
   values: any[];
   constructor(options: QueryOperatorOptions);
 }
+
+export declare class MySQLClient extends QueryHandler {
+  constructor(options?: ConnectionOptions, name?: string | null | undefined);
+
+  existDatabase(database?: string): Promise<boolean>;
+
+  existTable(database: string, table: string): Promise<boolean>;
+
+  exexQuery(query: Query, operator: OperatorType): Promise<QueryResult>;
+
+  close(): Promise<void>;
+}
