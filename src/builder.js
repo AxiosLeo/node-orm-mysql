@@ -149,10 +149,16 @@ class Builder {
       throw new Error('At least one table is required');
     }
     return tables.map((t) => {
+      let name = t.tableName.split('.').map((n) => {
+        if (n[0] === '`' && n[n.length - 1] === '`') {
+          return n;
+        }
+        return `\`${n}\``;
+      }).join('.');
       if (t.alias) {
-        return `\`${t.tableName}\` AS \`${t.alias}\``;
+        return `${name} AS \`${t.alias}\``;
       }
-      return `\`${t.tableName}\``;
+      return name;
     }).join(' , ');
   }
 
