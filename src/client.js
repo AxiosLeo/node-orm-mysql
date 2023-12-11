@@ -2,7 +2,9 @@
 
 const mysql = require('mysql2');
 const mysqlPromise = require('mysql2/promise');
-const { validate } = require('./utils');
+const { _validate } = require('./utils');
+const { QueryHandler, Query } = require('./operator');
+const { _query } = require('./utils');
 
 const clients = {};
 
@@ -12,7 +14,7 @@ const clients = {};
  * @returns {mysql.Connection}
  */
 const createClient = (options, name = null) => {
-  validate(options, {
+  _validate(options, {
     host: 'required|string',
     user: 'required|string',
     password: 'required|string',
@@ -35,7 +37,7 @@ const createClient = (options, name = null) => {
  * @returns {mysqlPromise.Connection}
  */
 const createPromiseClient = async (options, name = null) => {
-  validate(options, {
+  _validate(options, {
     host: 'required|string',
     user: 'required|string',
     password: 'required|string',
@@ -57,7 +59,7 @@ const createPromiseClient = async (options, name = null) => {
  * @returns {mysql.Pool}
  */
 const createPool = (options, name = null) => {
-  validate(options, {
+  _validate(options, {
     host: 'required|string',
     user: 'required|string',
     password: 'required|string',
@@ -89,7 +91,58 @@ const getClient = (name) => {
   return clients[name];
 };
 
+class MySQLClient extends QueryHandler {
+
+  /**
+   * @param {mysql.ConnectionOptions} options 
+   * @param {*} name 
+   */
+  constructor(options, name = 'default') {
+    const conn = createClient(options, name);
+    super(conn);
+  }
+
+  async existTable(database, table) {
+    const c = await this.table('information_schema.TABLES')
+      .where('TABLE_SCHEMA', database)
+      .where('TABLE_NAME', table)
+      .count();
+    return !!c;
+  }
+
+  async existDatabase(database) {
+    const c = await this.table('information_schema.SCHEMATA')
+      .where('SCHEMA_NAME', database)
+      .count();
+    return !!c;
+  }
+
+  /**
+   * @param {import('./operator').Query} query 
+   */
+  async exexQuery(query, operator = null) {
+    if (query instanceof Query) {
+      query.options.operator = operator;
+      return await _query(this.conn, query.options);
+    }
+  }
+
+  async close() {
+    return new Promise((resolve, reject) => {
+      this.conn.end((err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+  }
+}
+
 module.exports = {
+  MySQLClient,
+
   getClient,
   createPool,
   createClient,
