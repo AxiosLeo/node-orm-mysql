@@ -255,13 +255,27 @@ export declare class Builder {
 }
 
 export declare class MySQLClient extends QueryHandler {
+
   constructor(options?: ConnectionOptions, name?: string | null | undefined);
 
+  /**
+   * @param database default is options.database
+   */
   existDatabase(database?: string): Promise<boolean>;
 
-  existTable(database: string, table: string): Promise<boolean>;
+  /**
+   * @param table
+   * @param database default is options.database
+   */
+  existTable(table: string, database?: string): Promise<boolean>;
 
-  exexQuery(query: Query, operator: OperatorType): Promise<QueryResult>;
+  /**
+   * 
+   * @param query 
+   * @param operator default is 'select'
+   */
+  execQuery(query: Query, operator?: OperatorType): Promise<QueryResult>;
 
   close(): Promise<void>;
+
 }

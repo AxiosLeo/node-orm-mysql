@@ -102,7 +102,10 @@ class MySQLClient extends QueryHandler {
     super(conn);
   }
 
-  async existTable(database, table) {
+  async existTable(table, database = null) {
+    if (!table) {
+      throw new Error('table name is required');
+    }
     const c = await this.table('information_schema.TABLES')
       .where('TABLE_SCHEMA', database)
       .where('TABLE_NAME', table)
@@ -120,7 +123,7 @@ class MySQLClient extends QueryHandler {
   /**
    * @param {import('./operator').Query} query 
    */
-  async exexQuery(query, operator = null) {
+  async execQuery(query, operator = null) {
     if (query instanceof Query) {
       query.options.operator = operator;
       return await _query(this.conn, query.options);
