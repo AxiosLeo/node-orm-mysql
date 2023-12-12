@@ -15,7 +15,9 @@ const {
   getClient,
   createPool,
   createClient,
-  createPromiseClient
+  createPromiseClient,
+
+  MySQLClient
 } = require('./src/client');
 
 const Hook = require('./src/hook');
@@ -32,6 +34,7 @@ module.exports = {
   TransactionOperator,
   TransactionHandler,
 
+  MySQLClient,
   getClient,
   createPool,
   createClient,
