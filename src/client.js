@@ -100,6 +100,7 @@ class MySQLClient extends QueryHandler {
   constructor(options, name = 'default') {
     const conn = createClient(options, name);
     super(conn);
+    this.database = options.database;
   }
 
   async existTable(table, database = null) {
@@ -107,7 +108,7 @@ class MySQLClient extends QueryHandler {
       throw new Error('table name is required');
     }
     const c = await this.table('information_schema.TABLES')
-      .where('TABLE_SCHEMA', database)
+      .where('TABLE_SCHEMA', database || this.database)
       .where('TABLE_NAME', table)
       .count();
     return !!c;
