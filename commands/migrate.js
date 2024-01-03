@@ -7,6 +7,7 @@ const { _foreach } = require('@axiosleo/cli-tool/src/helper/cmd');
 const { createPromiseClient } = require('../src/client');
 const { _caml_case, _render } = require('@axiosleo/cli-tool/src/helper/str');
 const { _validate } = require('../src/utils');
+const is = require('@axiosleo/cli-tool/src/helper/is');
 
 let actions = {
   database: {
@@ -46,6 +47,50 @@ function __validate(obj, rules = {}) {
     printer.println().yellow(local.trim()).println().println().print('    ').red(e.message).println();
     process.exit(1);
   }
+}
+
+function _renderColumns(columns) {
+  let primary_column = null;
+  let strs = columns.map(column => {
+    __validate(column, {
+      name: 'required|string',
+      type: 'required|string',
+      default: 'string',
+      comment: 'string',
+      not_null: 'boolean',
+      auto_increment: 'boolean',
+      collate: 'string',
+    });
+    let str = `\`${column.name}\` ${column.type.toUpperCase()}`;
+    if (column.not_null === true) {
+      str += ' NOT NULL';
+    }
+    if (column.unsigned === true) {
+      str += ' UNSIGNED';
+    }
+    if (typeof column.default !== 'undefined') {
+      if (column.default === null) {
+        str += ' DEFAULT NULL';
+      } else if (is.string(column.default)) {
+        str += ` DEFAULT '${column.default}'`;
+      }
+    }
+    if (is.string(column.comment) && is.empty(column.comment) === false) {
+      str += ` COMMENT '${column.comment}'`;
+    }
+    if (column.auto_increment === true) {
+      str += ' AUTO_INCREMENT';
+    }
+    if (column.is_primary_key === true) {
+      primary_column = column;
+    }
+    return str;
+  });
+  if (primary_column) {
+    strs.push(`PRIMARY KEY (\`${primary_column.name}\`)`);
+    strs.push(`UNIQUE INDEX \`${primary_column.name}\` (\`${primary_column.name}\` ASC) VISIBLE`);
+  }
+  return strs.join(',');
 }
 
 class MigrateCommand extends Command {
@@ -154,9 +199,12 @@ class MigrateCommand extends Command {
           primary_column: 'string',
           engine: 'string',
         });
+        if (!options.columns.find(c => c.is_primary_key === true)) {
+          throw new Error('Primary key is required.');
+        }
         let opt = {
           table_name: options.table_name,
-          columns: options.columns,
+          columns: _renderColumns(options.columns),
           primary_column: options.primary_column || 'id',
           engine: options.engine || 'InnoDB',
         };
