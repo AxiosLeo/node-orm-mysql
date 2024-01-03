@@ -285,32 +285,19 @@ interface CreateDatabaseOptions {
 }
 
 interface CreateTableOptions {
-  name: string,
+  table_name: string,
   columns: {
     name: string,
     type: string,
-    length?: number,
     unsigned?: boolean,
     not_null?: boolean,
     default?: string | number | boolean | null,
-    auto_increment?: boolean,
     comment?: string,
-    primary_key?: boolean,
-    unique?: boolean,
-    index?: boolean,
-    fulltext?: boolean,
-    spatial?: boolean,
-    foreign_key?: {
-      table: string,
-      column: string,
-      on_delete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION',
-      on_update?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
-    }
+    auto_increment?: boolean,
+    is_primary_key?: boolean,
   }[],
-  charset?: string,
-  collate?: string,
+  primary_column?: string,
   engine?: string,
-  comment?: string
 }
 
 interface CreateColumnOptions {
