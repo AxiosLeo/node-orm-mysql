@@ -270,12 +270,115 @@ export declare class MySQLClient extends QueryHandler {
   existTable(table: string, database?: string): Promise<boolean>;
 
   /**
-   * 
    * @param query 
    * @param operator default is 'select'
    */
   execQuery(query: Query, operator?: OperatorType): Promise<QueryResult>;
 
   close(): Promise<void>;
+}
 
+interface CreateDatabaseOptions {
+  database_name: string,
+  charset?: string,
+  collate?: string
+}
+
+interface CreateTableOptions {
+  name: string,
+  columns: {
+    name: string,
+    type: string,
+    length?: number,
+    unsigned?: boolean,
+    not_null?: boolean,
+    default?: string | number | boolean | null,
+    auto_increment?: boolean,
+    comment?: string,
+    primary_key?: boolean,
+    unique?: boolean,
+    index?: boolean,
+    fulltext?: boolean,
+    spatial?: boolean,
+    foreign_key?: {
+      table: string,
+      column: string,
+      on_delete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION',
+      on_update?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
+    }
+  }[],
+  charset?: string,
+  collate?: string,
+  engine?: string,
+  comment?: string
+}
+
+interface CreateColumnOptions {
+  table: string,
+  name: string,
+  type: string,
+  length?: number,
+  unsigned?: boolean,
+  not_null?: boolean,
+  default?: string | number | boolean | null,
+  auto_increment?: boolean,
+  comment?: string,
+  primary_key?: boolean,
+  unique?: boolean,
+  index?: boolean,
+  fulltext?: boolean,
+  spatial?: boolean,
+  foreign_key?: {
+    table: string,
+    column: string,
+    on_delete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION',
+    on_update?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
+  }
+}
+
+interface CreateIndexOptions {
+  table: string,
+  name: string,
+  columns: string[],
+  unique?: boolean,
+  fulltext?: boolean,
+  spatial?: boolean
+}
+
+interface CreateForeignKeyOptions {
+  table: string,
+  name: string,
+  column: string,
+  foreign_table: string,
+  foreign_column: string,
+  on_delete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION',
+  on_update?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
+}
+
+export declare class MigrationCreateInterface {
+  constructor(conn: PromiseConnection);
+
+  createDatabase(options: CreateDatabaseOptions): Promise<void>;
+
+  createTable(options: CreateTableOptions): Promise<void>;
+
+  createColumn(options: CreateColumnOptions): Promise<void>;
+
+  createIndex(options: CreateIndexOptions): Promise<void>;
+
+  createForeignKey(options: CreateForeignKeyOptions): Promise<void>;
+}
+
+export declare class MigrationDropInterface {
+  constructor(conn: PromiseConnection);
+
+  dropDatabase(name: string): Promise<void>;
+
+  dropTable(name: string): Promise<void>;
+
+  dropColumn(options: { table: string, name: string }): Promise<void>;
+
+  dropIndex(options: { table: string, name: string }): Promise<void>;
+
+  dropForeignKey(options: { table: string, name: string }): Promise<void>;
 }
