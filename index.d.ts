@@ -291,7 +291,7 @@ interface CreateTableOptions {
     type: string,
     unsigned?: boolean,
     not_null?: boolean,
-    default?: string | number | boolean | null,
+    default?: string | number | boolean | null | 'timestamp',
     comment?: string,
     auto_increment?: boolean,
     is_primary_key?: boolean,

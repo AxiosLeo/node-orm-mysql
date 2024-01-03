@@ -71,8 +71,10 @@ function _renderColumns(columns) {
     if (typeof column.default !== 'undefined') {
       if (column.default === null) {
         str += ' DEFAULT NULL';
+      } else if (column.default === 'timestamp') {
+        str += ' DEFAULT CURRENT_TIMESTAMP';
       } else if (is.string(column.default)) {
-        str += ` DEFAULT '${column.default}'`;
+        str += ` DEFAULT ${column.default}`;
       }
     }
     if (is.string(column.comment) && is.empty(column.comment) === false) {
