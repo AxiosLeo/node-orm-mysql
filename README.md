@@ -195,6 +195,31 @@ try {
 }
 ```
 
+### Migration
+
+```javascript
+'use strict';
+
+/**
+ * @param {import('@axiosleo/orm-mysql').MigrationCreateInterface} migration
+ */
+function up(migration) {
+  migration.createDatabase({ database_name: 'demo' });
+}
+
+/**
+ * @param {import('@axiosleo/orm-mysql').MigrationDropInterface} migration
+ */
+function down(migration) {
+  migration.dropDatabase({ database_name: 'demo' });
+}
+
+module.exports = {
+  up,
+  down
+};
+```
+
 ### Custom query driver
 
 ```javascript
