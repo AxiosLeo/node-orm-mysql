@@ -161,6 +161,17 @@ export declare class QueryHandler {
    * @param condition 
    */
   upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
+
+  /**
+ * @param database default is options.database
+ */
+  existDatabase(database?: string): Promise<boolean>;
+
+  /**
+   * @param table
+   * @param database default is options.database
+   */
+  existTable(table: string, database?: string): Promise<boolean>;
 }
 
 export declare class TransactionOperator extends QueryOperator {
@@ -256,18 +267,7 @@ export declare class Builder {
 
 export declare class MySQLClient extends QueryHandler {
 
-  constructor(options?: ConnectionOptions, name?: string | null | undefined);
-
-  /**
-   * @param database default is options.database
-   */
-  existDatabase(database?: string): Promise<boolean>;
-
-  /**
-   * @param table
-   * @param database default is options.database
-   */
-  existTable(table: string, database?: string): Promise<boolean>;
+  constructor(options?: ConnectionOptions, name?: string | null | undefined, type?: 'default' | 'promise' | 'pool');
 
   /**
    * @param query 
@@ -289,12 +289,14 @@ interface CreateTableOptions {
   columns: {
     name: string,
     type: string,
+    length?: number,
     unsigned?: boolean,
     not_null?: boolean,
     default?: string | number | boolean | null | 'timestamp',
     comment?: string,
     auto_increment?: boolean,
     is_primary_key?: boolean,
+    is_uniq_index?: boolean
   }[],
   primary_column?: string,
   engine?: string,
@@ -342,8 +344,7 @@ interface CreateForeignKeyOptions {
   on_update?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
 }
 
-export declare class MigrationCreateInterface {
-  constructor(conn: PromiseConnection);
+export declare class MigrationInterface {
 
   createDatabase(options: CreateDatabaseOptions): Promise<void>;
 
@@ -354,10 +355,6 @@ export declare class MigrationCreateInterface {
   createIndex(options: CreateIndexOptions): Promise<void>;
 
   createForeignKey(options: CreateForeignKeyOptions): Promise<void>;
-}
-
-export declare class MigrationDropInterface {
-  constructor(conn: PromiseConnection);
 
   dropDatabase(name: string): Promise<void>;
 
