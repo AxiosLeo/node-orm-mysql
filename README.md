@@ -201,14 +201,14 @@ try {
 'use strict';
 
 /**
- * @param {import('@axiosleo/orm-mysql').MigrationCreateInterface} migration
+ * @param {import('@axiosleo/orm-mysql').MigrationInterface} migration
  */
 function up(migration) {
   migration.createDatabase({ database_name: 'demo' });
 }
 
 /**
- * @param {import('@axiosleo/orm-mysql').MigrationDropInterface} migration
+ * @param {import('@axiosleo/orm-mysql').MigrationInterface} migration
  */
 function down(migration) {
   migration.dropDatabase({ database_name: 'demo' });
