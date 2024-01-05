@@ -13,7 +13,26 @@ const _validate = (obj, rules) => {
   }
 };
 
-const _query = async (conn, options, opt = null) => {
+const _execSQL = (conn, sql, values = []) => {
+  let opt = { sql, values };
+  return new Promise((resolve, reject) => {
+    if (conn.query instanceof Function) {
+      conn.query(opt, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    } else {
+      conn.execute(opt)
+        .then((res) => resolve(res))
+        .catch((err) => reject(err));
+    }
+  });
+};
+
+const _query = (conn, options, opt = null) => {
   switch (options.driver) {
     case 'mysql': {
       if (opt === null) {
@@ -37,19 +56,25 @@ const _query = async (conn, options, opt = null) => {
             }
           });
         }
+        _execSQL(conn, opt.sql, opt.values)
+          .then((res) => resolve(res))
+          .catch((err) => reject(err));
       });
     }
     default: {
-      const promise = options.query_handler(conn, options, opt);
-      if (!(promise instanceof Promise)) {
-        throw new Error('query_handler must return a promise');
+      if (typeof options.query_handler === 'function') {
+        const promise = options.query_handler(conn, options, opt);
+        if (promise instanceof Promise) {
+          return promise;
+        }
       }
-      return promise;
+      throw new Error('query_handler must return a promise');
     }
   }
 };
 
 module.exports = {
+  _query,
+  _execSQL,
   _validate,
-  _query
 };
