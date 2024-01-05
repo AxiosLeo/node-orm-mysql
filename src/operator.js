@@ -131,6 +131,25 @@ class QueryHandler {
     }
     return await this.table(tableName).insert(data);
   }
+
+  async existTable(table, database = null) {
+    if (!table) {
+      throw new Error('table name is required');
+    }
+    const query = new QueryOperator(this.conn, this.options);
+    const c = await query.table('information_schema.TABLES')
+      .where('TABLE_SCHEMA', database || this.database)
+      .where('TABLE_NAME', table)
+      .count();
+    return !!c;
+  }
+
+  async existDatabase(database) {
+    const c = await this.table('information_schema.SCHEMATA')
+      .where('SCHEMA_NAME', database)
+      .count();
+    return !!c;
+  }
 }
 
 module.exports = {
