@@ -2,9 +2,9 @@
 
 const mysql = require('mysql2');
 const mysqlPromise = require('mysql2/promise');
-const { _validate } = require('./utils');
-const { QueryHandler, Query } = require('./operator');
-const { _query } = require('./utils');
+const { _validate, _query } = require('./utils');
+const { QueryHandler } = require('./operator');
+const Query = require('./query');
 
 const clients = {};
 
@@ -96,29 +96,22 @@ class MySQLClient extends QueryHandler {
   /**
    * @param {mysql.ConnectionOptions} options 
    * @param {*} name 
+   * @param {'default'|'promise'|'pool'} type
    */
-  constructor(options, name = 'default') {
-    const conn = createClient(options, name);
+  constructor(options, name = 'default', type = 'default') {
+    let conn;
+    switch (type) {
+      case 'default':
+        conn = createClient(options, name);
+        break;
+      case 'pool':
+        conn = createPool(options, name);
+        break;
+      default:
+        throw new Error(`client type ${type} not found`);
+    }
     super(conn);
     this.database = options.database;
-  }
-
-  async existTable(table, database = null) {
-    if (!table) {
-      throw new Error('table name is required');
-    }
-    const c = await this.table('information_schema.TABLES')
-      .where('TABLE_SCHEMA', database || this.database)
-      .where('TABLE_NAME', table)
-      .count();
-    return !!c;
-  }
-
-  async existDatabase(database) {
-    const c = await this.table('information_schema.SCHEMATA')
-      .where('SCHEMA_NAME', database)
-      .count();
-    return !!c;
   }
 
   /**
