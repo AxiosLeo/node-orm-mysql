@@ -86,47 +86,52 @@ function __validate(obj, rules = {}) {
   }
 }
 
+function _renderColumn(column) {
+  __validate(column, {
+    name: 'required|string',
+    type: 'required|string',
+    default: 'string',
+    comment: 'string',
+    not_null: 'boolean',
+    auto_increment: 'boolean',
+    collate: 'string',
+  });
+  let str = `\`${column.name}\` ${column.type.toUpperCase()}`;
+  if (typeof column.length !== 'undefined') {
+    str += `(${column.length})`;
+  }
+  if (column.not_null === true) {
+    str += ' NOT NULL';
+  }
+  if (column.unsigned === true) {
+    str += ' UNSIGNED';
+  }
+  if (typeof column.default !== 'undefined') {
+    if (column.is_primary_key === true) {
+      _throwError('Primary key can not have default value.');
+    }
+    if (column.default === null) {
+      str += ' DEFAULT NULL';
+    } else if (column.default === 'timestamp') {
+      str += ' DEFAULT CURRENT_TIMESTAMP';
+    } else if (is.string(column.default)) {
+      str += ` DEFAULT ${column.default}`;
+    }
+  }
+  if (is.string(column.comment) && is.empty(column.comment) === false) {
+    str += ` COMMENT '${column.comment}'`;
+  }
+  if (column.auto_increment === true) {
+    str += ' AUTO_INCREMENT';
+  }
+  return str;
+}
+
 function _renderColumns(columns) {
   let primary_column = null;
   let indexs = [];
   let strs = columns.map(column => {
-    __validate(column, {
-      name: 'required|string',
-      type: 'required|string',
-      default: 'string',
-      comment: 'string',
-      not_null: 'boolean',
-      auto_increment: 'boolean',
-      collate: 'string',
-    });
-    let str = `\`${column.name}\` ${column.type.toUpperCase()}`;
-    if (typeof column.length !== 'undefined') {
-      str += `(${column.length})`;
-    }
-    if (column.not_null === true) {
-      str += ' NOT NULL';
-    }
-    if (column.unsigned === true) {
-      str += ' UNSIGNED';
-    }
-    if (typeof column.default !== 'undefined') {
-      if (column.is_primary_key === true) {
-        _throwError('Primary key can not have default value.');
-      }
-      if (column.default === null) {
-        str += ' DEFAULT NULL';
-      } else if (column.default === 'timestamp') {
-        str += ' DEFAULT CURRENT_TIMESTAMP';
-      } else if (is.string(column.default)) {
-        str += ` DEFAULT ${column.default}`;
-      }
-    }
-    if (is.string(column.comment) && is.empty(column.comment) === false) {
-      str += ` COMMENT '${column.comment}'`;
-    }
-    if (column.auto_increment === true) {
-      str += ' AUTO_INCREMENT';
-    }
+    let str = _renderColumn(column);
     if (column.is_primary_key === true) {
       primary_column = column;
     } else if (column.is_uniq_index === true) {
@@ -211,7 +216,7 @@ function _create(item, options) {
   switch (item) {
     case 'table': {
       __validate(options, {
-        table_name: 'required|string',
+        name: 'required|string',
         columns: 'required|array',
         primary_column: 'string',
         engine: 'string',
@@ -220,9 +225,8 @@ function _create(item, options) {
         throw new Error('Primary key is required.');
       }
       let opt = {
-        table_name: options.table_name,
+        name: options.name,
         columns: _renderColumns(options.columns),
-        primary_column: options.primary_column || 'id',
         engine: options.engine || 'InnoDB',
       };
       return {
@@ -232,27 +236,20 @@ function _create(item, options) {
     }
     case 'column': {
       __validate(options, {
-        table_name: 'required|string',
-        column_name: 'required|string',
-        column_type: 'required|string',
-        column_length: 'integer',
-        column_default: 'string',
-        column_comment: 'string',
-        column_nullable: 'string',
-        column_auto_increment: 'string',
+        table: 'required|string',
+        name: 'required|string',
+        type: 'required|string',
+        length: 'number',
+        unsigned: 'boolean',
+        not_null: 'boolean',
+        default: 'string',
+        comment: 'string',
+        auto_increment: 'boolean',
+        is_primary_key: 'boolean',
+        is_uniq_index: 'boolean'
       });
-      let opt = {
-        table_name: options.table_name,
-        column_name: options.column_name,
-        column_type: options.column_type,
-        column_length: options.column_length || null,
-        column_default: options.column_default || null,
-        column_comment: options.column_comment || null,
-        column_nullable: options.column_nullable || 'NOT NULL',
-        column_auto_increment: options.column_auto_increment || null,
-      };
       return {
-        sql: _render(actions.column.create, opt),
+        sql: _renderColumn(options),
         values: [],
       };
     }
@@ -304,12 +301,10 @@ function _create(item, options) {
 function _drop(item, options) {
   switch (item) {
     case 'table': {
-      __validate(options, {
+      __validate({ table_name: options }, {
         table_name: 'required|string'
       });
-      let opt = {
-        table_name: options.table_name
-      };
+      let opt = { table_name: options.table_name };
       return {
         sql: _render(actions.table.drop, opt),
         values: [],
