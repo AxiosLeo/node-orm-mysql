@@ -298,7 +298,6 @@ interface CreateTableOptions {
     is_primary_key?: boolean,
     is_uniq_index?: boolean
   }[],
-  primary_column?: string,
   engine?: string,
 }
 
@@ -316,13 +315,7 @@ interface CreateColumnOptions {
   unique?: boolean,
   index?: boolean,
   fulltext?: boolean,
-  spatial?: boolean,
-  foreign_key?: {
-    table: string,
-    column: string,
-    on_delete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION',
-    on_update?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
-  }
+  spatial?: boolean
 }
 
 interface CreateIndexOptions {
