@@ -2,14 +2,17 @@
 
 const os = require('os');
 const path = require('path');
-const { _list } = require('@axiosleo/cli-tool/src/helper/fs');
-const { createClient, createPool } = require('./client');
+const { _list, _exists } = require('@axiosleo/cli-tool/src/helper/fs');
+const { createClient, createPool, createPromiseClient } = require('./client');
 const { QueryHandler } = require('./operator');
-const { printer } = require('@axiosleo/cli-tool');
+// eslint-disable-next-line no-unused-vars
+const { printer, debug } = require('@axiosleo/cli-tool');
 const { _execSQL, _validate } = require('./utils');
 const { _render, _caml_case } = require('@axiosleo/cli-tool/src/helper/str');
 const is = require('@axiosleo/cli-tool/src/helper/is');
 const { _foreach } = require('@axiosleo/cli-tool/src/helper/cmd');
+const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
+const { TransactionHandler } = require('..');
 
 const actions = {
   // database: {
@@ -46,25 +49,15 @@ const migrationColumns = [
     is_primary_key: true,
   },
   {
-    name: 'file',
-    type: 'varchar',
-    length: 255,
-    not_null: true,
-  },
-  {
     name: 'migration_key',
     type: 'varchar',
     length: 255,
     not_null: true,
   },
   {
-    name: 'sql',
-    type: 'text',
-    not_null: true,
-  },
-  {
-    name: 'md5',
-    type: 'text',
+    name: 'filename',
+    type: 'varchar',
+    length: 255,
     not_null: true,
     is_uniq_index: true,
   },
@@ -76,14 +69,20 @@ const migrationColumns = [
   }
 ];
 
+function _throwError(msg) {
+  const e = new Error(msg);
+  let tmp = e.stack.split('\n').find(i => i.indexOf('at Object.up') > -1);
+  let index = tmp.indexOf('(');
+  let local = tmp.substring(index + 1, tmp.length - 2);
+  printer.println('').yellow('at ' + local.trim()).println().println().print('    ').red(e.message).println();
+  process.exit(1);
+}
+
 function __validate(obj, rules = {}) {
   try {
     _validate(obj, rules);
   } catch (e) {
-    let tmp = e.stack.split('\n');
-    let local = tmp[5].indexOf('at Object.jump') > -1 ? tmp[6] : tmp[5];
-    printer.println().yellow(local.trim()).println().println().print('    ').red(e.message).println();
-    process.exit(1);
+    _throwError(e.message);
   }
 }
 
@@ -111,6 +110,9 @@ function _renderColumns(columns) {
       str += ' UNSIGNED';
     }
     if (typeof column.default !== 'undefined') {
+      if (column.is_primary_key === true) {
+        _throwError('Primary key can not have default value.');
+      }
       if (column.default === null) {
         str += ' DEFAULT NULL';
       } else if (column.default === 'timestamp') {
@@ -153,16 +155,21 @@ async function init(context) {
   if (context.action === 'down') {
     files = files.reverse();
   }
-
-  context.files = files;
+  context.files = files.filter(f => f !== '.connect.js');
   context.items = Object.keys(actions);
 
+  const connectPath = path.join(context.config.dir, '.connect.js');
+  if (await _exists(connectPath)) {
+    const connect = require(connectPath);
+    _assign(context.connection, connect);
+  }
+  context.task_key = 'migrate_' + context.connection.database;
   let globalConn = createClient({
     ...context.connection,
     database: 'mysql'
   });
-
   let handler = new QueryHandler(globalConn);
+
   const database = context.connection.database;
   if (!await handler.existDatabase(database)) {
     printer.yellow('will create database ' + database).println().println();
@@ -178,6 +185,7 @@ async function init(context) {
 
   handler = new QueryHandler(conn);
   if (await handler.existTable(context.task_key, database)) {
+    conn.end();
     return;
   }
 
@@ -188,6 +196,7 @@ async function init(context) {
     columns: _renderColumns(migrationColumns),
     engine: 'InnoDB',
   }));
+  conn.end();
   if (res.serverStatus !== 2) {
     printer.error('create migration table failed.');
     process.exit(1);
@@ -198,7 +207,7 @@ async function init(context) {
  * initialize migration
  * @param {import('./migration').Context} context 
  */
-async function _create(context, item, options) {
+function _create(item, options) {
   switch (item) {
     case 'table': {
       __validate(options, {
@@ -216,11 +225,10 @@ async function _create(context, item, options) {
         primary_column: options.primary_column || 'id',
         engine: options.engine || 'InnoDB',
       };
-      context.runtime.queries.push({
+      return {
         sql: _render(actions.table.create, opt),
-        value: [],
-      });
-      break;
+        values: [],
+      };
     }
     case 'column': {
       __validate(options, {
@@ -243,11 +251,10 @@ async function _create(context, item, options) {
         column_nullable: options.column_nullable || 'NOT NULL',
         column_auto_increment: options.column_auto_increment || null,
       };
-      context.runtime.queries.push({
+      return {
         sql: _render(actions.column.create, opt),
-        value: [],
-      });
-      break;
+        values: [],
+      };
     }
     case 'index': {
       __validate(options, {
@@ -260,11 +267,10 @@ async function _create(context, item, options) {
         index_name: options.index_name,
         column_names: options.column_names,
       };
-      context.runtime.queries.push({
+      return {
         sql: _render(actions.index.create, opt),
-        value: [],
-      });
-      break;
+        values: [],
+      };
     }
     case 'foreign_key': {
       __validate(options, {
@@ -281,11 +287,10 @@ async function _create(context, item, options) {
         foreign_table_name: options.foreign_table_name,
         foreign_column_name: options.foreign_column_name,
       };
-      context.runtime.queries.push({
+      return {
         sql: _render(actions.foreign_key.create, opt),
-        value: [],
-      });
-      break;
+        values: [],
+      };
     }
     default:
       throw new Error(`Unknown migration operation create${_caml_case(item, true)}.`);
@@ -296,7 +301,7 @@ async function _create(context, item, options) {
  * initialize migration
  * @param {import('./migration').Context} context 
  */
-async function _drop(context, item, options) {
+function _drop(item, options) {
   switch (item) {
     case 'table': {
       __validate(options, {
@@ -305,11 +310,10 @@ async function _drop(context, item, options) {
       let opt = {
         table_name: options.table_name
       };
-      context.runtime.queries.push({
+      return {
         sql: _render(actions.table.drop, opt),
-        value: [],
-      });
-      break;
+        values: [],
+      };
     }
     case 'column': {
       __validate(options, {
@@ -320,11 +324,10 @@ async function _drop(context, item, options) {
         table_name: options.table_name,
         column_name: options.column_name
       };
-      context.runtime.queries.push({
+      return {
         sql: _render(actions.column.drop, opt),
-        value: [],
-      });
-      break;
+        values: [],
+      };
     }
     case 'index': {
       __validate(options, {
@@ -335,11 +338,10 @@ async function _drop(context, item, options) {
         table_name: options.table_name,
         index_name: options.index_name
       };
-      context.runtime.queries.push({
+      return {
         sql: _render(actions.index.drop, opt),
-        value: [],
-      });
-      break;
+        values: [],
+      };
     }
     case 'foreign_key': {
       __validate(options, {
@@ -350,11 +352,10 @@ async function _drop(context, item, options) {
         table_name: options.table_name,
         foreign_key_name: options.foreign_key_name
       };
-      context.runtime.queries.push({
+      return {
         sql: _render(actions.foreign_key.drop, opt),
-        value: [],
-      });
-      break;
+        values: [],
+      };
     }
     default:
       throw new Error(`Unknown migration operation drop${_caml_case(item, true)}.`);
@@ -365,50 +366,49 @@ async function _drop(context, item, options) {
  * initialize migration
  * @param {import('./migration').Context} context 
  */
-async function _build(context, file) {
-  const script = require(context.runtime.script);
+async function _exec(context, queries) {
+  const conn = await createPromiseClient(context.connection, context.task_key + '_transaction');
+  const transaction = new TransactionHandler(conn);
+  await transaction.begin();
 
-  const migration = {};
-
-  context.items.forEach((item) => {
-    Object.defineProperty(migration, 'create' + _caml_case(item, true), {
-      value: function (options) {
-        _create.call(this, context, item, options);
-      },
-      writable: true,
-      enumerable: true,
-      configurable: true
-    });
-    Object.defineProperties(migration, 'drop' + _caml_case(item, true), {
-      value: function (options) {
-        _drop.call(this, context, item, options);
-      },
-      writable: true,
-      enumerable: true,
-      configurable: true
-    });
-  });
-
-  switch (context.action) {
-    case 'up': {
-      if (typeof script.up !== 'function') {
-        printer.error(`Migration file "${file}" must have a function named up.`);
-        process.exit(1);
+  try {
+    const files = Object.keys(queries);
+    await _foreach(files, async (file) => {
+      if (context.action === 'up') {
+        const hasMigarated = await transaction.table(context.task_key)
+          .where('migration_key', context.task_key)
+          .where('filename', file)
+          .count();
+        if (hasMigarated) {
+          printer.yellow(`Migration file "${file}" has been migrated.`).println();
+          return;
+        }
       }
-      await script.up(migration);
-      break;
-    }
-    case 'down': {
-      if (typeof script.down !== 'function') {
-        printer.error(`Migration file "${file}" must have a function named down.`);
-        process.exit(1);
+
+      const sqls = queries[file];
+      await _foreach(sqls, async (query) => {
+        await transaction.query(query);
+      });
+
+      if (context.action === 'up') {
+        await transaction.table(context.task_key).insert({
+          migration_key: context.task_key,
+          filename: file,
+          created_at: new Date()
+        });
+      } else {
+        const item = await transaction.table(context.task_key)
+          .where('migration_key', context.task_key)
+          .where('filename', file).find();
+        if (item) {
+          await transaction.table(context.task_key).where('id', item.id).delete();
+        }
       }
-      await script.down(migration);
-      break;
-    }
-    default: {
-      throw new Error(`Unknown migration action ${context.action}.`);
-    }
+    });
+    await transaction.commit();
+  } catch (e) {
+    await transaction.rollback();
+    debug.log(e);
   }
 }
 
@@ -416,22 +416,60 @@ async function _build(context, file) {
  * initialize migration
  * @param {import('./migration').Context} context 
  */
-async function _exec(context, file) {
-  // const queries = context.runtime.queries;
-}
-
-/**
- * initialize migration
- * @param {import('./migration').Context} context 
- */
 async function run(context) {
-  const { files, config } = context;
+  const { files } = context;
+  const queries = {};
   await _foreach(files, async (file) => {
-    context.runtime.script = path.join(config.dir, file);
-    context.runtime.queries = [];
-    await _build(context, file);
-    await _exec(context, file);
+    const scriptPath = path.join(context.config.dir, file);
+    const script = require(scriptPath);
+    queries[file] = [];
+
+    const migration = {};
+
+    context.items.forEach((item) => {
+      Object.defineProperty(migration, 'create' + _caml_case(item, true), {
+        value: function (options) {
+          let query = _create.call(this, item, options);
+          queries[file].push(query);
+        },
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
+      Object.defineProperty(migration, 'drop' + _caml_case(item, true), {
+        value: function (options) {
+          let query = _drop.call(this, item, options);
+          queries[file].push(query);
+        },
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
+    });
+
+    switch (context.action) {
+      case 'up': {
+        if (typeof script.up !== 'function') {
+          printer.error(`Migration file "${file}" must have a function named up.`);
+          process.exit(1);
+        }
+        await script.up(migration);
+        break;
+      }
+      case 'down': {
+        if (typeof script.down !== 'function') {
+          printer.error(`Migration file "${file}" must have a function named down.`);
+          process.exit(1);
+        }
+        await script.down(migration);
+        break;
+      }
+      default: {
+        throw new Error(`Unknown migration action ${context.action}.`);
+      }
+    }
   });
+  await _exec(context, queries);
 }
 
 async function end(context) {
