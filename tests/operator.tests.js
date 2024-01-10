@@ -43,7 +43,7 @@ describe('operator test case', () => {
   it('transaction', async () => {
     const conn = {
       execute: async (sql, values) => {
-        return [{ insertId: 1 }];
+        return [[{ insertId: 1 }]];
       },
       beginTransaction: async () => { },
       rollback: async () => { },
