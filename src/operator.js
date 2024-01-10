@@ -145,7 +145,8 @@ class QueryHandler {
   }
 
   async existDatabase(database) {
-    const c = await this.table('information_schema.SCHEMATA')
+    const query = new QueryOperator(this.conn, this.options);
+    const c = await query.table('information_schema.SCHEMATA')
       .where('SCHEMA_NAME', database)
       .count();
     return !!c;
