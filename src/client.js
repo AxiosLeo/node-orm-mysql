@@ -16,9 +16,9 @@ const clients = {};
 const createClient = (options, name = null) => {
   _validate(options, {
     host: 'required|string',
+    port: 'required|integer',
     user: 'required|string',
     password: 'required|string',
-    port: 'required|integer',
     database: 'required|string',
   });
   const key = name ? name :
