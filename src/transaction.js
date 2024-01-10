@@ -3,6 +3,7 @@
 // eslint-disable-next-line no-unused-vars
 const mysql = require('mysql2/promise');
 const { QueryOperator } = require('./operator');
+const { _query } = require('./utils');
 
 const levels = {
   RU: 'READ UNCOMMITTED',
@@ -60,13 +61,9 @@ class TransactionHandler {
 
   async query(options) {
     return new Promise((resolve, reject) => {
-      this.conn.query(options, (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
+      _query(this.conn, { transaction: true, driver: 'mysql' }, options)
+        .catch((res) => reject(res))
+        .then((res) => resolve(res));
     });
   }
 
