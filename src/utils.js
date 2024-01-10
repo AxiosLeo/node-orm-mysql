@@ -36,6 +36,13 @@ const _execSQL = (conn, sql, values = []) => {
   });
 };
 
+/**
+ * 
+ * @param {import('mysql2/promise').Connection} conn 
+ * @param {*} options 
+ * @param {*} opt 
+ * @returns 
+ */
 const _query = (conn, options, opt = null) => {
   switch (options.driver) {
     case 'mysql': {
@@ -48,21 +55,19 @@ const _query = (conn, options, opt = null) => {
       }
       return new Promise((resolve, reject) => {
         if (options.transaction) {
-          conn.execute(opt)
-            .then((res) => resolve(res))
-            .catch((err) => reject(err));
-        } else {
-          conn.query(opt, (err, result) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(result);
-            }
-          });
+          conn.execute(opt.sql, opt.values || []).then((res) => {
+            resolve(res[0]);
+          }).catch((err) => reject(err));
+          return;
         }
-        _execSQL(conn, opt.sql, opt.values)
-          .then((res) => resolve(res))
-          .catch((err) => reject(err));
+        conn.query(opt, (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
+        });
+
       });
     }
     default: {
