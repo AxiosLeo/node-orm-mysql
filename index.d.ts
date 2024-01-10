@@ -284,52 +284,40 @@ interface CreateDatabaseOptions {
   collate?: string
 }
 
-interface CreateTableOptions {
-  table_name: string,
-  columns: {
-    name: string,
-    type: string,
-    length?: number,
-    unsigned?: boolean,
-    not_null?: boolean,
-    default?: string | number | boolean | null | 'timestamp',
-    comment?: string,
-    auto_increment?: boolean,
-    is_primary_key?: boolean,
-    is_uniq_index?: boolean
-  }[],
-  engine?: string,
-}
-
-interface CreateColumnOptions {
-  table: string,
-  name: string,
+interface ColumnItem {
+  column_name: string,
   type: string,
   length?: number,
   unsigned?: boolean,
   not_null?: boolean,
-  default?: string | number | boolean | null,
-  auto_increment?: boolean,
+  default?: string | number | boolean | null | 'timestamp',
   comment?: string,
-  primary_key?: boolean,
-  unique?: boolean,
-  index?: boolean,
-  fulltext?: boolean,
-  spatial?: boolean
+  auto_increment?: boolean,
+  is_primary_key?: boolean,
+  is_uniq_index?: boolean
+}
+
+interface CreateTableOptions {
+  table_name: string,
+  columns: ColumnItem[],
+  engine?: string,
+}
+
+interface CreateColumnOptions extends ColumnItem {
+  table_name: string,
 }
 
 interface CreateIndexOptions {
-  table: string,
-  name: string,
-  columns: string[],
+  table_name: string,
+  index_name: string,
+  columns: ColumnItem[],
   unique?: boolean,
   fulltext?: boolean,
   spatial?: boolean
 }
 
 interface CreateForeignKeyOptions {
-  table: string,
-  name: string,
+  foreign_key_name: string,
   column: string,
   foreign_table: string,
   foreign_column: string,
@@ -339,7 +327,7 @@ interface CreateForeignKeyOptions {
 
 export declare class MigrationInterface {
 
-  createDatabase(options: CreateDatabaseOptions): Promise<void>;
+  // createDatabase(options: CreateDatabaseOptions): Promise<void>;
 
   createTable(options: CreateTableOptions): Promise<void>;
 
@@ -349,13 +337,13 @@ export declare class MigrationInterface {
 
   createForeignKey(options: CreateForeignKeyOptions): Promise<void>;
 
-  dropDatabase(name: string): Promise<void>;
+  // dropDatabase(name: string): Promise<void>;
 
   dropTable(name: string): Promise<void>;
 
-  dropColumn(options: { table: string, name: string }): Promise<void>;
+  dropColumn(table: string, name: string): Promise<void>;
 
-  dropIndex(options: { table: string, name: string }): Promise<void>;
+  dropIndex(index_field_name: string): Promise<void>;
 
   dropForeignKey(options: { table: string, name: string }): Promise<void>;
 }
