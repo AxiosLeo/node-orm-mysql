@@ -278,15 +278,15 @@ export declare class MySQLClient extends QueryHandler {
   close(): Promise<void>;
 }
 
-interface CreateDatabaseOptions {
-  database_name: string,
-  charset?: string,
-  collate?: string
-}
+type FieldType =
+  'TINYINT' | 'SMALLINT' | 'MEDIUMINT' | 'INT' | 'BIGINT' | 'FLOAT' | 'DOUBLE' | 'DECIMAL' |
+  'DATE' | 'TIME' | 'YEAR' | 'DATETIME' | 'TIMESTAMP' |
+  'CHAR' | 'VARCHAR' | 'TINYBLOB' | 'TINYTEXT' | 'BLOB' | 'TEXT' | 'MEDIUMBLOB' | 'MEDIUMTEXT' |
+  'LONGBLOB' | 'LONGTEXT' | 'ENUM' | 'SET' | 'JSON';
 
 interface ColumnItem {
   column_name: string,
-  type: string,
+  type: FieldType,
   length?: number,
   unsigned?: boolean,
   not_null?: boolean,
@@ -310,24 +310,29 @@ interface CreateColumnOptions extends ColumnItem {
 interface CreateIndexOptions {
   table_name: string,
   index_name: string,
-  columns: ColumnItem[],
+  columns: string[],
   unique?: boolean,
   fulltext?: boolean,
   spatial?: boolean
 }
 
 interface CreateForeignKeyOptions {
-  foreign_key_name: string,
-  column: string,
+  foreign_key: string,
+  table_name: string,
+  column_name: string,
   foreign_table: string,
   foreign_column: string,
-  on_delete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION',
+  on_delete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action',
   on_update?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
 }
 
-export declare class MigrationInterface {
+export type BuilderSQLOptions = {
+  operator: string;
+  columns?: ColumnItem[];
+  target: 'table' | 'column' | 'index' | 'foreign_key';
+}
 
-  // createDatabase(options: CreateDatabaseOptions): Promise<void>;
+export declare class MigrationInterface {
 
   createTable(options: CreateTableOptions): Promise<void>;
 
@@ -337,13 +342,14 @@ export declare class MigrationInterface {
 
   createForeignKey(options: CreateForeignKeyOptions): Promise<void>;
 
-  // dropDatabase(name: string): Promise<void>;
+  dropTable(options: { table_name: string }): Promise<void>;
 
-  dropTable(name: string): Promise<void>;
+  dropColumn(options: { table_name: string, column_name: string }): Promise<void>;
 
-  dropColumn(table: string, name: string): Promise<void>;
+  dropIndex(options: { index_name: string }): Promise<void>;
 
-  dropIndex(index_field_name: string): Promise<void>;
-
-  dropForeignKey(options: { table: string, name: string }): Promise<void>;
+  dropForeignKey(options: { table_name: string, foreign_key: string }): Promise<void>;
 }
+
+export declare function up(migration: MigrationInterface): Promise<void>;
+export declare function down(migration: MigrationInterface): Promise<void>;
