@@ -310,7 +310,7 @@ class ManageSQLBuilder extends Builder {
     try {
       this.sql = this[method].call(this, options);
     } catch (err) {
-      debug.dump(`${options.operator} ${options.target} error: ${err.message}}`);
+      debug.dump(`${options.operator} ${options.target} error: ${err.message}`);
       throw err;
     }
   }
