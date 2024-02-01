@@ -71,13 +71,13 @@ const _query = (conn, options, opt = null) => {
       });
     }
     default: {
-      if (typeof options.query_handler === 'function') {
-        const promise = options.query_handler(conn, options, opt);
+      if (typeof options.queryHandler === 'function') {
+        const promise = options.queryHandler(conn, options, opt);
         if (promise instanceof Promise) {
           return promise;
         }
       }
-      throw new Error('query_handler must return a promise');
+      throw new Error('queryHandler must return a promise');
     }
   }
 };

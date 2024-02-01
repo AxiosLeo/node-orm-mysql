@@ -50,7 +50,7 @@ export interface TableOption {
 
 export type QueryOperatorBaseOptions = {
   driver?: string | 'mysql';
-  query_handler?: QueryHandler;
+  queryHandler?: QueryHandler;
 };
 
 export type QueryOperatorOptions = QueryOperatorBaseOptions & {
@@ -285,31 +285,31 @@ type FieldType =
   'LONGBLOB' | 'LONGTEXT' | 'ENUM' | 'SET' | 'JSON';
 
 interface ColumnItem {
-  column_name: string,
+  columnName: string,
   type: FieldType,
   length?: number,
   unsigned?: boolean,
-  not_null?: boolean,
+  allowNull?: boolean,
   default?: string | number | boolean | null | 'timestamp',
   comment?: string,
-  auto_increment?: boolean,
-  is_primary_key?: boolean,
-  is_uniq_index?: boolean
+  autoIncrement?: boolean,
+  primaryKey?: boolean,
+  uniqIndex?: boolean
 }
 
 interface CreateTableOptions {
-  table_name: string,
+  tableName: string,
   columns: ColumnItem[],
   engine?: string,
 }
 
 interface CreateColumnOptions extends ColumnItem {
-  table_name: string,
+  tableName: string,
 }
 
 interface CreateIndexOptions {
-  table_name: string,
-  index_name: string,
+  tableName: string,
+  indexName: string,
   columns: string[],
   unique?: boolean,
   fulltext?: boolean,
@@ -317,13 +317,13 @@ interface CreateIndexOptions {
 }
 
 interface CreateForeignKeyOptions {
-  foreign_key: string,
-  table_name: string,
-  column_name: string,
-  foreign_table: string,
-  foreign_column: string,
-  on_delete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action',
-  on_update?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
+  foreignKey: string,
+  tableName: string,
+  columnName: string,
+  foreignTable: string,
+  foreignColumn: string,
+  onDelete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action',
+  onUpdate?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
 }
 
 export type BuilderSQLOptions = {
@@ -342,11 +342,11 @@ export declare class MigrationInterface {
 
   createForeignKey(options: CreateForeignKeyOptions): Promise<void>;
 
-  dropTable(options: { table_name: string }): Promise<void>;
+  dropTable(options: { tableName: string }): Promise<void>;
 
-  dropColumn(options: { table_name: string, column_name: string }): Promise<void>;
+  dropColumn(options: { tableName: string, columnName: string }): Promise<void>;
 
-  dropIndex(options: { index_name: string }): Promise<void>;
+  dropIndex(options: { indexName: string }): Promise<void>;
 
   dropForeignKey(options: { table_name: string, foreign_key: string }): Promise<void>;
 }

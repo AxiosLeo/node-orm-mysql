@@ -20,13 +20,13 @@ class TransactionOperator extends QueryOperator {
     super(conn);
     this.options.transaction = true;
     this.options.driver = options.driver || 'mysql';
-    this.options.query_handler = options.query_handler || null;
+    this.options.queryHandler = options.queryHandler || null;
     if (this.options.driver !== 'mysql') {
-      if (!this.options.query_handler) {
-        throw new Error('query_handler is required');
+      if (!this.options.queryHandler) {
+        throw new Error('queryHandler is required');
       }
-      if (!(this.options.query_handler instanceof Function)) {
-        throw new Error('query_handler must be a function');
+      if (!(this.options.queryHandler instanceof Function)) {
+        throw new Error('queryHandler must be a function');
       }
     }
   }

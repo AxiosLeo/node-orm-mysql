@@ -240,7 +240,7 @@ const conn = createClient({
 
 const hanlder = new QueryHandler(conn, {
   driver: 'custom',
-  query_handler: (con, options) => {
+  queryHandler: (con, options) => {
     const builder = new Builder(options);
     return new Promise((resolve, reject) => {
       if (options.operator === 'select') {
