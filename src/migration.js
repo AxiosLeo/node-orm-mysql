@@ -126,7 +126,6 @@ async function _exec(context, queries) {
       }
 
       const sqls = queries[file];
-      // debug.halt(sqls);
       await _foreach(sqls, async (query) => {
         if (context.debug) {
           debug.log(query.sql);
