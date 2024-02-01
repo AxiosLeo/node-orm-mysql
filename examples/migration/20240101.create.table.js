@@ -5,7 +5,7 @@
  */
 function up(migration) {
   migration.createTable({
-    table_name: 'table1',
+    table_name: 'organization',
     columns: [{
       column_name: 'id',
       type: 'int(11)',
