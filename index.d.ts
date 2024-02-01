@@ -285,8 +285,19 @@ type FieldType =
   'LONGBLOB' | 'LONGTEXT' | 'ENUM' | 'SET' | 'JSON';
 
 interface ColumnItem {
-  columnName: string,
   type: FieldType,
+  length?: number,
+  unsigned?: boolean,
+  allowNull?: boolean,
+  default?: string | number | boolean | null | 'timestamp',
+  onUpdate?: boolean,
+  comment?: string,
+  autoIncrement?: boolean,
+  primaryKey?: boolean,
+  uniqIndex?: boolean
+}
+
+interface CreateColumnOptions {
   length?: number,
   unsigned?: boolean,
   allowNull?: boolean,
@@ -297,58 +308,75 @@ interface ColumnItem {
   uniqIndex?: boolean
 }
 
-interface CreateTableOptions {
-  tableName: string,
-  columns: ColumnItem[],
-  engine?: string,
-}
-
-interface CreateColumnOptions extends ColumnItem {
-  tableName: string,
-}
-
 interface CreateIndexOptions {
-  tableName: string,
-  indexName: string,
-  columns: string[],
   unique?: boolean,
   fulltext?: boolean,
   spatial?: boolean
 }
 
-interface CreateForeignKeyOptions {
-  foreignKey: string,
-  tableName: string,
-  columnName: string,
-  foreignTable: string,
-  foreignColumn: string,
-  onDelete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action',
-  onUpdate?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION'
-}
-
-export type BuilderSQLOptions = {
-  operator: string;
-  columns?: ColumnItem[];
+export type ManageBuilderOptions = {
+  operator: 'create' | 'drop' | 'alter';
+  columns: Record<string, ColumnItem>;
   target: 'table' | 'column' | 'index' | 'foreign_key';
 }
 
 export declare class MigrationInterface {
 
-  createTable(options: CreateTableOptions): Promise<void>;
+  /**
+   * @param tableName 
+   * @param columns 
+   * @param options default engine is InnoDB; default charset is utf8mb4
+   */
+  createTable(tableName: string, columns: Record<string, ColumnItem>, options?: {
+    engine?: 'InnoDB' | 'MyISAM' | 'MEMORY',
+    charset?: string
+  }): void;
 
-  createColumn(options: CreateColumnOptions): Promise<void>;
+  /**
+   * @param columnName 
+   * @param columnType 
+   * @param tableName 
+   * @param options allowNull default is true
+   */
+  createColumn(columnName: string, columnType: FieldType, tableName: string, options?: {
+    length?: number,
+    unsigned?: boolean,
+    allowNull?: boolean,
+    default?: string | number | boolean | null | 'timestamp',
+    onUpdate?: string,
+    comment?: string,
+    autoIncrement?: boolean,
+    primaryKey?: boolean,
+    uniqIndex?: boolean,
+    after?: string
+  }): void;
 
-  createIndex(options: CreateIndexOptions): Promise<void>;
+  createIndex(tableName: string, columns: string[], options?: {
+    indexName?: string,
+    unique?: boolean,
+    fulltext?: boolean,
+    spatial?: boolean
+  }): void;
 
-  createForeignKey(options: CreateForeignKeyOptions): Promise<void>;
+  createForeignKey(options: {
+    foreignKey?: string,
+    tableName: string,
+    columnName: string,
+    reference: {
+      tableName: string,
+      columnName: string,
+      onDelete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action',
+      onUpdate?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action',
+    }
+  }): void;
 
-  dropTable(options: { tableName: string }): Promise<void>;
+  dropTable(tableName: string): void;
 
-  dropColumn(options: { tableName: string, columnName: string }): Promise<void>;
+  dropColumn(columnName: string, tableName: string): void;
 
-  dropIndex(options: { indexName: string }): Promise<void>;
+  dropIndex(indexName: string): void;
 
-  dropForeignKey(options: { table_name: string, foreign_key: string }): Promise<void>;
+  dropForeignKey(foreign_key: string, tableName: string): void;
 }
 
 export declare function up(migration: MigrationInterface): Promise<void>;
