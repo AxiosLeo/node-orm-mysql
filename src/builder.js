@@ -1,7 +1,11 @@
 'use strict';
 
+const { debug } = require('@axiosleo/cli-tool');
 const Query = require('./query');
 const is = require('@axiosleo/cli-tool/src/helper/is');
+const { _caml_case, _render } = require('@axiosleo/cli-tool/src/helper/str');
+const { _validate } = require('./utils');
+const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
 
 /**
  * @param {array} arr 
@@ -14,6 +18,9 @@ const emit = (arr, res) => {
 };
 
 class Builder {
+  /**
+   * @param {import('../index').QueryOperatorOptions} options 
+   */
   constructor(options) {
     let sql = '';
     this.values = [];
@@ -78,6 +85,9 @@ class Builder {
         emit(tmp, this._buildGroupField(options.groupField));
         emit(tmp, this._buildHaving(options.having));
         sql = tmp.join(' ');
+        break;
+      }
+      case 'manage': {
         break;
       }
       default:
@@ -285,6 +295,235 @@ class Builder {
   }
 }
 
+class ManageSQLBuilder extends Builder {
+  /**
+   * @param {import('../index').ManageBuilderOptions} options 
+   */
+  constructor(options) {
+    super({ operator: 'manage' });
+    // const emitter = new Emitter();
+    const action = `${options.operator}_${options.target}`;
+    const method = _caml_case(action, false);
+    if (!this[method]) {
+      throw new Error(`'${options.target}' Unsupported '${options.operator}' operation.`);
+    }
+    try {
+      this.sql = this[method].call(this, options);
+    } catch (err) {
+      debug.dump(`${options.operator} ${options.target} error: ${err.message}}`);
+      throw err;
+    }
+  }
+
+  /**
+   * @param {import('../index').ManageBuilderOptions} options 
+   */
+  createTable(options) {
+    _validate(options, {
+      name: 'required|string',
+      engine: [{ in: ['InnoDB', 'MyISAM', 'MEMORY'] }],
+      charset: 'string'
+    });
+    if (is.empty(options.columns)) {
+      throw new Error('At least one column is required');
+    }
+    if (!Object.values(options.columns).find(c => c.primaryKey === true)) {
+      throw new Error('At least one primary key column is required');
+    }
+    let columns = Object.keys(options.columns).map(name => {
+      return { name, ...options.columns[name] };
+    });
+    options = _assign({
+      engine: 'InnoDB',
+      charset: 'utf8mb4'
+    }, options, {
+      columns: this.createColumns(columns)
+    });
+    return _render('CREATE TABLE `${name}` ( ${columns} ) ENGINE=${engine} DEFAULT CHARSET=${charset}', options);
+  }
+
+  createColumn(options) {
+    _validate(options, {
+      table: 'required|string',
+      name: 'required|string',
+      type: 'required|string',
+      length: 'number',
+      unsigned: 'boolean',
+      allowNull: 'boolean',
+      default: 'string',
+      comment: 'string',
+      autoIncrement: 'boolean',
+      primaryKey: 'boolean',
+      uniqIndex: 'boolean',
+      after: 'string'
+    });
+    return `ALTER TABLE \`${options.table}\` ADD COLUMN ` + this.renderSingleColumn(options);
+  }
+
+  createIndex(options) {
+    _validate(options, {
+      name: 'required|string',
+      table: 'required|string',
+      columns: 'required|array',
+      unique: 'boolean',
+      fulltext: 'boolean',
+      spatial: 'boolean',
+      order: [{ in: ['asc', 'desc'] }],
+      visible: 'boolean'
+    });
+
+    return _render('CREATE INDEX `${index_name}` ON `${table_name}` (${column_names}) ${visible}', {
+      index_name: options.name,
+      table_name: options.table,
+      visible: options.visible === false ? 'INVISIBLE' : 'VISIBLE',
+      column_names: options.columns.map(c => {
+        if (c.indexOf(' ') !== -1) {
+          let t = c.split(' ', 2);
+          return `\`${t[0]}\` ${t[1].toUpperCase()}`;
+        }
+        return `\`${c}\``;
+      }).join(', ')
+    });
+  }
+
+  createForeignKey(options) {
+    _validate(options, {
+      name: 'required|string',
+      table: 'required|string',
+      column: 'required|string',
+      'reference.tableName': 'required|string',
+      'reference.columnName': 'required|string',
+      'reference.onUpdate': [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }],
+      'reference.onDelete': [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }]
+    });
+    return _render('ALTER TABLE `${table_name}` ADD CONSTRAINT `${name}` FOREIGN KEY (`${column_name}`) REFERENCES `${foreign_table}` (`${foreign_column}`) ON DELETE ${on_delete} ON UPDATE ${on_update}', {
+      table_name: options.tableName,
+      name: options.name,
+      column_name: options.columnName,
+      foreign_table: options.reference.tableName,
+      foreign_column: options.reference.columnName,
+      on_delete: options.reference.onDelete || 'NO ACTION',
+      on_update: options.reference.onUpdate || 'NO ACTION',
+    });
+  }
+
+  dropTable(options) {
+    _validate(options, {
+      name: 'required|string',
+    });
+    return _render('DROP TABLE `${name}`', options);
+  }
+
+  dropColumn(options) {
+    _validate(options, {
+      table: 'required|string',
+      name: 'required|string',
+    });
+    return _render('ALTER TABLE `${table}` DROP COLUMN `${name}`', options);
+
+  }
+
+  dropIndex(options) {
+    _validate(options, {
+      name: 'required|string',
+      table: 'required|string',
+    });
+    return _render('DROP INDEX `${name}` ON `${table}`', options);
+  }
+
+  dropForeignKey(options) {
+    _validate(options, {
+      name: 'required|string',
+      table: 'required|string',
+    });
+    return _render('ALTER TABLE `${table}` DROP FOREIGN KEY `${name}`', options);
+  }
+
+  createColumns(columns) {
+    let primaryColumn = null;
+    let indexColumns = [];
+    let strs = columns.map(column => {
+      let str = this.renderSingleColumn(column);
+      if (column.primaryKey === true) {
+        primaryColumn = column;
+      } else if (column.uniqIndex === true) {
+        indexColumns.push(column);
+      }
+      return str;
+    });
+    if (primaryColumn) {
+      strs.push(`PRIMARY KEY (\`${primaryColumn.name}\`)`);
+      strs.push(`UNIQUE INDEX \`${primaryColumn.name}\` (\`${primaryColumn.name}\` ASC) VISIBLE`);
+    }
+    if (indexColumns.length > 0) {
+      indexColumns.forEach((i) => {
+        strs.push(`UNIQUE INDEX \`${i.name}\` (\`${i.name}\` ASC) VISIBLE`);
+      });
+    }
+    return strs.join(', ');
+  }
+
+  renderSingleColumn(options) {
+    _validate(options, {
+      name: 'required|string',
+      type: 'required|string',
+      default: 'string',
+      onUpdate: 'string',
+      length: 'integer',
+      comment: 'string',
+      allowNull: 'boolean',
+      autoIncrement: 'boolean',
+      collate: 'string',
+      primaryKey: 'boolean',
+      uniqIndex: 'boolean'
+    });
+    let type = options.type.toUpperCase();
+    if (type === 'STRING') {
+      type = 'VARCHAR';
+    }
+    let str = `\`${options.name}\` ${type}`;
+    if (typeof options.length !== 'undefined') {
+      str += `(${options.length})`;
+    } else if (type === 'INT') {
+      str += '(11)';
+    } else if (type === 'VARCHAR') {
+      str += '(255)';
+    }
+    if (options.allowNull === false) {
+      str += ' NOT NULL';
+    }
+    if (options.unsigned === true) {
+      str += ' UNSIGNED';
+    }
+    if (typeof options.default !== 'undefined') {
+      if (options.primaryKey === true) {
+        throw new Error('Primary key can not have default value.');
+      }
+      if (options.default === null) {
+        str += ' DEFAULT NULL';
+      } else if (options.default === 'timestamp') {
+        str += ' DEFAULT CURRENT_TIMESTAMP';
+      } else if (is.string(options.default)) {
+        str += ` DEFAULT ${options.default}`;
+      }
+    }
+    if (options.onUpdate) {
+      str += ` ON UPDATE ${options.onUpdate}`;
+    }
+    if (is.string(options.comment) && is.empty(options.comment) === false) {
+      str += ` COMMENT '${options.comment}'`;
+    }
+    if (options.autoIncrement === true) {
+      str += ' AUTO_INCREMENT';
+    }
+    if (options.after) {
+      str += ' AFTER `' + options.after + '`';
+    }
+    return str;
+  }
+}
+
 module.exports = {
-  Builder
+  Builder,
+  ManageSQLBuilder
 };
