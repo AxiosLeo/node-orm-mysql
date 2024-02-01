@@ -3,7 +3,7 @@
 const { Builder } = require('./builder');
 const Query = require('./query');
 const Hook = require('./hook');
-const { _query } = require('./utils');
+const { _query } = require('./core');
 
 class QueryOperator extends Query {
   /**

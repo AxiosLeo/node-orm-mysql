@@ -2,7 +2,8 @@
 
 const mysql = require('mysql2');
 const mysqlPromise = require('mysql2/promise');
-const { _validate, _query } = require('./utils');
+const { _validate } = require('./utils');
+const { _query } = require('./core');
 const { QueryHandler } = require('./operator');
 const Query = require('./query');
 

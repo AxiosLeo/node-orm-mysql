@@ -3,7 +3,7 @@
 // eslint-disable-next-line no-unused-vars
 const mysql = require('mysql2/promise');
 const { QueryOperator } = require('./operator');
-const { _query } = require('./utils');
+const { _query } = require('./core');
 
 const levels = {
   RU: 'READ UNCOMMITTED',
