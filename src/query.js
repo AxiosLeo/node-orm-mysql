@@ -4,7 +4,7 @@ class Query {
   constructor(operator = 'select') {
     this.options = {
       driver: 'mysql',
-      query_handler: null,
+      queryHandler: null,
       conditions: [],
       orders: [],
       tables: [],

@@ -25,7 +25,7 @@ describe('operator test case', () => {
     };
     const operator = new QueryOperator(conn, {
       driver: 'custom',
-      query_handler: (con, options) => {
+      queryHandler: (con, options) => {
         const builder = new Builder(options);
         expect(builder.sql).to.be.a('string');
         expect(builder.sql).to.be.equal('SELECT * FROM `test`');
