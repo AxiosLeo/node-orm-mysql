@@ -504,9 +504,13 @@ class ManageSQLBuilder extends Builder {
       }
       if (options.default === null) {
         str += ' DEFAULT NULL';
-      } else if (options.default === 'timestamp') {
+      } else if (options.default === 'timestamp' || options.default === 'TIMESTAMP') {
         str += ' DEFAULT CURRENT_TIMESTAMP';
+      } else if (options.default === 'CURRENT_TIMESTAMP') {
+        str += ` DEFAULT ${options.default}`;
       } else if (is.string(options.default)) {
+        str += ` DEFAULT '${options.default}'`;
+      } else {
         str += ` DEFAULT ${options.default}`;
       }
     }
