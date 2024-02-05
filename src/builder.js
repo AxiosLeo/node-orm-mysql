@@ -273,6 +273,9 @@ class Builder {
     if (key === null) {
       return '';
     }
+    if (typeof key === 'undefined') {
+      throw new Error('Field key is required');
+    }
     if (key.indexOf('(') !== -1 && key.indexOf(')') !== -1) {
       let field = key.substring(key.indexOf('(') + 1, key.indexOf(')'));
       key = key.substring(0, key.indexOf('(')) + '(' + this._buildFieldWithTableName(field) + ')' + key.substring(key.indexOf(')') + 1);
