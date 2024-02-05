@@ -15,9 +15,9 @@ class MigrateCommand extends Command {
 
     this.addOption('debug', 'd', '[false] debug mode', 'optional', false);
     this.addOption('host', null, '[localhost] mysql host', 'optional', 'localhost');
+    this.addOption('port', null, '[3306] port number to connect to the database', 'optional', 3306);
     this.addOption('user', null, '[root] username for connect to the database', 'optional', 'root');
     this.addOption('pass', null, 'password to connect to the database', 'optional', '');
-    this.addOption('port', null, '[3306] port number to connect to the database', 'optional', 3306);
     this.addOption('db', null, 'database name', 'optional', '');
   }
 
@@ -29,6 +29,7 @@ class MigrateCommand extends Command {
     const workflow = new Workflow(migration);
     try {
       await workflow.start({
+        task_key: 'migrate_logs',
         action: args.action,
         config: {
           dir: args.dir
