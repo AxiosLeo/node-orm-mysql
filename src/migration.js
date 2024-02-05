@@ -58,7 +58,9 @@ async function init(context) {
     const connect = require(connectPath);
     _assign(context.connection, connect);
   }
-  context.task_key = 'migrate_' + context.connection.database;
+  if (!context.task_key) {
+    context.task_key = 'migrate_' + context.connection.database;
+  }
   let globalConn = createClient({
     ...context.connection,
     database: 'mysql'
