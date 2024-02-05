@@ -1,6 +1,7 @@
 'use strict';
 
 const { Builder } = require('./builder');
+const is = require('@axiosleo/cli-tool/src/helper/is');
 
 /**
  * 
@@ -10,6 +11,9 @@ const { Builder } = require('./builder');
  * @returns 
  */
 const _query = (conn, options, opt = null) => {
+  if (is.empty(options)) {
+    options = { driver: 'mysql' };
+  }
   switch (options.driver) {
     case 'mysql': {
       if (opt === null) {
