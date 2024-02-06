@@ -9,7 +9,8 @@ class GenerateCommand extends Command {
   constructor() {
     super({
       name: 'generate',
-      desc: ''
+      desc: '',
+      alias: ['gen']
     });
     this.addArgument('name', 'Migration name', 'required', '');
     this.addArgument('dir', 'Migration scripts directory', 'optional', process.cwd());

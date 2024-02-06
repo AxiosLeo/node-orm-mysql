@@ -199,6 +199,8 @@ try {
 
 > [Migration examples](./examples/migration/).
 
+- Migration script example
+
 ```javascript
 'use strict';
 
@@ -229,13 +231,29 @@ function up(migration) {
  * @param {import('@axiosleo/orm-mysql').MigrationInterface} migration
  */
 function down(migration) {
-  migration.dropDatabase({ database_name: 'table1' });
+  migration.dropTable('table1');
 }
 
 module.exports = {
   up,
   down
 };
+```
+
+- Generate migration script
+
+```bash
+orm-mysql generate -h
+
+Usage:
+
+  generate [--] [name] <dir>
+  gen
+
+Arguments:
+
+ *name    Migration name
+  dir     Migration scripts directory
 ```
 
 - Run migration
