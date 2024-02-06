@@ -197,6 +197,8 @@ try {
 
 ### Migration
 
+> [Migration examples](./examples/migration/).
+
 ```javascript
 'use strict';
 
@@ -218,6 +220,34 @@ module.exports = {
   up,
   down
 };
+```
+
+- Run migration
+
+```bash
+orm-mysql migrate -h
+
+Description:
+
+  Migrate database
+
+Usage:
+
+  migrate [options] [--] [action] <dir>
+
+Options:
+
+  -d, --debug    [false] debug mode
+  --host         [localhost] mysql host
+  --port         [3306] port number to connect to the database
+  --user         [root] username for connect to the database
+  --pass         password to connect to the database
+  --db           database name
+
+Arguments:
+
+ *action         up or down
+  dir            migration directory
 ```
 
 ### Custom query driver
