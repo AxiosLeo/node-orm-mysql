@@ -206,14 +206,30 @@ try {
  * @param {import('@axiosleo/orm-mysql').MigrationInterface} migration
  */
 function up(migration) {
-  migration.createDatabase({ database_name: 'demo' });
+  migration.createTable('table1', {
+    field1: {
+      type: 'varchar',
+      length: 64,
+      allowNull: false,
+      uniqIndex: true
+    },
+    field2: {
+      type: 'VARCHAR',
+      allowNull: false
+    },
+    field3: {
+      type: 'VARCHAR',
+      comment: 'comment',
+      allowNull: false
+    },
+  });
 }
 
 /**
  * @param {import('@axiosleo/orm-mysql').MigrationInterface} migration
  */
 function down(migration) {
-  migration.dropDatabase({ database_name: 'demo' });
+  migration.dropDatabase({ database_name: 'table1' });
 }
 
 module.exports = {
