@@ -1,9 +1,13 @@
 'use strict';
 
-const expect = require('chai').expect;
+let expect = null;
 const { Builder } = require('../src/builder');
 
 describe('builder test case', () => {
+  before(async function () {
+    const chai = await import('chai');
+    expect = chai.expect;
+  })
   it('select table should be ok', () => {
     const options = {
       sql: '',

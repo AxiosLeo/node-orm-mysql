@@ -1,9 +1,13 @@
 'use strict';
 
-const expect = require('chai').expect;
+let expect = null;
 const Hook = require('../src/hook');
 
 describe('hook test case', () => {
+  before(async function () {
+    const chai = await import('chai');
+    expect = chai.expect;
+  })
   it('pre', () => {
     const callback = (...args) => {
       expect(true).to.be.true;

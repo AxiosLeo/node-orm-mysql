@@ -1,11 +1,15 @@
 'use strict';
 
-const expect = require('chai').expect;
+let expect = null;
 const { Builder } = require('../src/builder');
 const { QueryOperator } = require('../src/operator');
 const { TransactionHandler } = require('../src/transaction');
 
 describe('operator test case', () => {
+  before(async function () {
+    const chai = await import('chai');
+    expect = chai.expect;
+  })
   it('find', async () => {
     const conn = {
       query: async (_, callback) => {
