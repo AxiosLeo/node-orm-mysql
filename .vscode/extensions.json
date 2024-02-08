@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "vscode-icons-team.vscode-icons",
+    "formulahendry.docker-extension-pack",
+    "mikestead.dotenv",
+    "dbaeumer.vscode-eslint",
+    "codezombiech.gitignore",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "wayou.vscode-todo-highlight",
+    "vue.vscode-typescript-vue-plugin",
+    "octref.vetur",
+    "pflannery.vscode-versionlens"
+  ]
+}
