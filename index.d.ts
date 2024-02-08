@@ -53,9 +53,12 @@ export type QueryOperatorBaseOptions = {
   queryHandler?: QueryHandler;
 };
 
+export type AttrSubQuery = () => Query;
+export type Attr = string | AttrSubQuery;
+
 export type QueryOperatorOptions = QueryOperatorBaseOptions & {
   conditions: WhereOptions[];
-  attrs?: string[] | null;
+  attrs?: Attr[] | null;
   orders: OrderByOptions[];
   pageLimit?: number;
   pageOffset?: number;
@@ -92,7 +95,7 @@ export declare class Query {
 
   andWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 
-  attr(...attr: string[]): this;
+  attr(...attr: Attr[]): this;
 
   orderBy(sortField: string, sortOrder: 'asc' | 'desc'): this;
 
