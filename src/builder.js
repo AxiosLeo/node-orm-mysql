@@ -37,6 +37,7 @@ class Builder {
           if (attr instanceof Function) {
             const query = attr();
             const builder = new Builder(query.options);
+            this.values = this.values.concat(builder.values);
             let s = `(${builder.sql})`;
             if (query.alias) {
               return query.alias.indexOf(' ') > -1 ? s + ' ' + this._buildFieldKey(query.alias)
@@ -48,9 +49,9 @@ class Builder {
         });
         emit(tmp, `SELECT ${attrs.length ? attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
         emit(tmp, this._buildJoins(options.joins));
-        emit(tmp, this._buildContidion(options.conditions));
+        emit(tmp, this._buildCondition(options.conditions));
         emit(tmp, this._buildOrders(options.orders));
-        emit(tmp, this._buldPagenation(options.pageLimit, options.pageOffset));
+        emit(tmp, this._buildPagination(options.pageLimit, options.pageOffset));
         if (options.having && options.having.length && !options.groupField.length) {
           throw new Error('having is not allowed without "GROUP BY"');
         }
@@ -76,7 +77,7 @@ class Builder {
         if (!options.conditions.length) {
           throw new Error('At least one condition is required for update operation');
         }
-        emit(tmp, this._buildContidion(options.conditions));
+        emit(tmp, this._buildCondition(options.conditions));
         sql = tmp.join(' ');
         break;
       }
@@ -85,14 +86,14 @@ class Builder {
         if (!options.conditions.length) {
           throw new Error('At least one where condition is required for delete operation');
         }
-        emit(tmp, this._buildContidion(options.conditions));
+        emit(tmp, this._buildCondition(options.conditions));
         sql = tmp.join(' ');
         break;
       }
       case 'count': {
         emit(tmp, `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`);
         emit(tmp, this._buildJoins(options.joins));
-        emit(tmp, this._buildContidion(options.conditions));
+        emit(tmp, this._buildCondition(options.conditions));
         if (options.having && options.having.length && !options.groupField.length) {
           throw new Error('having is not allowed without "GROUP BY"');
         }
@@ -122,7 +123,7 @@ class Builder {
     if (!having || !having.length) {
       return '';
     }
-    return this._buildContidion(having, 'HAVING ');
+    return this._buildCondition(having, 'HAVING ');
   }
 
   _buildJoins(joins = []) {
@@ -130,7 +131,7 @@ class Builder {
       let { table, alias, self_column, foreign_column, join_type } = j;
       if (table instanceof Query) {
         if (!alias) {
-          throw new Error('Alias is required for subquery');
+          throw new Error('Alias is required for subQuery');
         }
         const builder = new Builder(table.options);
         this.values = this.values.concat(builder.values);
@@ -186,7 +187,7 @@ class Builder {
     }).join(' , ');
   }
 
-  _buldPagenation(limit, offset) {
+  _buildPagination(limit, offset) {
     let sql = '';
     if (limit) {
       sql += ` LIMIT ${limit}`;
@@ -227,7 +228,7 @@ class Builder {
     return null;
   }
 
-  _buildContidionIn(condition, isNot = false) {
+  _buildConditionIn(condition, isNot = false) {
     if (Array.isArray(condition.value) && !condition.value.length) {
       throw new Error('Value must not be empty for "IN" condition');
     } else if (!Array.isArray(condition.value) && !(condition.value instanceof Query)) {
@@ -244,7 +245,7 @@ class Builder {
     return res ? `${this._buildFieldKey(condition.key)} ${opt} (${res})` : `${this._buildFieldKey(condition.key)} ${opt} (?)`;
   }
 
-  _buildContidion(conditions, prefix) {
+  _buildCondition(conditions, prefix) {
     if (!conditions || !conditions.length) {
       return '';
     }
@@ -265,7 +266,7 @@ class Builder {
         }
         if (c.key && c.key.indexOf('->') !== -1) {
           const keys = c.key.split('->');
-          return this._buildContidion([
+          return this._buildCondition([
             {
               key: `JSON_EXTRACT(${this._buildFieldKey(keys[0])}, '${keys[1]}')`,
               opt: c.opt,
@@ -275,11 +276,11 @@ class Builder {
         }
         const opt = c.opt.toLowerCase();
         if (opt === 'in') {
-          return this._buildContidionIn(c);
+          return this._buildConditionIn(c);
         } else if (opt === 'not in') {
-          return this._buildContidionIn(c, true);
+          return this._buildConditionIn(c, true);
         } else if (opt === 'group' && Array.isArray(c.value)) {
-          return `(${this._buildContidion(c.value, '')})`;
+          return `(${this._buildCondition(c.value, '')})`;
         }
         let res = this._buildConditionValues(c.value);
         if (!is.empty(res)) {
