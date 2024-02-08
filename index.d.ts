@@ -54,7 +54,7 @@ export type QueryOperatorBaseOptions = {
 };
 
 export type AttrSubQuery = () => Query;
-export type Attr = string | AttrSubQuery;
+export type Attr = string | AttrSubQuery | Query;
 
 export type QueryOperatorOptions = QueryOperatorBaseOptions & {
   conditions: WhereOptions[];

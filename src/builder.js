@@ -35,13 +35,15 @@ class Builder {
         options.attrs = options.attrs || [];
         const attrs = options.attrs.map((attr) => {
           if (attr instanceof Function) {
-            const query = attr();
-            const builder = new Builder(query.options);
+            attr = attr();
+          }
+          if (attr instanceof Query) {
+            const builder = new Builder(attr.options);
             this.values = this.values.concat(builder.values);
             let s = `(${builder.sql})`;
-            if (query.alias) {
-              return query.alias.indexOf(' ') > -1 ? s + ' ' + this._buildFieldKey(query.alias)
-                : s + ' AS ' + this._buildFieldKey(query.alias);
+            if (attr.alias) {
+              return attr.alias.indexOf(' ') > -1 ? s + ' ' + this._buildFieldKey(attr.alias)
+                : s + ' AS ' + this._buildFieldKey(attr.alias);
             }
             return s;
           }

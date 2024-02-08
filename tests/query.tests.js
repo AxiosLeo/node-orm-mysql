@@ -165,12 +165,14 @@ describe('query test case', () => {
   });
 
   it('attr is sub query', () => {
+    const query = new Query('count', '> 0 AS has_children');
+    query.table('orgs', 's2').where('s2.parent_id', '`s1`.`id`');
     let sql = handler.table('orgs', 's1')
-      .attr('s1.id', 's1.name', 's1.parent_id', () => {
-        const query = new Query('count', '> 0 AS has_children');
-        query.table('orgs', 's2').where('s2.parent_id', '`s1`.`id`');
-        return query;
-      }).buildSql('select').sql;
+      .attr('s1.id', 's1.name', 's1.parent_id', query).buildSql('select').sql;
+    expect(sql).to.be.equal('SELECT `s1`.`id`,`s1`.`name`,`s1`.`parent_id`,(SELECT COUNT(*) AS count FROM `orgs` AS `s2` WHERE `s2`.`parent_id` = `s1`.`id`) > 0 AS `has_children` FROM `orgs` AS `s1`');
+
+    sql = handler.table('orgs', 's1')
+      .attr('s1.id', 's1.name', 's1.parent_id', () => query).buildSql('select').sql;
     expect(sql).to.be.equal('SELECT `s1`.`id`,`s1`.`name`,`s1`.`parent_id`,(SELECT COUNT(*) AS count FROM `orgs` AS `s2` WHERE `s2`.`parent_id` = `s1`.`id`) > 0 AS `has_children` FROM `orgs` AS `s1`');
   });
 });
