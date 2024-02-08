@@ -159,4 +159,14 @@ describe('query test case', () => {
     const query = hanlder.table('users', 'u').attr(...[]).where('id', 1).whereConditions().limit(2).offset(1);
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?  LIMIT 2 OFFSET 1');
   });
+
+  it('attr is sub query', () => {
+    let sql = hanlder.table('orgs', 's1')
+      .attr('s1.id', 's1.name', 's1.parent_id', () => {
+        const query = new Query('count', '> 0 AS has_children');
+        query.table('orgs', 's2').where('s2.parent_id', '`s1`.`id`');
+        return query;
+      }).buildSql('select').sql;
+    expect(sql).to.be.equal('SELECT `s1`.`id`,`s1`.`name`,`s1`.`parent_id`,(SELECT COUNT(*) AS count FROM `orgs` AS `s2` WHERE `s2`.`parent_id` = `s1`.`id`) > 0 AS `has_children` FROM `orgs` AS `s1`');
+  });
 });

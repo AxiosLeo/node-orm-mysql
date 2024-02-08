@@ -70,7 +70,9 @@ export type QueryOperatorOptions = QueryOperatorBaseOptions & {
 }
 
 export declare class Query {
-  constructor(operator?: OperatorType);
+  options: QueryOperatorOptions;
+
+  constructor(operator?: OperatorType, alias?: string | null);
 
   table(tableName: string, alias: string | null): this;
 

@@ -32,7 +32,21 @@ class Builder {
       }
       // eslint-disable-next-line no-fallthrough
       case 'select': {
-        emit(tmp, `SELECT ${options.attrs ? options.attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
+        options.attrs = options.attrs || [];
+        const attrs = options.attrs.map((attr) => {
+          if (attr instanceof Function) {
+            const query = attr();
+            const builder = new Builder(query.options);
+            let s = `(${builder.sql})`;
+            if (query.alias) {
+              return query.alias.indexOf(' ') > -1 ? s + ' ' + this._buildFieldKey(query.alias)
+                : s + ' AS ' + this._buildFieldKey(query.alias);
+            }
+            return s;
+          }
+          return attr;
+        });
+        emit(tmp, `SELECT ${attrs.length ? attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
         emit(tmp, this._buildJoins(options.joins));
         emit(tmp, this._buildContidion(options.conditions));
         emit(tmp, this._buildOrders(options.orders));
@@ -199,6 +213,11 @@ class Builder {
   }
 
   _buildConditionValues(val) {
+    if (is.string(val)) {
+      if (val.startsWith('`') && val.endsWith('`')) {
+        return val;
+      }
+    }
     if (val instanceof Query) {
       const builder = new Builder(val.options);
       this.values = this.values.concat(builder.values);
@@ -263,7 +282,13 @@ class Builder {
           return `(${this._buildContidion(c.value, '')})`;
         }
         let res = this._buildConditionValues(c.value);
-        return res ? `${this._buildFieldKey(c.key)} ${c.opt} (${res})` : `${this._buildFieldKey(c.key)} ${c.opt} ?`;
+        if (!is.empty(res)) {
+          if (res.startsWith('`') && res.endsWith('`')) {
+            return `${this._buildFieldKey(c.key)} ${c.opt} ${res}`;
+          }
+          return `${this._buildFieldKey(c.key)} ${c.opt} (${res})`;
+        }
+        return `${this._buildFieldKey(c.key)} ${c.opt} ?`;
       }).join('')}`;
     }
     return sql;

@@ -1,7 +1,7 @@
 'use strict';
 
 class Query {
-  constructor(operator = 'select') {
+  constructor(operator = 'select', alias = null) {
     this.options = {
       driver: 'mysql',
       queryHandler: null,
@@ -16,6 +16,7 @@ class Query {
       suffix: null,
       transaction: false
     };
+    this.alias = alias || null;
   }
 
   table(tableName, alias) {
