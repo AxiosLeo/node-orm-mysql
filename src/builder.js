@@ -350,7 +350,7 @@ class ManageSQLBuilder extends Builder {
       table: 'required|string',
       name: 'required|string',
       type: 'required|string',
-      length: 'number',
+      length: 'integer',
       unsigned: 'boolean',
       allowNull: 'boolean',
       default: 'string',
@@ -470,7 +470,6 @@ class ManageSQLBuilder extends Builder {
     _validate(options, {
       name: 'required|string',
       type: 'required|string',
-      default: 'string',
       onUpdate: 'string',
       length: 'integer',
       comment: 'string',
