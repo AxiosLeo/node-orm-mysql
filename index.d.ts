@@ -38,13 +38,14 @@ export interface OrderByOptions {
 
 export type OperatorType = 'select' | 'find' | 'insert' | 'update' | 'delete' | 'count';
 export type CascadeType = 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action';
+export type JoinType = 'left' | 'right' | 'inner' | 'LEFT' | 'RIGHT' | 'INNER';
 
 export interface JoinOption {
   table: string | Query;
   table_alias?: string;
   self_column?: string;
   foreign_column?: string;
-  join_type?: 'left' | 'right' | 'inner';
+  join_type?: JoinType;
   on?: string;
 }
 
@@ -113,6 +114,12 @@ export declare class Query {
   set(data: any): this;
 
   join(opt: JoinOption): this;
+
+  leftJoin(table: string, on: string, options?: { alias?: string }): this;
+
+  rightJoin(table: string, on: string, options?: { alias?: string }): this;
+
+  innerJoin(table: string, on: string, options?: { alias?: string }): this;
 }
 
 export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | MySQLQueryResult;

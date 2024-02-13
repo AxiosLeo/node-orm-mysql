@@ -1,5 +1,20 @@
 'use strict';
 
+const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
+const { _validate } = require('./utils');
+
+function joinOn(table, on, options = {}) {
+  let o = _assign({ alias: null, join_type: 'INNER', table, on }, options);
+  if (!table) {
+    throw new Error('table is required');
+  }
+  if (!on) {
+    throw new Error('on is required');
+  }
+  this.options.joins.push(o);
+  return this;
+}
+
 class Query {
   constructor(operator = 'select', alias = null) {
     this.options = {
@@ -164,44 +179,32 @@ class Query {
    * @returns 
    */
   join(opt = {}) {
+    let types = ['left', 'right', 'inner'];
+    opt.join_type = opt.join_type ? opt.join_type.toLowerCase() : 'inner';
+    if (types.indexOf(opt.join_type) === -1) {
+      throw new Error('Invalid join type : ' + opt.join_type + '; only supported ' + types.join(', '));
+    }
+    _validate(opt, {
+      table: 'required',
+      self_column: 'required',
+      foreign_column: 'required_if:on',
+      join_type: [{ in: types }]
+    });
     let { table, table_alias, self_column, foreign_column, join_type } = opt;
-    if (!table) {
-      throw new Error('table is required');
-    }
-    if (!self_column) {
-      throw new Error('self_column is required');
-    }
-    if (!foreign_column) {
-      throw new Error('foreign_column is required');
-    }
-    if (join_type && ['left', 'right', 'inner'].indexOf(join_type) === -1) {
-      throw new Error('Invalid join type : ' + join_type + '; only supported left, right, inner');
-    }
     this.options.joins.push({ table, alias: table_alias, self_column, foreign_column, join_type });
     return this;
   }
 
-  joinOn(table, alias, on, type = 'LEFT') {
-    if (!table) {
-      throw new Error('table is required');
-    }
-    if (!on) {
-      throw new Error('on is required');
-    }
-    this.options.joins.push({ table, alias, on, join_type: type });
-    return this;
+  leftJoin(table, on, options = {}) {
+    return joinOn.call(this, table, on, { ...options, join_type: 'LEFT' });
   }
 
-  leftJoin(table, alias, on) {
-    return this.joinOn(table, alias, on, 'LEFT');
+  rightJoin(table, on, options = {}) {
+    return joinOn.call(this, table, on, { ...options, join_type: 'RIGHT' });
   }
 
-  rightJoin(table, alias, on) {
-    return this.joinOn(table, alias, on, 'RIGHT');
-  }
-
-  innerJoin(table, alias, on) {
-    return this.joinOn(table, alias, on, 'INNER');
+  innerJoin(table, on, options = {}) {
+    return joinOn.call(this, table, on, { ...options, join_type: 'INNER' });
   }
 }
 
