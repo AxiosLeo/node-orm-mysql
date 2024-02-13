@@ -5,12 +5,15 @@ import {
   PoolOptions,
   QueryOptions,
   RowDataPacket,
+  ResultSetHeader,
   ConnectionOptions
 } from 'mysql2';
 
 import {
   Connection as PromiseConnection,
 } from 'mysql2/promise';
+
+type MySQLQueryResult = OkPacket | ResultSetHeader;
 
 export type Clients = {
   [key: string]: Connection | Pool
@@ -34,13 +37,15 @@ export interface OrderByOptions {
 }
 
 export type OperatorType = 'select' | 'find' | 'insert' | 'update' | 'delete' | 'count';
+export type CascadeType = 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action';
 
 export interface JoinOption {
   table: string | Query;
   table_alias?: string;
-  self_column: string;
-  foreign_column: string;
+  self_column?: string;
+  foreign_column?: string;
   join_type?: 'left' | 'right' | 'inner';
+  on?: string;
 }
 
 export interface TableOption {
@@ -110,7 +115,7 @@ export declare class Query {
   join(opt: JoinOption): this;
 }
 
-export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | OkPacket;
+export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | MySQLQueryResult;
 
 export declare class QueryOperator extends Query {
   conn: Connection | Pool;
@@ -126,9 +131,9 @@ export declare class QueryOperator extends Query {
 
   find<T>(): Promise<T>;
 
-  update(data?: any): Promise<OkPacket>;
+  update(data?: any): Promise<MySQLQueryResult>;
 
-  insert(data?: any): Promise<OkPacket>;
+  insert(data?: any): Promise<MySQLQueryResult>;
 
   count(): Promise<number>;
 
@@ -137,7 +142,7 @@ export declare class QueryOperator extends Query {
    * @param id 
    * @param index_field_name default is 'id'
    */
-  delete(id?: number, index_field_name?: string): Promise<OkPacket>;
+  delete(id?: number, index_field_name?: string): Promise<MySQLQueryResult>;
 }
 
 export declare class QueryHandler {
@@ -165,7 +170,7 @@ export declare class QueryHandler {
    * @param data 
    * @param condition 
    */
-  upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
+  upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<MySQLQueryResult>;
 
   /**
  * @param database default is options.database
@@ -211,7 +216,7 @@ export declare class TransactionHandler {
 
   rollback(): Promise<void>;
 
-  upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<OkPacket>;
+  upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<MySQLQueryResult>;
 }
 
 export function createClient(options: ConnectionOptions, name?: string | null | undefined): Connection;
@@ -319,12 +324,6 @@ interface CreateIndexOptions {
   spatial?: boolean
 }
 
-export type ManageBuilderOptions = {
-  operator: 'create' | 'drop' | 'alter';
-  columns: Record<string, ColumnItem>;
-  target: 'table' | 'column' | 'index' | 'foreign_key';
-}
-
 export declare class MigrationInterface {
 
   /**
@@ -348,7 +347,7 @@ export declare class MigrationInterface {
     unsigned?: boolean,
     allowNull?: boolean,
     default?: string | number | boolean | null | 'timestamp',
-    onUpdate?: string,
+    onUpdate?: boolean,
     comment?: string,
     autoIncrement?: boolean,
     primaryKey?: boolean,
@@ -370,8 +369,8 @@ export declare class MigrationInterface {
     reference: {
       tableName: string,
       columnName: string,
-      onDelete?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action',
-      onUpdate?: 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'NO ACTION' | 'restrict' | 'cascade' | 'set null' | 'no action',
+      onDelete?: CascadeType,
+      onUpdate?: CascadeType,
     }
   }): void;
 
@@ -383,6 +382,3 @@ export declare class MigrationInterface {
 
   dropForeignKey(foreign_key: string, tableName: string): void;
 }
-
-export declare function up(migration: MigrationInterface): Promise<void>;
-export declare function down(migration: MigrationInterface): Promise<void>;
