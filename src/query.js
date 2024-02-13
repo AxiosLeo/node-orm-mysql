@@ -180,6 +180,29 @@ class Query {
     this.options.joins.push({ table, alias: table_alias, self_column, foreign_column, join_type });
     return this;
   }
+
+  joinOn(table, alias, on, type = 'LEFT') {
+    if (!table) {
+      throw new Error('table is required');
+    }
+    if (!on) {
+      throw new Error('on is required');
+    }
+    this.options.joins.push({ table, alias, on, join_type: type });
+    return this;
+  }
+
+  leftJoin(table, alias, on) {
+    return this.joinOn(table, alias, on, 'LEFT');
+  }
+
+  rightJoin(table, alias, on) {
+    return this.joinOn(table, alias, on, 'RIGHT');
+  }
+
+  innerJoin(table, alias, on) {
+    return this.joinOn(table, alias, on, 'INNER');
+  }
 }
 
 module.exports = Query;
