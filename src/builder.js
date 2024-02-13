@@ -17,6 +17,8 @@ const emit = (arr, res) => {
   }
 };
 
+const operations = ['find', 'select', 'insert', 'update', 'delete', 'count', 'manage'];
+
 class Builder {
   /**
    * @param {import('../index').QueryOperatorOptions} options 
@@ -73,6 +75,9 @@ class Builder {
         break;
       }
       case 'update': {
+        if (is.invalid(options.data)) {
+          throw new Error('Data is required for update operation');
+        }
         const fields = this._buildValues(options.data);
         emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
         emit(tmp, `SET ${fields.map((f) => `\`${f}\` = ?`).join(',')}`);
@@ -93,11 +98,15 @@ class Builder {
         break;
       }
       case 'count': {
-        emit(tmp, `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`);
+        let fieldName = 'count';
+        if (!is.empty(options.attrs)) {
+          fieldName = this._buildFieldKey(options.attrs[0]);
+        }
+        emit(tmp, `SELECT COUNT(*) AS ${fieldName} FROM ${this._buildTables(options.tables)}`);
         emit(tmp, this._buildJoins(options.joins));
         emit(tmp, this._buildCondition(options.conditions));
         if (options.having && options.having.length && !options.groupField.length) {
-          throw new Error('having is not allowed without "GROUP BY"');
+          throw new Error('"HAVING" is not allowed without "GROUP BY"');
         }
         emit(tmp, this._buildGroupField(options.groupField));
         emit(tmp, this._buildHaving(options.having));
@@ -156,7 +165,11 @@ class Builder {
           sql = 'INNER JOIN ';
           break;
       }
-      sql += `${table} ON ${this._buildFieldWithTableName(self_column)} = ${this._buildFieldWithTableName(foreign_column)}`;
+      if (j.on) {
+        sql += `${table} ON ${j.on}`;
+      } else {
+        sql += `${table} ON ${this._buildFieldWithTableName(self_column)} = ${this._buildFieldWithTableName(foreign_column)}`;
+      }
       return sql;
     }).join(' ');
   }
@@ -328,21 +341,24 @@ class Builder {
 
 class ManageSQLBuilder extends Builder {
   /**
-   * @param {import('../index').ManageBuilderOptions} options 
+   * @param {import('./migration').ManageBuilderOptions} options 
    */
   constructor(options) {
-    super({ operator: 'manage' });
-    // const emitter = new Emitter();
-    const action = `${options.operator}_${options.target}`;
-    const method = _caml_case(action, false);
-    if (!this[method]) {
-      throw new Error(`'${options.target}' Unsupported '${options.operator}' operation.`);
-    }
-    try {
-      this.sql = this[method].call(this, options);
-    } catch (err) {
-      debug.dump(`${options.operator} ${options.target} error: ${err.message}`);
-      throw err;
+    if (operations.indexOf(options.operator) > -1) {
+      super(options);
+    } else {
+      super({ operator: 'manage' });
+      const action = `${options.operator}_${options.target}`;
+      const method = _caml_case(action, false);
+      if (!this[method]) {
+        throw new Error(`'${options.target}' Unsupported '${options.operator}' operation.`);
+      }
+      try {
+        this.sql = this[method].call(this, options);
+      } catch (err) {
+        debug.dump(`${options.operator} ${options.target} error: ${err.message}`);
+        throw err;
+      }
     }
   }
 
