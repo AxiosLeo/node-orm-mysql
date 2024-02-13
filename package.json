@@ -22,6 +22,9 @@
     "clear": "rm -rf ./nyc_output ./coverage && rm -rf ./node_modules && npm cache clean --force"
   },
   "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "@axiosleo/cli-tool": "^1.6.1",
     "mysql2": "^3.9.1",
