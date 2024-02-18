@@ -114,16 +114,16 @@ async function _exec(context, queries) {
   try {
     const files = Object.keys(queries);
     await _foreach(files, async (file) => {
-      const hasMigarated = await transaction.table(context.task_key)
+      const hasMigrated = await transaction.table(context.task_key)
         .where('migration_key', context.task_key)
         .where('filename', file)
         .count();
-      if (context.action === 'up' && hasMigarated) {
-        if (hasMigarated) {
+      if (context.action === 'up' && hasMigrated) {
+        if (hasMigrated) {
           printer.yellow(`Migration file "${file}" has been migrated.`).println();
           return;
         }
-      } else if (context.action === 'down' && !hasMigarated) {
+      } else if (context.action === 'down' && !hasMigrated) {
         return;
       }
 
