@@ -98,11 +98,7 @@ class Builder {
         break;
       }
       case 'count': {
-        let fieldName = 'count';
-        if (!is.empty(options.attrs)) {
-          fieldName = this._buildFieldKey(options.attrs[0]);
-        }
-        emit(tmp, `SELECT COUNT(*) AS ${fieldName} FROM ${this._buildTables(options.tables)}`);
+        emit(tmp, `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`);
         emit(tmp, this._buildJoins(options.joins));
         emit(tmp, this._buildCondition(options.conditions));
         if (options.having && options.having.length && !options.groupField.length) {
