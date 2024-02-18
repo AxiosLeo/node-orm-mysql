@@ -311,7 +311,13 @@ interface ColumnItem {
   comment?: string,
   autoIncrement?: boolean,
   primaryKey?: boolean,
-  uniqIndex?: boolean
+  uniqIndex?: boolean,
+  references?: {
+    table: string,
+    column: string,
+    onDelete?: CascadeType,
+    onUpdate?: CascadeType
+  }
 }
 
 interface CreateColumnOptions {

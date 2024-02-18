@@ -380,7 +380,7 @@ class ManageSQLBuilder extends Builder {
       engine: 'InnoDB',
       charset: 'utf8mb4'
     }, options, {
-      columns: this.createColumns(columns)
+      columns: this.createColumns(columns, options.name)
     });
     return _render('CREATE TABLE `${name}` ( ${columns} ) ENGINE=${engine} DEFAULT CHARSET=${charset}', options);
   }
@@ -482,15 +482,38 @@ class ManageSQLBuilder extends Builder {
     return _render('ALTER TABLE `${table}` DROP FOREIGN KEY `${name}`', options);
   }
 
-  createColumns(columns) {
+  createColumns(columns, table) {
     let primaryColumn = null;
     let indexColumns = [];
+    let referenceColumns = [];
     let strs = columns.map(column => {
       let str = this.renderSingleColumn(column);
       if (column.primaryKey === true) {
         primaryColumn = column;
       } else if (column.uniqIndex === true) {
         indexColumns.push(column);
+      }
+      if (column.reference) {
+        column.reference.onDelete = column.reference.onDelete ? column.reference.onDelete.toUpperCase() : 'NO ACTION';
+        column.reference.onUpdate = column.reference.onUpdate ? column.reference.onUpdate.toUpperCase() : 'NO ACTION';
+
+        _validate(column.reference, {
+          table: 'required|string',
+          column: 'required|string',
+          onDelete: [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }],
+          onUpdate: [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }]
+        });
+        referenceColumns.push({
+          name: 'fk_' + table + '_' + column.name,
+          table,
+          column: column.name,
+          reference: {
+            tableName: column.reference.table,
+            columnName: column.reference.column,
+            onDelete: column.reference.onDelete,
+            onUpdate: column.reference.onUpdate
+          }
+        });
       }
       return str;
     });
@@ -501,6 +524,11 @@ class ManageSQLBuilder extends Builder {
     if (indexColumns.length > 0) {
       indexColumns.forEach((i) => {
         strs.push(`UNIQUE INDEX \`${i.name}\` (\`${i.name}\` ASC) VISIBLE`);
+      });
+    }
+    if (referenceColumns.length) {
+      referenceColumns.forEach((r) => {
+        strs.push(this.createForeignKey(r));
       });
     }
     return strs.join(', ');
