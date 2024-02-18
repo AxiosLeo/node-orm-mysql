@@ -69,10 +69,18 @@ function up(migration) {
     account_id: {
       type: 'int',
       allowNull: false,
+      references: {
+        table: 'account',
+        column: 'id'
+      }
     },
     org_id: {
       type: 'int',
       allowNull: false,
+      references: {
+        table: 'orgs',
+        column: 'id'
+      }
     },
     type: {
       type: 'varchar',
@@ -83,24 +91,6 @@ function up(migration) {
     }
   });
   migration.createColumn('created_at', 'TIMESTAMP', 'account_orgs');
-  migration.createForeignKey({
-    tableName: 'account_orgs',
-    columnName: 'account_id',
-    reference: {
-      tableName: 'account',
-      columnName: 'id',
-      onDelete: 'CASCADE'
-    }
-  });
-  migration.createForeignKey({
-    tableName: 'account_orgs',
-    columnName: 'org_id',
-    reference: {
-      tableName: 'orgs',
-      columnName: 'id',
-      onDelete: 'CASCADE'
-    }
-  });
 }
 
 /**
