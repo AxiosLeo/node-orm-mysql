@@ -2,6 +2,7 @@
 
 const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
 const { _validate } = require('./utils');
+const is = require('@axiosleo/cli-tool/src/helper/is');
 
 function joinOn(table, on, options = {}) {
   let o = _assign({ alias: null, join_type: 'INNER', table, on }, options);
@@ -124,6 +125,10 @@ class Query {
   }
 
   attr(...attr) {
+    if (attr.length === 1 && is.array(attr)) {
+      this.options.attrs = attr;
+      return this;
+    }
     if (!attr.length) {
       return this;
     }
