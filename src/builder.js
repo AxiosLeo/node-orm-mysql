@@ -150,6 +150,7 @@ class Builder {
         table = `\`${table}\``;
       }
       let sql = '';
+      join_type = join_type.toLowerCase();
       switch (join_type) {
         case 'left':
           sql = 'LEFT JOIN ';
