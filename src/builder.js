@@ -387,20 +387,9 @@ class ManageSQLBuilder extends Builder {
   }
 
   createColumn(options) {
-    _validate(options, {
-      table: 'required|string',
-      name: 'required|string',
-      type: 'required|string',
-      length: 'integer',
-      unsigned: 'boolean',
-      allowNull: 'boolean',
-      default: 'string',
-      comment: 'string',
-      autoIncrement: 'boolean',
-      primaryKey: 'boolean',
-      uniqIndex: 'boolean',
-      after: 'string'
-    });
+    if (!options.table) {
+      throw new Error('Table name is required');
+    }
     return `ALTER TABLE \`${options.table}\` ADD COLUMN ` + this.renderSingleColumn(options);
   }
 
@@ -431,6 +420,8 @@ class ManageSQLBuilder extends Builder {
   }
 
   createForeignKey(options) {
+    options.reference.onDelete = options.reference.onDelete ? options.reference.onDelete.toUpperCase() : 'NO ACTION';
+    options.reference.onUpdate = options.reference.onUpdate ? options.reference.onUpdate.toUpperCase() : 'NO ACTION';
     _validate(options, {
       name: 'required|string',
       table: 'required|string',

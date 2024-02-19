@@ -365,7 +365,7 @@ export declare class MigrationInterface {
     autoIncrement?: boolean,
     primaryKey?: boolean,
     uniqIndex?: boolean,
-    after?: string
+    after?: string,
   }): void;
 
   createIndex(tableName: string, columns: string[], options?: {
