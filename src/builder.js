@@ -371,9 +371,6 @@ class ManageSQLBuilder extends Builder {
     if (is.empty(options.columns)) {
       throw new Error('At least one column is required');
     }
-    if (!Object.values(options.columns).find(c => c.primaryKey === true)) {
-      throw new Error('At least one primary key column is required');
-    }
     let columns = Object.keys(options.columns).map(name => {
       return { name, ...options.columns[name] };
     });
@@ -550,6 +547,8 @@ class ManageSQLBuilder extends Builder {
       str += '(11)';
     } else if (type === 'VARCHAR') {
       str += '(255)';
+    } else if (type === 'TINYINT') {
+      str += '(4)';
     }
     if (options.allowNull === false) {
       str += ' NOT NULL';
