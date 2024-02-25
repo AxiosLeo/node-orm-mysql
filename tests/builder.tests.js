@@ -241,7 +241,7 @@ describe('builder test case', () => {
       groupField: ['t1.id'],
       having: [{ key: 't1.id', opt: '>', value: 1 }]
     };
-    expect((new Builder(options)).sql).to.be.equal('SELECT COUNT(*) AS `count` FROM `table1` AS `t1` GROUP BY `t1`.`id` HAVING `t1`.`id` > ?');
+    expect((new Builder(options)).sql).to.be.equal('SELECT COUNT(*) AS count FROM `table1` AS `t1` GROUP BY `t1`.`id` HAVING `t1`.`id` > ?');
   });
 
   it('build sql with invalid operator will throw error', () => {
