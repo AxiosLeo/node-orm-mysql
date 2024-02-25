@@ -240,7 +240,7 @@ export declare class Hook {
    */
   static pre: (
     callback: (options: QueryOperatorOptions) => void,
-    option: { table?: string, opt?: OperatorType }
+    option?: { table?: string, opt?: OperatorType }
   ) => string;
 
   /**
@@ -248,7 +248,7 @@ export declare class Hook {
    */
   static post: (
     callback: (options: QueryOperatorOptions, result: QueryResult | Error) => void,
-    option: { table?: string, opt?: OperatorType }
+    option?: { table?: string, opt?: OperatorType }
   ) => string;
 
   /**
