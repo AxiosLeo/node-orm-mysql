@@ -78,6 +78,17 @@ export type QueryOperatorOptions = QueryOperatorBaseOptions & {
   transaction: boolean;
 }
 
+type GroupWhereOptionsArr = [string | null, OptType, ConditionValueType | WhereOptions[] | null]
+  | [string | null, ConditionValueType | WhereOptions[]];
+
+type GroupWhereOptions = {
+  key?: string | null;
+  opt?: OptType;
+  value?: ConditionValueType | WhereOptions[] | null;
+}
+
+type GroupWhereItem = GroupWhereOptions | string | GroupWhereOptionsArr;
+
 export declare class Query {
   options: QueryOperatorOptions;
 
@@ -97,7 +108,7 @@ export declare class Query {
 
   whereConditions(...condition: WhereOptions[]): this;
 
-  groupWhere(...condition: WhereOptions[]): this;
+  groupWhere(...condition: GroupWhereItem[]): this;
 
   orWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 

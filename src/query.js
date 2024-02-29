@@ -2,6 +2,7 @@
 
 const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
 const { _validate } = require('./utils');
+const is = require('@axiosleo/cli-tool/src/helper/is');
 
 function joinOn(table, on, options = {}) {
   let o = _assign({ alias: null, join_type: 'INNER', table, on }, options);
@@ -99,7 +100,27 @@ class Query {
     }
     const condition = { key: null, opt: 'group', value: [] };
     conditions.forEach((c) => {
-      condition.value.push(c);
+      if (is.string(c)) {
+        condition.value.push({ key: null, opt: c, value: null });
+      } else if (is.object(c)) {
+        condition.value.push({
+          key: null,
+          opt: '=',
+          value: null,
+          ...c
+        });
+      } else if (is.array(c)) {
+        const [k, o, v] = c;
+        if (c.length === 2) {
+          condition.value.push({ key: k, opt: '=', value: o });
+        } else if (c.length === 3) {
+          condition.value.push({ key: k, opt: o, value: v });
+        } else {
+          throw new Error('Invalid condition: ' + c);
+        }
+      } else {
+        condition.value.push(c);
+      }
     });
     this.options.conditions.push(condition);
     return this;
