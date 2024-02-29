@@ -124,6 +124,11 @@ class QueryHandler {
     return (new QueryOperator(this.conn, this.options)).table(table, alias);
   }
 
+  tables(...tables) {
+    const operator = new QueryOperator(this.conn, this.options);
+    return operator.tables(...tables);
+  }
+
   async upsert(tableName, data, condition = {}) {
     const count = await this.table(tableName).whereObject(condition).count();
     if (count) {

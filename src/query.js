@@ -35,8 +35,13 @@ class Query {
     this.alias = alias || null;
   }
 
-  table(tableName, alias) {
-    this.options.tables.push({ tableName, alias });
+  table(table, alias) {
+    this.options.tables.push({ table, alias });
+    return this;
+  }
+
+  tables(...tables) {
+    this.options.tables = tables;
     return this;
   }
 
