@@ -49,8 +49,8 @@ export interface JoinOption {
   on?: string;
 }
 
-export interface TableOption {
-  tableName: string;
+interface TableOption {
+  table: string;
   alias: string | null;
 }
 
@@ -83,7 +83,9 @@ export declare class Query {
 
   constructor(operator?: OperatorType, alias?: string | null);
 
-  table(tableName: string, alias: string | null): this;
+  table(table: string, alias: string | null): this;
+
+  tables(...tables: TableOption[]): this;
 
   limit(limit: number): this;
 
@@ -164,6 +166,12 @@ export declare class QueryHandler {
    * @param alias 
    */
   table(table: string, alias?: string | null): QueryOperator;
+
+  /**
+   * select tables
+   * @param tables 
+   */
+  tables(...tables: TableOption[]): QueryOperator;
 
   /**
    * execute sql
