@@ -165,7 +165,7 @@ class Query {
   }
 
   groupBy(...groupField) {
-    this.options.groupField.push(...groupField);
+    this.options.groupField = groupField;
     return this;
   }
 
