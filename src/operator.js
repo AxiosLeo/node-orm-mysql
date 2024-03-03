@@ -82,7 +82,7 @@ class QueryOperator extends Query {
 
   async insert(data) {
     this.options.operator = 'insert';
-    if (data) {
+    if (typeof data !== 'undefined') {
       this.set(data);
     }
     return await this.exec();
