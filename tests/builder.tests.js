@@ -11,7 +11,7 @@ describe('builder test case', () => {
   before(async function () {
     const chai = await import('chai');
     expect = chai.expect;
-  })
+  });
   it('select table should be ok', () => {
     const options = {
       sql: '',
@@ -24,7 +24,7 @@ describe('builder test case', () => {
       groupField: [],
       having: []
     };
-    options.tables.push({ tableName: 'table1', alias: 't1' });
+    options.tables.push({ table: 'table1', alias: 't1' });
     options.operator = 'select';
     expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` AS `t1`');
   });
@@ -35,7 +35,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'select',
       data: null,
       groupField: [],
@@ -66,7 +66,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'find',
       data: null,
       groupField: [],
@@ -88,7 +88,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'select',
       data: null,
       groupField: [],
@@ -110,7 +110,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'select',
       data: null,
       groupField: [],
@@ -130,7 +130,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'select',
       data: null,
       groupField: [],
@@ -146,7 +146,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'update',
       data: null,
       groupField: [],
@@ -155,7 +155,7 @@ describe('builder test case', () => {
     expect(() => {
       (new Builder(options)).sql;
     }).to.throw('Data is required for update operation');
-  })
+  });
 
   it('update operation without condition will throw error', () => {
     const options = {
@@ -163,7 +163,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'update',
       data: { test: 123 },
       groupField: [],
@@ -172,7 +172,7 @@ describe('builder test case', () => {
     expect(() => {
       (new Builder(options)).sql;
     }).to.throw('At least one condition is required for update operation');
-  })
+  });
 
   it('delete operation without condition will throw error', () => {
     const options = {
@@ -180,7 +180,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'delete',
       data: null,
       groupField: [],
@@ -197,7 +197,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'delete',
       data: null,
       groupField: [],
@@ -217,7 +217,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'count',
       data: null,
       groupField: [],
@@ -235,7 +235,7 @@ describe('builder test case', () => {
       attrs: ['count'],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'count',
       data: null,
       groupField: ['t1.id'],
@@ -250,7 +250,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'invalid',
       data: null,
       groupField: [],
@@ -267,7 +267,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'select',
       data: null,
       groupField: [],
@@ -292,7 +292,7 @@ describe('builder test case', () => {
       values: [],
       conditions: [],
       orders: [],
-      tables: [{ tableName: 'table1', alias: 't1' }],
+      tables: [{ table: 'table1', alias: 't1' }],
       operator: 'select',
       data: null,
       groupField: [],
