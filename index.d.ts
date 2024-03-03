@@ -114,7 +114,7 @@ export declare class Query {
 
   andWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 
-  attr(...attr: Attr[] | Attr[][]): this;
+  attr(...attr: Attr[]): this;
 
   orderBy(sortField: string, sortOrder: 'asc' | 'desc'): this;
 
