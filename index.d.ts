@@ -153,7 +153,11 @@ export declare class QueryOperator extends Query {
 
   update(data?: any): Promise<MySQLQueryResult>;
 
+  update<T extends Object>(data?: T): Promise<MySQLQueryResult>;
+
   insert(data?: any): Promise<MySQLQueryResult>;
+
+  insert<T extends Object>(data?: T): Promise<MySQLQueryResult>;
 
   count(): Promise<number>;
 
