@@ -62,7 +62,10 @@ class QueryOperator extends Query {
     return res;
   }
 
-  async select() {
+  async select(...attrs) {
+    if (attrs.length > 0) {
+      this.options.attrs = attrs;
+    }
     this.options.operator = 'select';
     return await this.exec();
   }

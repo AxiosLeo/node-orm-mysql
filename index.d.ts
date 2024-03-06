@@ -147,7 +147,7 @@ export declare class QueryOperator extends Query {
 
   exec(): Promise<QueryResult>;
 
-  select<T>(): Promise<T[]>;
+  select<T>(...attrs: string[]): Promise<T[]>;
 
   find<T>(): Promise<T>;
 
