@@ -10,14 +10,26 @@ describe('query test case', () => {
   before(async function () {
     const chai = await import('chai');
     expect = chai.expect;
-  })
+  });
   /**
    * @type {QueryHandler}
    */
   let handler;
   beforeEach(() => {
     mm(mysql, 'createConnection', (options) => {
-      return {};
+      return {
+        query: (opt, callback) => {
+          if (opt.sql.indexOf('COUNT(*)') < 0) {
+            if (opt.sql.indexOf('SELECT') < 0) {
+              callback(null, { affectedRows: 1 });
+              return;
+            }
+            callback(null, []);
+            return;
+          }
+          callback(null, [{ count: 1 }]);
+        }
+      };
     });
     const conn = mysql.createConnection({});
     handler = new QueryHandler(conn);
@@ -174,5 +186,10 @@ describe('query test case', () => {
     sql = handler.table('orgs', 's1')
       .attr('s1.id', 's1.name', 's1.parent_id', () => query).buildSql('select').sql;
     expect(sql).to.be.equal('SELECT `s1`.`id`,`s1`.`name`,`s1`.`parent_id`,(SELECT COUNT(*) AS count FROM `orgs` AS `s2` WHERE `s2`.`parent_id` = `s1`.`id`) > 0 AS `has_children` FROM `orgs` AS `s1`');
+  });
+
+  it('upsert row', async () => {
+    const res = await handler.table('users', 'u').upsertRow({ id: 1, name: 'leo' }, { id: 1 });
+    expect(res.affectedRows).to.be.equal(1);
   });
 });

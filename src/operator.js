@@ -108,12 +108,21 @@ class QueryOperator extends Query {
     if (conditions.length === 0) {
       throw new Error('conditions is required');
     }
-    const query = new QueryOperator(this.conn, this.options);
-    const count = await query.whereConditions(...conditions).count();
-    if (count) {
-      return await query.whereConditions(...conditions).update(data);
+    if (!this.options.tables[0]) {
+      throw new Error('table is required');
     }
-    return await query.insert(data);
+    const query = new QueryOperator(this.conn, this.options);
+    const table = this.options.tables[0].table;
+    const alias = this.options.tables[0].alias;
+    const count = await query.table(table, alias)
+      .whereConditions(...conditions)
+      .count();
+    if (count) {
+      return await query.table(table, alias)
+        .whereConditions(...conditions)
+        .update(data);
+    }
+    return await query.table(this.options.tables[0]).insert(data);
   }
 }
 
@@ -144,6 +153,13 @@ class QueryHandler {
     return operator.tables(...tables);
   }
 
+  /**
+   * @deprecated
+   * @param {*} tableName 
+   * @param {*} data 
+   * @param {*} condition 
+   * @returns 
+   */
   async upsert(tableName, data, condition = {}) {
     const count = await this.table(tableName).whereObject(condition).count();
     if (count) {
