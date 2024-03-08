@@ -1,9 +1,11 @@
 'use strict';
 
+const os = require('os');
 const { Builder } = require('./builder');
 const Query = require('./query');
 const Hook = require('./hook');
 const { _query } = require('./core');
+const { printer } = require('@axiosleo/cli-tool');
 
 class QueryOperator extends Query {
   /**
@@ -56,6 +58,18 @@ class QueryOperator extends Query {
       }
       Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, res);
     } catch (err) {
+      const e = new Error();
+      let f = e.stack.split(os.EOL).find(s =>
+        !s.startsWith('Error') &&
+        s.indexOf('QueryOperator') < 0 &&
+        s.indexOf('node:internal') < 0
+      );
+      if (f) {
+        printer.println();
+        printer.print('[MySQL] error  : '.data).print(f.trim().warning).println();
+        printer.print('[MySQL] message: '.data).print(err.message.error).println();
+        printer.print('[MySQL] query  : '.data).print(err.sql).println().println();
+      }
       Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, err);
       throw err;
     }
@@ -118,11 +132,11 @@ class QueryOperator extends Query {
       .whereConditions(...conditions)
       .count();
     if (count) {
-      return await query.table(table, alias)
+      return await query
         .whereConditions(...conditions)
         .update(data);
     }
-    return await query.table(this.options.tables[0]).insert(data);
+    return await query.insert(data);
   }
 }
 
