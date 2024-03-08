@@ -21,9 +21,9 @@ export type Clients = {
 
 export type ConditionValueType = null | string | number | boolean | Date | Array<string | number | boolean | Date> | Query;
 
-export type OptType = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE'
-  | 'NOT LIKE' | 'IN' | 'NOT IN' | 'BETWEEN' | 'NOT BETWEEN' | 'IS' | 'IS NOT' | 'REGEXP' | 'NOT REGEXP'
-  | 'AND' | 'OR' | 'GROUP' | 'like' | 'not like' | 'in' | 'not in' | 'between' | 'not between' | 'is' | 'is not' | 'regexp' | 'not regexp' | 'group';
+export type OptType = '=' | '!=' | '>' | '<' | '>=' | '<=' |
+  'LIKE' | 'NOT LIKE' | 'IN' | 'NOT IN' | 'BETWEEN' | 'NOT BETWEEN' | 'IS' | 'IS NOT' | 'REGEXP' | 'NOT REGEXP' | 'AND' | 'OR' | 'GROUP' |
+  'like' | 'not like' | 'in' | 'not in' | 'between' | 'not between' | 'is' | 'is not' | 'regexp' | 'not regexp' | 'and' | 'or' | 'group';
 
 export interface WhereOptions {
   key: string | null;
