@@ -28,8 +28,13 @@ export type OptType = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE'
 export interface WhereOptions {
   key: string | null;
   opt: OptType;
-  value: ConditionValueType | WhereOptions[];
+  value?: ConditionValueType | WhereOptions[] | null;
 }
+
+export type WhereArrayOptions = [string | null, OptType, ConditionValueType | WhereOptions[] | null]
+  | [string | null, ConditionValueType | WhereOptions[]];
+
+export type WhereItem = WhereOptions | OptType | WhereArrayOptions;
 
 export interface OrderByOptions {
   sortField: string,
@@ -78,17 +83,6 @@ export type QueryOperatorOptions = QueryOperatorBaseOptions & {
   transaction: boolean;
 }
 
-type GroupWhereOptionsArr = [string | null, OptType, ConditionValueType | WhereOptions[] | null]
-  | [string | null, ConditionValueType | WhereOptions[]];
-
-type GroupWhereOptions = {
-  key?: string | null;
-  opt?: OptType;
-  value?: ConditionValueType | WhereOptions[] | null;
-}
-
-type GroupWhereItem = GroupWhereOptions | string | GroupWhereOptionsArr;
-
 export declare class Query {
   options: QueryOperatorOptions;
 
@@ -106,9 +100,9 @@ export declare class Query {
 
   whereObject(obj: Record<string, ConditionValueType>): this;
 
-  whereConditions(...condition: WhereOptions[]): this;
+  whereConditions(...condition: WhereItem[]): this;
 
-  groupWhere(...condition: GroupWhereItem[]): this;
+  groupWhere(...condition: WhereItem[]): this;
 
   orWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 
@@ -168,7 +162,7 @@ export declare class QueryOperator extends Query {
    */
   delete(id?: number, index_field_name?: string): Promise<MySQLQueryResult>;
 
-  upsertRow<T extends Object>(data: T, ...conditions: WhereOptions[]): Promise<MySQLQueryResult>;
+  upsertRow<T extends Object>(data: T, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
 }
 
 export declare class QueryHandler {

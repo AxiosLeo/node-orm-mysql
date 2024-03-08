@@ -81,15 +81,35 @@ class Query {
     return this;
   }
 
-  whereConditions(...condition) {
-    if (!condition.length) {
+  whereConditions(...conditions) {
+    if (!conditions.length) {
       return this;
     }
-    if (this.options.conditions.length) {
+    if (this.options.conditions.length && !is.string(conditions[0])) {
       this.options.conditions.push({ key: null, opt: 'AND', value: null });
     }
-    condition.forEach((c) => {
-      this.options.conditions.push(c);
+    conditions.forEach((c) => {
+      if (is.string(c)) {
+        this.options.conditions.push({ key: null, opt: c, value: null });
+      } else if (is.object(c)) {
+        this.options.conditions.push({
+          key: null,
+          opt: '=',
+          value: null,
+          ...c
+        });
+      } else if (is.array(c)) {
+        const [k, o, v] = c;
+        if (c.length === 2) {
+          this.options.conditions.push({ key: k, opt: '=', value: o });
+        } else if (c.length === 3) {
+          this.options.conditions.push({ key: k, opt: o, value: v });
+        } else {
+          throw new Error('Invalid condition: ' + c);
+        }
+      } else {
+        this.options.conditions.push(c);
+      }
     });
     return this;
   }
