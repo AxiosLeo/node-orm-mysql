@@ -104,11 +104,14 @@ class QueryOperator extends Query {
     return await this.exec();
   }
 
-  async upsertRow(data, condition = []) {
+  async upsertRow(data, ...conditions) {
+    if (conditions.length === 0) {
+      throw new Error('conditions is required');
+    }
     const query = new QueryOperator(this.conn, this.options);
-    const count = await query.whereConditions(...condition).count();
+    const count = await query.whereConditions(...conditions).count();
     if (count) {
-      return await query.whereConditions(...condition).update(data);
+      return await query.whereConditions(...conditions).update(data);
     }
     return await query.insert(data);
   }
