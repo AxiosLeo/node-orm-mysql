@@ -103,6 +103,15 @@ class QueryOperator extends Query {
     this.options.operator = 'delete';
     return await this.exec();
   }
+
+  async upsertRow(data, condition = []) {
+    const query = new QueryOperator(this.conn, this.options);
+    const count = await query.whereConditions(...condition).count();
+    if (count) {
+      return await query.whereConditions(...condition).update(data);
+    }
+    return await query.insert(data);
+  }
 }
 
 class QueryHandler {

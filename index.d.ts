@@ -167,6 +167,8 @@ export declare class QueryOperator extends Query {
    * @param index_field_name default is 'id'
    */
   delete(id?: number, index_field_name?: string): Promise<MySQLQueryResult>;
+
+  upsertRow<T extends Object>(data: T, ...conditions: WhereOptions[]): Promise<MySQLQueryResult>;
 }
 
 export declare class QueryHandler {
