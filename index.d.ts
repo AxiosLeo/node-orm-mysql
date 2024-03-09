@@ -145,24 +145,29 @@ export declare class QueryOperator extends Query {
 
   find<T>(): Promise<T>;
 
-  update(data?: any): Promise<MySQLQueryResult>;
-
-  update<T extends Object>(data?: T): Promise<MySQLQueryResult>;
-
-  insert(data?: any): Promise<MySQLQueryResult>;
-
-  insert<T extends Object>(data?: T): Promise<MySQLQueryResult>;
-
   count(): Promise<number>;
 
-  /**
-   * delete data
-   * @param id 
-   * @param index_field_name default is 'id'
-   */
   delete(id?: number, index_field_name?: string): Promise<MySQLQueryResult>;
 
-  upsertRow<T extends Object>(data: T, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
+  update(row?: any): Promise<MySQLQueryResult>;
+
+  update<T extends Object>(row?: T): Promise<MySQLQueryResult>;
+
+  insert(row?: any): Promise<MySQLQueryResult>;
+
+  insert<T extends Object>(row?: T): Promise<MySQLQueryResult>;
+
+  insertAll(rows: any[]): Promise<MySQLQueryResult[]>;
+
+  insertAll<T extends Object>(rows: T[]): Promise<MySQLQueryResult[]>;
+
+  upsertRow(row: any, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
+
+  upsertRow<T extends Object>(row: T, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
+
+  upsertAll(rows: any[]): Promise<MySQLQueryResult[]>;
+
+  upsertAll<T extends Object>(rows: T[]): Promise<MySQLQueryResult[]>;
 }
 
 export declare class QueryHandler {
