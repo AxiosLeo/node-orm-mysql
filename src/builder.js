@@ -68,9 +68,12 @@ class Builder {
         break;
       }
       case 'insert': {
-        const fields = this._buildValues(options.data);
+        const { fields, sqlStr } = this._buildValues(options.data);
         emit(tmp, `INSERT INTO ${this._buildTables(options.tables)}(${fields.map((f) => `\`${f}\``).join(',')})`);
-        emit(tmp, `VALUES (${fields.map((f) => '?').join(',')})`);
+        emit(tmp, `VALUES ${sqlStr}`);
+        if (options.keys) {
+          emit(tmp, `ON DUPLICATE KEY UPDATE ${options.keys.map((f) => `\`${f}\` = VALUES(\`${f}\`)`).join(',')}`);
+        }
         sql = tmp.join(' ');
         break;
       }
@@ -78,7 +81,7 @@ class Builder {
         if (is.invalid(options.data)) {
           throw new Error('Data is required for update operation');
         }
-        const fields = this._buildValues(options.data);
+        const fields = this._buildValue(options.data);
         emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
         emit(tmp, `SET ${fields.map((f) => `\`${f}\` = ?`).join(',')}`);
         if (!options.conditions.length) {
@@ -210,7 +213,7 @@ class Builder {
     return sql;
   }
 
-  _buildValues(obj) {
+  _buildValue(obj) {
     const fields = [];
     Object.keys(obj).forEach((key) => {
       fields.push(`${key}`);
@@ -223,6 +226,18 @@ class Builder {
       }
     });
     return fields;
+  }
+
+  _buildValues(value) {
+    let fields = [];
+    if (is.array(value)) {
+      [fields] = value.map((v) => this._buildValue(v));
+      let item = '(' + fields.map(f => '?').join(',') + ')';
+      return { fields, sqlStr: new Array(value.length).fill(item).join(',') };
+    }
+    fields = this._buildValue(value);
+
+    return { fields, sqlStr: '(' + fields.join(',') + ')' };
   }
 
   _buildConditionValues(val) {
