@@ -72,7 +72,8 @@ class Builder {
         emit(tmp, `INSERT INTO ${this._buildTables(options.tables)}(${fields.map((f) => `\`${f}\``).join(',')})`);
         emit(tmp, `VALUES ${sqlStr}`);
         if (options.keys) {
-          emit(tmp, `ON DUPLICATE KEY UPDATE ${options.keys.map((f) => `\`${f}\` = VALUES(\`${f}\`)`).join(',')}`);
+          let columns = fields.filter(f => !options.keys.includes(f));
+          emit(tmp, `ON DUPLICATE KEY UPDATE ${columns.map((f) => `\`${f}\` = VALUES(\`${f}\`)`).join(',')}`);
         }
         sql = tmp.join(' ');
         break;
