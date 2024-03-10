@@ -6,6 +6,7 @@ const Query = require('./query');
 const Hook = require('./hook');
 const { _query } = require('./core');
 const { printer } = require('@axiosleo/cli-tool');
+const is = require('@axiosleo/cli-tool/src/helper/is');
 
 class QueryOperator extends Query {
   /**
@@ -97,10 +98,27 @@ class QueryOperator extends Query {
     return await this.exec();
   }
 
-  async insert(data) {
+  async insert(data, keys = null) {
+    if (keys) {
+      this.options.onDuplicateKeys = keys;
+    }
     this.options.operator = 'insert';
-    if (typeof data !== 'undefined') {
+    if (!is.empty(data)) {
       this.set(data);
+    }
+    if (!is.object(this.options.data)) {
+      throw new Error('data must be an object');
+    }
+    return await this.exec();
+  }
+
+  async insertAll(rows = []) {
+    this.options.operator = 'insert';
+    if (rows.length) {
+      this.options.data = rows;
+    }
+    if (!is.array(this.options.data)) {
+      throw new Error('data must be an array');
     }
     return await this.exec();
   }
