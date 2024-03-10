@@ -31,7 +31,8 @@ class Query {
       having: [],
       joins: [],
       suffix: null,
-      transaction: false
+      transaction: false,
+      keys: null,
     };
     this.alias = alias || null;
   }
@@ -43,6 +44,11 @@ class Query {
 
   tables(...tables) {
     this.options.tables = tables;
+    return this;
+  }
+
+  keys(...keys) {
+    this.options.keys = keys;
     return this;
   }
 
@@ -212,10 +218,10 @@ class Query {
   }
 
   set(data) {
-    if (!this.options.data) {
-      this.options.data = {};
+    if (is.invalid(data)) {
+      throw new Error('data is required');
     }
-    Object.assign(this.options.data, data);
+    this.options.data = data;
     return this;
   }
 
