@@ -92,6 +92,8 @@ export declare class Query {
 
   tables(...tables: TableOption[]): this;
 
+  keys(...keys: string[]): this;
+
   limit(limit: number): this;
 
   offset(offset: number): this;
@@ -164,10 +166,6 @@ export declare class QueryOperator extends Query {
   upsertRow(row: any, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
 
   upsertRow<T extends Object>(row: T, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
-
-  upsertAll(rows: any[]): Promise<MySQLQueryResult[]>;
-
-  upsertAll<T extends Object>(rows: T[]): Promise<MySQLQueryResult[]>;
 }
 
 export declare class QueryHandler {
@@ -197,6 +195,7 @@ export declare class QueryHandler {
 
   /**
    * insert or update
+   * @deprecated
    * @param tableName 
    * @param data 
    * @param condition 
