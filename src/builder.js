@@ -237,7 +237,7 @@ class Builder {
     }
     fields = this._buildValue(value);
 
-    return { fields, sqlStr: '(' + fields.join(',') + ')' };
+    return { fields, sqlStr: '(' + fields.map(f => '?').join(',') + ')' };
   }
 
   _buildConditionValues(val) {
