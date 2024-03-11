@@ -122,7 +122,7 @@ describe('query test case', () => {
       join_type: 'left'
     });
     const res2 = query2.buildSql('select');
-    expect(res2.sql).to.be.equal('SELECT `id`,`name` FROM `users` AS `u` LEFT JOIN `(SELECT * FROM `users` WHERE `name` = ?)` AS `sub_query` ON `id` = `sub_query`.`id`');
+    expect(res2.sql).to.be.equal('SELECT `id`,`name` FROM `users` AS `u` LEFT JOIN (SELECT * FROM `users` WHERE `name` = ?) AS `sub_query` ON `id` = `sub_query`.`id`');
   });
 
   it('query with in condition', () => {
