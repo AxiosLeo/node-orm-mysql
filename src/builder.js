@@ -120,6 +120,10 @@ class Builder {
         throw new Error('Invalid operator: ' + options.operator);
     }
 
+    if (options.explain) {
+      sql = 'EXPLAIN ' + sql;
+    }
+
     this.sql = sql;
   }
 
@@ -147,8 +151,10 @@ class Builder {
         const builder = new Builder(table.options);
         this.values = this.values.concat(builder.values);
         table = `(${builder.sql})`;
-      }
-      if (alias) {
+        if (alias) {
+          table = `${table} AS \`${alias}\``;
+        }
+      } else if (alias) {
         table = `\`${table}\` AS \`${alias}\``;
       } else {
         table = `\`${table}\``;
