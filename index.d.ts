@@ -81,6 +81,7 @@ export type QueryOperatorOptions = QueryOperatorBaseOptions & {
   having: WhereOptions[];
   suffix?: string | null;
   transaction: boolean;
+  explain?: boolean;
 }
 
 export declare class Query {
@@ -133,6 +134,23 @@ export declare class Query {
 
 export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | MySQLQueryResult;
 
+export type ExplainResult = {
+  select_type: 'PRIMARY' | 'DERIVED';
+  table: string;
+  partitions: string | null;
+  type: string | 'ALL' | 'eq_ref';
+  possible_keys: null | 'PRIMARY';
+  key: null | string;
+  key_len: null | number;
+  ref: null | string;
+  rows: number;
+  filtered: number;
+  Extra: null | string | 'Using filesort';
+
+  id?: number;
+  [property: string]: any;
+};
+
 export declare class QueryOperator extends Query {
   conn: Connection | Pool;
   options: QueryOperatorOptions
@@ -142,6 +160,8 @@ export declare class QueryOperator extends Query {
   buildSql(operator: OperatorType): { sql: string, values: any[] };
 
   exec(): Promise<QueryResult>;
+
+  explain(operator: OperatorType): Promise<ExplainResult[]>;
 
   select<T>(...attrs: string[]): Promise<T[]>;
 

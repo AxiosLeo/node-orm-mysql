@@ -32,6 +32,12 @@ class QueryOperator extends Query {
     return new Builder(this.options);
   }
 
+  async explain(operator) {
+    this.options.operator = operator;
+    this.options.explain = true;
+    return await this.exec();
+  }
+
   async exec() {
     if (!this.options.operator) {
       throw new Error('Invalid operator: ' + this.options.operator);

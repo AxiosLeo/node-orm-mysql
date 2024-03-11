@@ -33,6 +33,7 @@ class Query {
       suffix: null,
       transaction: false,
       keys: null,
+      explain: false,
     };
     this.alias = alias || null;
   }
