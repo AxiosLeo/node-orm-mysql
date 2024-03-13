@@ -268,10 +268,12 @@ class Builder {
     } else if (!Array.isArray(condition.value) && !(condition.value instanceof Query)) {
       throw new Error('Value must be an array or sub-query for "IN" condition');
     }
-    if (condition.key.indexOf('$') !== -1) {
+    if (condition.key.indexOf('->') !== -1) {
+      let keys = condition.key.split('->');
+      let k = `${this._buildFieldKey(keys[0])}`;
       let res = this._buildConditionValues(condition.value);
-      let sql = res ? `JSON_CONTAINS(JSON_ARRAY(${res}), ${this._buildFieldKey(condition.key)})` :
-        `JSON_CONTAINS(JSON_ARRAY(?), ${this._buildFieldKey(condition.key)})`;
+      let sql = res ? `JSON_CONTAINS(JSON_ARRAY(${res}), JSON_EXTRACT(${k}, '${keys[1]}'))` :
+        `JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(${k}, '${keys[1]}'))`;
       return isNot ? `${sql}=0` : sql;
     }
     let res = this._buildConditionValues(condition.value);
@@ -280,10 +282,12 @@ class Builder {
   }
 
   _buildConditionContain(condition, isNot = false) {
-    if (condition.key.indexOf('$') !== -1) {
+    if (condition.key.indexOf('->') !== -1) {
+      let keys = condition.key.split('->');
+      let k = `${this._buildFieldKey(keys[0])}`;
       let res = this._buildConditionValues(condition.value);
-      let sql = res ? `JSON_CONTAINS(${this._buildFieldKey(condition.key)}, JSON_ARRAY(${res}))` :
-        `JSON_CONTAINS(${this._buildFieldKey(condition.key)}, JSON_ARRAY(?))`;
+      let sql = res ? `JSON_CONTAINS(${k}, JSON_ARRAY(${res}), '${keys[1]}')` :
+        `JSON_CONTAINS(${k}, JSON_ARRAY(?), '${keys[1]}')`;
       return isNot ? `${sql}=0` : sql;
     }
     let res = this._buildConditionValues(condition.value);
@@ -298,17 +302,18 @@ class Builder {
     let sql = typeof prefix === 'undefined' ? 'WHERE ' : prefix;
     if (conditions.length) {
       sql += `${conditions.map((c) => {
-        if (typeof c.key === 'undefined') {
-          c.key = null;
+        const opt = c.opt.toLowerCase();
+        if (opt === 'group' && Array.isArray(c.value)) {
+          return `(${this._buildCondition(c.value, '')})`;
         }
-        if (typeof c.value === 'undefined') {
-          c.value = null;
-        }
-        if (c.key === null && c.value === null) {
-          return ` ${c.opt} `;
-        }
-        if (c.value === null) {
-          return c.opt === '=' ? `ISNULL(${this._buildFieldKey(c.key)})` : `!ISNULL(${this._buildFieldKey(c.key)})`;
+        if (opt === 'in') {
+          return this._buildConditionIn(c);
+        } else if (opt === 'not in') {
+          return this._buildConditionIn(c, true);
+        } else if (opt === 'contain') {
+          return this._buildConditionContain(c);
+        } else if (opt === 'not contain') {
+          return this._buildConditionContain(c, true);
         }
         if (c.key && c.key.indexOf('->') !== -1) {
           const keys = c.key.split('->');
@@ -320,17 +325,17 @@ class Builder {
             }
           ], '');
         }
-        const opt = c.opt.toLowerCase();
-        if (opt === 'in') {
-          return this._buildConditionIn(c);
-        } else if (opt === 'not in') {
-          return this._buildConditionIn(c, true);
-        } else if (opt === 'group' && Array.isArray(c.value)) {
-          return `(${this._buildCondition(c.value, '')})`;
-        } else if (opt === 'contain') {
-          return this._buildConditionContain(c);
-        } else if (opt === 'not contain') {
-          return this._buildConditionContain(c, true);
+        if (typeof c.key === 'undefined') {
+          c.key = null;
+        }
+        if (typeof c.value === 'undefined') {
+          c.value = null;
+        }
+        if (c.key === null && c.value === null) {
+          return ` ${c.opt} `;
+        }
+        if (c.value === null) {
+          return c.opt === '=' ? `ISNULL(${this._buildFieldKey(c.key)})` : `!ISNULL(${this._buildFieldKey(c.key)})`;
         }
         let res = this._buildConditionValues(c.value);
         if (!is.empty(res)) {
