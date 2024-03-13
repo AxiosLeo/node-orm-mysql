@@ -279,6 +279,18 @@ class Builder {
     return res ? `${this._buildFieldKey(condition.key)} ${opt} (${res})` : `${this._buildFieldKey(condition.key)} ${opt} (?)`;
   }
 
+  _buildConditionContain(condition, isNot = false) {
+    if (condition.key.indexOf('$') !== -1) {
+      let res = this._buildConditionValues(condition.value);
+      let sql = res ? `JSON_CONTAINS(${this._buildFieldKey(condition.key)}, JSON_ARRAY(${res}))` :
+        `JSON_CONTAINS(${this._buildFieldKey(condition.key)}, JSON_ARRAY(?))`;
+      return isNot ? `${sql}=0` : sql;
+    }
+    let res = this._buildConditionValues(condition.value);
+    const opt = isNot ? 'NOT LIKE' : 'LIKE';
+    return res ? `${this._buildFieldKey(condition.key)} ${opt} CONCAT('%', ?, '%')` : `${this._buildFieldKey(condition.key)} ${opt} CONCAT('%', ?, '%')`;
+  }
+
   _buildCondition(conditions, prefix) {
     if (!conditions || !conditions.length) {
       return '';
@@ -315,6 +327,10 @@ class Builder {
           return this._buildConditionIn(c, true);
         } else if (opt === 'group' && Array.isArray(c.value)) {
           return `(${this._buildCondition(c.value, '')})`;
+        } else if (opt === 'contain') {
+          return this._buildConditionContain(c);
+        } else if (opt === 'not contain') {
+          return this._buildConditionContain(c, true);
         }
         let res = this._buildConditionValues(c.value);
         if (!is.empty(res)) {
