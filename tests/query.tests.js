@@ -86,11 +86,65 @@ describe('query test case', () => {
     query.where('u.meta->$.id', 123);
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_EXTRACT(`u`.`meta`, \'$.id\') = ?');
 
+    // opt=in
     query = handler.table('users', 'u');
     query.where('u.meta->$.id', [1, 2, 3], 'in');
-    const res = query.buildSql('select');
+    let res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))');
     expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
+
+    // opt=not in
+    query = handler.table('users', 'u');
+    query.where('u.meta->$.id', [1, 2, 3], 'not in');
+    res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))=0');
+    expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
+
+    // opt=contain
+    query = handler.table('users', 'u');
+    query.where('u.meta->$.id', 1, 'contain');
+    res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(`u`.`meta`, JSON_ARRAY(?), \'$.id\')');
+    expect(JSON.stringify(res.values)).to.be.equal('[1]');
+
+    // opt=not contain
+    query = handler.table('users', 'u');
+    query.where('u.meta->$.id', 1, 'not contain');
+    res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(`u`.`meta`, JSON_ARRAY(?), \'$.id\')=0');
+    expect(JSON.stringify(res.values)).to.be.equal('[1]');
+  });
+
+  it('in condition', () => {
+    // opt=in
+    let query = handler.table('users', 'u');
+    query.where('u.meta', [1, 2, 3], 'in');
+    let res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` IN (?)');
+    expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
+
+    // opt=not in
+    query = handler.table('users', 'u');
+    query.where('u.meta', [1, 2, 3], 'not in');
+    res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` NOT IN (?)');
+    expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
+  });
+
+  it('contain condition', () => {
+    // opt=in
+    let query = handler.table('users', 'u');
+    query.where('u.meta', 1, 'contain');
+    let res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` LIKE CONCAT(\'%\', ?, \'%\')');
+    expect(JSON.stringify(res.values)).to.be.equal('[1]');
+
+    // opt=not in
+    query = handler.table('users', 'u');
+    query.where('u.meta', 1, 'not contain');
+    res = query.buildSql('select');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` NOT LIKE CONCAT(\'%\', ?, \'%\')');
+    expect(JSON.stringify(res.values)).to.be.equal('[1]');
   });
 
   it('timestamp field', () => {
