@@ -89,7 +89,7 @@ export declare class Query {
 
   constructor(operator?: OperatorType, alias?: string | null);
 
-  table(table: string, alias: string | null): this;
+  table(table: string, alias?: string | null): this;
 
   tables(...tables: TableOption[]): this;
 
