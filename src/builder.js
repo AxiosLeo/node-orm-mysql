@@ -301,10 +301,11 @@ class Builder {
     }
     let sql = typeof prefix === 'undefined' ? 'WHERE ' : prefix;
     if (conditions.length) {
-      sql += `${conditions.map((c) => {
+      sql += `${conditions.map((c, index) => {
         const opt = c.opt.toLowerCase();
         if (opt === 'group' && Array.isArray(c.value)) {
-          return `(${this._buildCondition(c.value, '')})`;
+          let t = `(${this._buildCondition(c.value, '')})`;
+          return index === 0 ? t : ` AND ${t}`;
         }
         if (opt === 'in') {
           return this._buildConditionIn(c);
