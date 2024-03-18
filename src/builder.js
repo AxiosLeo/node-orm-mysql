@@ -295,6 +295,20 @@ class Builder {
     return res ? `${this._buildFieldKey(condition.key)} ${opt} CONCAT('%', ?, '%')` : `${this._buildFieldKey(condition.key)} ${opt} CONCAT('%', ?, '%')`;
   }
 
+  _buildConditionOverlaps(condition, isNot = false) {
+    if (condition.key.indexOf('->') !== -1) {
+      let keys = condition.key.split('->');
+      let k = `${this._buildFieldKey(keys[0])}`;
+      let res = this._buildConditionValues(condition.value);
+      let sql = res ? `JSON_OVERLAPS(JSON_EXTRACT(${k}, '${keys[1]}'), JSON_ARRAY(${res}))` :
+        `JSON_OVERLAPS(JSON_EXTRACT(${k}, '${keys[1]}'), JSON_ARRAY(?))`;
+      return isNot ? `${sql}=0` : sql;
+    }
+    let res = this._buildConditionValues(condition.value);
+    const opt = isNot ? 'NOT REGEXP' : 'REGEXP';
+    return res ? `${this._buildFieldKey(condition.key)} ${opt} ?` : `${this._buildFieldKey(condition.key)} ${opt} ?`;
+  }
+
   _buildCondition(conditions, prefix) {
     if (!conditions || !conditions.length) {
       return '';
@@ -315,6 +329,10 @@ class Builder {
           return this._buildConditionContain(c);
         } else if (opt === 'not contain') {
           return this._buildConditionContain(c, true);
+        } else if (opt === 'overlaps') {
+          return this._buildConditionOverlaps(c);
+        } else if (opt === 'not overlaps') {
+          return this._buildConditionOverlaps(c, true);
         }
         if (c.key && c.key.indexOf('->') !== -1) {
           const keys = c.key.split('->');
