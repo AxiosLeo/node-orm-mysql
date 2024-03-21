@@ -144,7 +144,7 @@ class Builder {
   _buildJoins(joins = []) {
     return joins.map((j) => {
       let { table, alias, self_column, foreign_column, join_type } = j;
-      if (table instanceof Query) {
+      if (table instanceof Query || table.options) {
         if (!alias) {
           throw new Error('Alias is required for subQuery');
         }

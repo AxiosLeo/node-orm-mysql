@@ -125,11 +125,11 @@ export declare class Query {
 
   join(opt: JoinOption): this;
 
-  leftJoin(table: string, on: string, options?: { alias?: string }): this;
+  leftJoin(table: string | Query, on: string, options?: { alias?: string }): this;
 
-  rightJoin(table: string, on: string, options?: { alias?: string }): this;
+  rightJoin(table: string | Query, on: string, options?: { alias?: string }): this;
 
-  innerJoin(table: string, on: string, options?: { alias?: string }): this;
+  innerJoin(table: string | Query, on: string, options?: { alias?: string }): this;
 }
 
 export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | MySQLQueryResult;
