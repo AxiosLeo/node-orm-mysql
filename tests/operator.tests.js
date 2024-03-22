@@ -9,7 +9,7 @@ describe('operator test case', () => {
   before(async function () {
     const chai = await import('chai');
     expect = chai.expect;
-  })
+  });
   it('find', async () => {
     const conn = {
       query: async (_, callback) => {

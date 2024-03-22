@@ -1,4 +1,4 @@
-'ues strict';
+'use strict';
 
 /**
  * @type {Chai.ExpectStatic}
@@ -10,7 +10,7 @@ describe('utils test case', () => {
   before(async function () {
     const chai = await import('chai');
     expect = chai.expect;
-  })
+  });
   it('validate successfully', () => {
     _validate({
       name: 'test',

@@ -7,7 +7,7 @@ describe('hook test case', () => {
   before(async function () {
     const chai = await import('chai');
     expect = chai.expect;
-  })
+  });
   it('pre', () => {
     const callback = (...args) => {
       expect(true).to.be.true;
