@@ -84,7 +84,45 @@ export type QueryOperatorOptions = QueryOperatorBaseOptions & {
   explain?: boolean;
 }
 
+export declare class QueryCondition {
+  where(logicOpt: 'OR' | 'or' | 'AND' | 'and'): this;
+
+  where(key: string, value: ConditionValueType | WhereOptions[]): this;
+
+  where(key: string, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
+
+  where(key: string, opt: OptType, value: ConditionValueType | WhereOptions[], isOr?: boolean): this;
+
+  whereIn(key: string, value: string | string[] | number[] | Query): this;
+
+  whereNotIn(key: string, value: string | string[] | number[] | Query): this;
+
+  whereContain(key: string, value: string | number): this;
+
+  whereNotContain(key: string, value: string | number): this;
+
+  whereBetween(key: string, value: any[]): this;
+
+  whereNotBetween(key: string, value: any[]): this;
+
+  whereOverlaps(key: string, value: any[]): this;
+
+  whereNotOverlaps(key: string, value: any[]): this;
+
+  whereLike(key: string, value: string | string[]): this;
+
+  whereNotLike(key: string, value: string | string[]): this;
+
+  whereCondition(condition: QueryCondition): this;
+}
+
+export type JoinOptions = {
+  alias?: string,
+  conditions: WhereItem[]
+};
+
 export declare class Query {
+
   options: QueryOperatorOptions;
 
   constructor(operator?: OperatorType, alias?: string | null);
@@ -98,18 +136,6 @@ export declare class Query {
   limit(limit: number): this;
 
   offset(offset: number): this;
-
-  where(key: string | null, value: ConditionValueType | WhereOptions[], opt?: OptType): this;
-
-  whereObject(obj: Record<string, ConditionValueType>): this;
-
-  whereConditions(...condition: WhereItem[]): this;
-
-  groupWhere(...condition: WhereItem[]): this;
-
-  orWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
-
-  andWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 
   attr(...attr: Attr[]): this;
 
@@ -130,6 +156,36 @@ export declare class Query {
   rightJoin(table: string | Query, on: string, options?: { alias?: string }): this;
 
   innerJoin(table: string | Query, on: string, options?: { alias?: string }): this;
+
+  /**
+   * @deprecated will deprecated on v1.0+ version
+   */
+  where(key: string | null, value: ConditionValueType | WhereOptions[], opt?: OptType): this;
+
+  /**
+   * @deprecated will deprecated on v1.0+ version
+   */
+  whereObject(obj: Record<string, ConditionValueType>): this;
+
+  /**
+   * @deprecated will deprecated on v1.0+ version
+   */
+  whereConditions(...condition: WhereItem[]): this;
+
+  /**
+   * @deprecated will deprecated on v1.0+ version
+   */
+  groupWhere(...condition: WhereItem[]): this;
+
+  /**
+   * @deprecated will deprecated on v1.0+ version
+   */
+  orWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
+
+  /**
+   * @deprecated will deprecated on v1.0+ version
+   */
+  andWhere(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 }
 
 export type QueryResult = any | undefined | RowDataPacket[] | RowDataPacket | MySQLQueryResult;
@@ -183,7 +239,7 @@ export declare class QueryOperator extends Query {
 
   insertAll<T extends Object>(rows: T[]): Promise<MySQLQueryResult[]>;
 
-  upsertRow(row: any, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
+  upsertRow(row: any, condition: QueryCondition): Promise<MySQLQueryResult>;
 
   upsertRow<T extends Object>(row: T, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
 }
