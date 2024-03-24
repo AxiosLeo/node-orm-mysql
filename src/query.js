@@ -4,6 +4,11 @@ const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
 const { _validate } = require('./utils');
 const is = require('@axiosleo/cli-tool/src/helper/is');
 
+const optType = [
+  '=', '!=', '>', '<', '>=', '<=',
+  'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'IS', 'IS NOT', 'REGEXP', 'NOT REGEXP', 'AND', 'OR', 'GROUP', 'CONTAIN', 'NOT CONTAIN', 'OVERLAPS', 'NOT OVERLAPS'
+];
+
 function joinOn(table, on, options = {}) {
   let o = _assign({ alias: null, join_type: 'INNER', table, on }, options);
   if (!table) {
@@ -16,8 +21,141 @@ function joinOn(table, on, options = {}) {
   return this;
 }
 
-class Query {
+class QueryCondition {
+  constructor() {
+    this.options = {
+      conditions: []
+    };
+  }
+
+  where(...args) {
+    if (this.options.conditions.length !== 0 && args.length > 1) {
+      const last = this.options.conditions[this.options.conditions.length - 1];
+      if (last.opt) {
+        const opt = last.opt.toUpperCase();
+        if (opt !== 'AND' && opt !== 'OR') {
+          this.options.conditions.push({ key: null, opt: args[3] === true ? 'OR' : 'AND', value: null });
+        }
+      }
+    }
+    switch (args.length) {
+      case 4:
+      case 3: {
+        const [key, opt, value] = args;
+        if (is.string(value) && optType.includes(value.toUpperCase()) >= -1) {
+          this.options.conditions.push({ key, opt: value, value: opt });
+          break;
+        }
+        this.options.conditions.push({ key, opt, value });
+        break;
+      }
+      case 2: {
+        const [key, value] = args;
+        this.options.conditions.push({ key, opt: '=', value });
+        break;
+      }
+      case 1: {
+        const [opt] = args;
+        this.options.conditions.push({ key: null, opt, value: null });
+        break;
+      }
+      default: {
+        throw new Error('Invalid arguments');
+      }
+    }
+    return this;
+  }
+
+  whereAnd() {
+    this.options.conditions.push({ key: null, opt: 'AND', value: null });
+    return this;
+  }
+
+  whereOr() {
+    this.options.conditions.push({ key: null, opt: 'OR', value: null });
+    return this;
+  }
+
+  whereIn(key, value) {
+    if (is.string(value)) {
+      value = value.split(',').map(v => v.trim());
+    }
+    this.options.conditions.push({ key, opt: 'IN', value });
+    return this;
+  }
+
+  whereNotIn(key, value) {
+    if (is.string(value)) {
+      value = value.split(',').map(v => v.trim());
+    }
+    this.options.conditions.push({ key, opt: 'NOT IN', value });
+    return this;
+  }
+
+  whereContain(key, value) {
+    this.options.conditions.push({ key, opt: 'CONTAIN', value });
+    return this;
+  }
+
+  whereNotContain(key, value) {
+    this.options.conditions.push({ key, opt: 'NOT CONTAIN', value });
+    return this;
+  }
+
+  whereBetween(key, value) {
+    this.options.conditions.push({ key, opt: 'BETWEEN', value });
+    return this;
+  }
+
+  whereNotBetween(key, value) {
+    this.options.conditions.push({ key, opt: 'NOT BETWEEN', value });
+    return this;
+  }
+
+  whereOverlaps(key, value) {
+    this.options.conditions.push({ key, opt: 'OVERLAPS', value });
+    return this;
+  }
+
+  whereNotOverlaps(key, value) {
+    this.options.conditions.push({ key, opt: 'NOT OVERLAPS', value });
+    return this;
+  }
+
+  whereLike(key, value) {
+    if (is.array(value)) {
+      value = value.join('');
+    }
+    this.options.conditions.push({ key, opt: 'LIKE', value });
+    return this;
+  }
+
+  whereNotLike(key, value) {
+    if (is.array(value)) {
+      value = value.join('');
+    }
+    this.options.conditions.push({ key, opt: 'NOT LIKE', value });
+    return this;
+  }
+
+  /**
+   * @param {QueryCondition} condition 
+   * @returns 
+   */
+  whereCondition(condition) {
+    this.options.conditions.push({ key: null, opt: 'GROUP', value: condition.options.conditions });
+    return this;
+  }
+
+  whereObject(object = {}) {
+    Object.keys(object).forEach((key) => this.where(key, object[key]));
+    return this;
+  }
+}
+
+class Query extends QueryCondition {
   constructor(operator = 'select', alias = null) {
+    super();
     this.options = {
       driver: 'mysql',
       queryHandler: null,
@@ -60,120 +198,6 @@ class Query {
 
   offset(offset) {
     this.options.pageOffset = offset;
-    return this;
-  }
-
-  /**
-   * 
-   * @param {string} key 
-   * @param {any} value 
-   * @param {*} opt 
-   * @returns 
-   */
-  where(key, value, opt = '=') {
-    if (!key) {
-      throw new Error('key is required');
-    }
-    if (this.options.conditions.length) {
-      this.options.conditions.push({ key: null, opt: 'AND', value: null });
-    }
-    this.options.conditions.push({
-      key, opt, value,
-    });
-    return this;
-  }
-
-  whereObject(object = {}) {
-    Object.keys(object).forEach((key) => this.where(key, object[key]));
-    return this;
-  }
-
-  whereConditions(...conditions) {
-    if (!conditions.length) {
-      return this;
-    }
-    if (this.options.conditions.length && !is.string(conditions[0])) {
-      this.options.conditions.push({ key: null, opt: 'AND', value: null });
-    }
-    conditions.forEach((c) => {
-      if (is.string(c)) {
-        this.options.conditions.push({ key: null, opt: c, value: null });
-      } else if (is.object(c)) {
-        this.options.conditions.push({
-          key: null,
-          opt: '=',
-          value: null,
-          ...c
-        });
-      } else if (is.array(c)) {
-        const [k, o, v] = c;
-        if (c.length === 2) {
-          this.options.conditions.push({ key: k, opt: '=', value: o });
-        } else if (c.length === 3) {
-          this.options.conditions.push({ key: k, opt: o, value: v });
-        } else {
-          throw new Error('Invalid condition: ' + c);
-        }
-      } else {
-        this.options.conditions.push(c);
-      }
-    });
-    return this;
-  }
-
-  groupWhere(...conditions) {
-    if (!conditions.length) {
-      return this;
-    }
-    const condition = { key: null, opt: 'group', value: [] };
-    conditions.forEach((c) => {
-      if (is.string(c)) {
-        condition.value.push({ key: null, opt: c, value: null });
-      } else if (is.object(c)) {
-        condition.value.push({
-          key: null,
-          opt: '=',
-          value: null,
-          ...c
-        });
-      } else if (is.array(c)) {
-        const [k, o, v] = c;
-        if (c.length === 2) {
-          condition.value.push({ key: k, opt: '=', value: o });
-        } else if (c.length === 3) {
-          condition.value.push({ key: k, opt: o, value: v });
-        } else {
-          throw new Error('Invalid condition: ' + c);
-        }
-      } else {
-        condition.value.push(c);
-      }
-    });
-    this.options.conditions.push(condition);
-    return this;
-  }
-
-  orWhere(key, opt, value) {
-    if (!this.options.conditions.length) {
-      throw new Error('At least one where condition is required');
-    }
-    this.options.conditions.push({
-      key: null,
-      opt: 'OR',
-      value: null
-    }, { key, opt, value });
-    return this;
-  }
-
-  andWhere(key, opt, value) {
-    if (!this.options.conditions.length) {
-      throw new Error('At least one where condition is required');
-    }
-    this.options.conditions.push({
-      key: null,
-      opt: 'AND',
-      value: null
-    }, { key, opt, value });
     return this;
   }
 
@@ -258,6 +282,129 @@ class Query {
   innerJoin(table, on, options = {}) {
     return joinOn.call(this, table, on, { ...options, join_type: 'INNER' });
   }
+
+  /**
+   * @deprecated
+   * @param {*} object 
+   * @returns 
+   */
+  whereObject(object = {}) {
+    Object.keys(object).forEach((key) => this.where(key, object[key]));
+    return this;
+  }
+
+  /**
+   * @deprecated
+   * @param  {...any} conditions 
+   * @returns 
+   */
+  whereConditions(...conditions) {
+    if (!conditions.length) {
+      return this;
+    }
+    if (this.options.conditions.length && !is.string(conditions[0])) {
+      this.options.conditions.push({ key: null, opt: 'AND', value: null });
+    }
+    conditions.forEach((c) => {
+      if (is.string(c)) {
+        this.options.conditions.push({ key: null, opt: c, value: null });
+      } else if (is.object(c)) {
+        this.options.conditions.push({
+          key: null,
+          opt: '=',
+          value: null,
+          ...c
+        });
+      } else if (is.array(c)) {
+        const [k, o, v] = c;
+        if (c.length === 2) {
+          this.options.conditions.push({ key: k, opt: '=', value: o });
+        } else if (c.length === 3) {
+          this.options.conditions.push({ key: k, opt: o, value: v });
+        } else {
+          throw new Error('Invalid condition: ' + c);
+        }
+      } else {
+        this.options.conditions.push(c);
+      }
+    });
+    return this;
+  }
+
+  /**
+   * @deprecated
+   * @param  {...any} conditions 
+   * @returns 
+   */
+  groupWhere(...conditions) {
+    if (!conditions.length) {
+      return this;
+    }
+    const condition = { key: null, opt: 'group', value: [] };
+    conditions.forEach((c) => {
+      if (is.string(c)) {
+        condition.value.push({ key: null, opt: c, value: null });
+      } else if (is.object(c)) {
+        condition.value.push({
+          key: null,
+          opt: '=',
+          value: null,
+          ...c
+        });
+      } else if (is.array(c)) {
+        const [k, o, v] = c;
+        if (c.length === 2) {
+          condition.value.push({ key: k, opt: '=', value: o });
+        } else if (c.length === 3) {
+          condition.value.push({ key: k, opt: o, value: v });
+        } else {
+          throw new Error('Invalid condition: ' + c);
+        }
+      } else {
+        condition.value.push(c);
+      }
+    });
+    this.options.conditions.push(condition);
+    return this;
+  }
+
+  /**
+   * @deprecated
+   * @param {*} key 
+   * @param {*} opt 
+   * @param {*} value 
+   * @returns 
+   */
+  orWhere(key, opt, value) {
+    if (!this.options.conditions.length) {
+      throw new Error('At least one where condition is required');
+    }
+    this.options.conditions.push({
+      key: null,
+      opt: 'OR',
+      value: null
+    }, { key, opt, value });
+    return this;
+  }
+
+  /**
+   * @deprecated
+   * @param {*} key 
+   * @param {*} opt 
+   * @param {*} value 
+   * @returns 
+   */
+  andWhere(key, opt, value) {
+    if (!this.options.conditions.length) {
+      throw new Error('At least one where condition is required');
+    }
+    this.options.conditions.push({
+      key: null,
+      opt: 'AND',
+      value: null
+    }, { key, opt, value });
+    return this;
+  }
 }
 
-module.exports = Query;
+module.exports = { Query, QueryCondition };
