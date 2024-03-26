@@ -91,6 +91,11 @@ export declare class QueryCondition {
 
   where(key: string, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 
+  /**
+ * @deprecated will deprecated on v1.0+ version
+ */
+  where(key: string | null, value: ConditionValueType | WhereOptions[], opt?: OptType): this;
+
   where(key: string, opt: OptType, value: ConditionValueType | WhereOptions[], isOr?: boolean): this;
 
   whereIn(key: string, value: string | string[] | number[] | Query): this;
@@ -114,6 +119,8 @@ export declare class QueryCondition {
   whereNotLike(key: string, value: string | string[]): this;
 
   whereCondition(condition: QueryCondition): this;
+
+  whereObject(obj: Record<string, ConditionValueType>): this;
 }
 
 export type JoinOptions = {
@@ -121,7 +128,7 @@ export type JoinOptions = {
   conditions: WhereItem[]
 };
 
-export declare class Query {
+export declare class Query extends QueryCondition {
 
   options: QueryOperatorOptions;
 
@@ -156,16 +163,6 @@ export declare class Query {
   rightJoin(table: string | Query, on: string, options?: { alias?: string }): this;
 
   innerJoin(table: string | Query, on: string, options?: { alias?: string }): this;
-
-  /**
-   * @deprecated will deprecated on v1.0+ version
-   */
-  where(key: string | null, value: ConditionValueType | WhereOptions[], opt?: OptType): this;
-
-  /**
-   * @deprecated will deprecated on v1.0+ version
-   */
-  whereObject(obj: Record<string, ConditionValueType>): this;
 
   /**
    * @deprecated will deprecated on v1.0+ version
