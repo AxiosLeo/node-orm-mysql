@@ -3,6 +3,7 @@
 const {
   QueryHandler,
   QueryOperator,
+  QueryCondition,
   Query
 } = require('./src/operator');
 
@@ -30,6 +31,7 @@ module.exports = {
   Query,
   QueryHandler,
   QueryOperator,
+  QueryCondition,
 
   TransactionOperator,
   TransactionHandler,
