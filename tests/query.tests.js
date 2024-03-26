@@ -4,7 +4,7 @@ const mm = require('mm');
 let expect = null;
 const mysql = require('mysql2');
 const { Builder } = require('../src/builder');
-const { QueryHandler, Query } = require('../src/operator');
+const { QueryHandler, Query, QueryCondition } = require('../src/operator');
 
 describe('query test case', () => {
   before(async function () {
@@ -42,6 +42,7 @@ describe('query test case', () => {
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`id` = ?');
   });
   it('join select order should be ok', () => {
+    // const condition = 
     const query = handler.table('meta_items_relationship', 'mir')
       .join({
         table: 'meta_items',
@@ -88,28 +89,28 @@ describe('query test case', () => {
 
     // opt=in
     query = handler.table('users', 'u');
-    query.where('u.meta->$.id', [1, 2, 3], 'in');
+    query.where('u.meta->$.id', 'in', [1, 2, 3]);
     let res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))');
     expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
 
     // opt=not in
     query = handler.table('users', 'u');
-    query.where('u.meta->$.id', [1, 2, 3], 'not in');
+    query.where('u.meta->$.id', 'not in', [1, 2, 3]);
     res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))=0');
     expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
 
     // opt=contain
     query = handler.table('users', 'u');
-    query.where('u.meta->$.id', 1, 'contain');
+    query.where('u.meta->$.id', 'contain', 1);
     res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(`u`.`meta`, JSON_ARRAY(?), \'$.id\')');
     expect(JSON.stringify(res.values)).to.be.equal('[1]');
 
     // opt=not contain
     query = handler.table('users', 'u');
-    query.where('u.meta->$.id', 1, 'not contain');
+    query.where('u.meta->$.id', 'not contain', 1);
     res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(`u`.`meta`, JSON_ARRAY(?), \'$.id\')=0');
     expect(JSON.stringify(res.values)).to.be.equal('[1]');
@@ -118,14 +119,14 @@ describe('query test case', () => {
   it('in condition', () => {
     // opt=in
     let query = handler.table('users', 'u');
-    query.where('u.meta', [1, 2, 3], 'in');
+    query.where('u.meta', 'in', [1, 2, 3]);
     let res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` IN (?)');
     expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
 
     // opt=not in
     query = handler.table('users', 'u');
-    query.where('u.meta', [1, 2, 3], 'not in');
+    query.where('u.meta', 'not in', [1, 2, 3]);
     res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` NOT IN (?)');
     expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
@@ -134,14 +135,14 @@ describe('query test case', () => {
   it('contain condition', () => {
     // opt=in
     let query = handler.table('users', 'u');
-    query.where('u.meta', 1, 'contain');
+    query.where('u.meta', 'contain', 1);
     let res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` LIKE CONCAT(\'%\', ?, \'%\')');
     expect(JSON.stringify(res.values)).to.be.equal('[1]');
 
     // opt=not in
     query = handler.table('users', 'u');
-    query.where('u.meta', 1, 'not contain');
+    query.where('u.meta', 'not contain', 1);
     res = query.buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` NOT LIKE CONCAT(\'%\', ?, \'%\')');
     expect(JSON.stringify(res.values)).to.be.equal('[1]');
@@ -161,7 +162,7 @@ describe('query test case', () => {
     const query = handler.table('users', 'u');
     const subQuery = new Query('select');
     subQuery.table('users');
-    const res = query.where('name', subQuery, 'IN').buildSql('select');
+    const res = query.where('name', 'IN', subQuery).buildSql('select');
     expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `name` IN (SELECT * FROM `users`)');
 
     // subQuery in joins
@@ -182,7 +183,7 @@ describe('query test case', () => {
   it('query with in condition', () => {
     const query = handler.table('users', 'u');
     expect(() => {
-      query.where('name', [], 'IN').buildSql('select');
+      query.where('name', 'IN', []).buildSql('select');
     }).to.be.throw('Value must not be empty for "IN" condition');
   });
 
@@ -191,7 +192,7 @@ describe('query test case', () => {
     const subQuery = new Query('select');
     subQuery.table('users').having('COUNT(*)', '>', 1);
     expect(() => {
-      query.where('u.name', subQuery, 'IN').buildSql('select');
+      query.where('u.name', 'IN', subQuery).buildSql('select');
     }).to.be.throw('having is not allowed without "GROUP BY"');
 
     subQuery.groupBy('u.name');
@@ -221,20 +222,22 @@ describe('query test case', () => {
   });
 
   it('where opt', () => {
-    const query = handler.table('users', 'u').attr(...[]).where('id', 1).whereConditions();
+    const query = handler.table('users', 'u').attr(...[]).where('id', 1);
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?');
   });
 
   it('limit&offset', () => {
-    const query = handler.table('users', 'u').attr(...[]).where('id', 1).whereConditions().limit(2).offset(1);
+    const query = handler.table('users', 'u').attr(...[]).where('id', 1).limit(2).offset(1);
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?  LIMIT 2 OFFSET 1');
   });
 
   it('attr is sub query', () => {
     const query = new Query('count', '> 0 AS has_children');
-    query.table('orgs', 's2').where('s2.parent_id', '`s1`.`id`');
+    query.table('orgs', 's2')
+      .where('s2.parent_id', '`s1`.`id`');
     let sql = handler.table('orgs', 's1')
-      .attr('s1.id', 's1.name', 's1.parent_id', query).buildSql('select').sql;
+      .attr('s1.id', 's1.name', 's1.parent_id', query)
+      .buildSql('select').sql;
     expect(sql).to.be.equal('SELECT `s1`.`id`,`s1`.`name`,`s1`.`parent_id`,(SELECT COUNT(*) AS count FROM `orgs` AS `s2` WHERE `s2`.`parent_id` = `s1`.`id`) > 0 AS `has_children` FROM `orgs` AS `s1`');
 
     sql = handler.table('orgs', 's1')
@@ -243,7 +246,9 @@ describe('query test case', () => {
   });
 
   it('upsert row', async () => {
-    const res = await handler.table('users', 'u').upsertRow({ id: 1, name: 'leo' }, { id: 1 });
+    const condition = new QueryCondition();
+    condition.where('id', 1);
+    const res = await handler.table('users', 'u').upsertRow({ id: 1, name: 'leo' }, condition);
     expect(res.affectedRows).to.be.equal(1);
   });
 });

@@ -2,7 +2,7 @@
 
 const os = require('os');
 const { Builder } = require('./builder');
-const Query = require('./query');
+const { Query, QueryCondition } = require('./query');
 const Hook = require('./hook');
 const { _query } = require('./core');
 const { printer } = require('@axiosleo/cli-tool');
@@ -142,23 +142,22 @@ class QueryOperator extends Query {
     return await this.exec();
   }
 
-  async upsertRow(data, ...conditions) {
-    if (conditions.length === 0) {
-      throw new Error('conditions is required');
-    }
+  async upsertRow(data, condition) {
     if (!this.options.tables[0]) {
       throw new Error('table is required');
     }
     const query = new QueryOperator(this.conn, this.options);
     const table = this.options.tables[0].table;
     const alias = this.options.tables[0].alias;
-    const count = await query.table(table, alias)
-      .whereConditions(...conditions)
-      .count();
+    const q = query.table(table, alias);
+    if (condition instanceof QueryCondition) {
+      q.whereCondition(condition);
+    } else {
+      q.whereObject(condition);
+    }
+    const count = await q.count();
     if (count) {
-      return await query
-        .whereConditions(...conditions)
-        .update(data);
+      return await q.update(data);
     }
     return await query.insert(data);
   }
@@ -230,5 +229,6 @@ class QueryHandler {
 module.exports = {
   QueryOperator,
   QueryHandler,
+  QueryCondition,
   Query
 };

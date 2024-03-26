@@ -1,7 +1,7 @@
 'use strict';
 
 const { debug } = require('@axiosleo/cli-tool');
-const Query = require('./query');
+const { Query } = require('./query');
 const is = require('@axiosleo/cli-tool/src/helper/is');
 const { _caml_case, _render } = require('@axiosleo/cli-tool/src/helper/str');
 const { _validate } = require('./utils');

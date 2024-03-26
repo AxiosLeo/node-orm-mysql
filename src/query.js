@@ -285,16 +285,6 @@ class Query extends QueryCondition {
 
   /**
    * @deprecated
-   * @param {*} object 
-   * @returns 
-   */
-  whereObject(object = {}) {
-    Object.keys(object).forEach((key) => this.where(key, object[key]));
-    return this;
-  }
-
-  /**
-   * @deprecated
    * @param  {...any} conditions 
    * @returns 
    */
