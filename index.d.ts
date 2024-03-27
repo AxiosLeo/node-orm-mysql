@@ -98,6 +98,10 @@ export declare class QueryCondition {
 
   where(key: string, opt: OptType, value: ConditionValueType | WhereOptions[], isOr?: boolean): this;
 
+  whereAnd(): this;
+
+  whereOr(): this;
+
   whereIn(key: string, value: string | string[] | number[] | Query): this;
 
   whereNotIn(key: string, value: string | string[] | number[] | Query): this;

@@ -276,7 +276,8 @@ class Builder {
         `JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(${k}, '${keys[1]}'))`;
       return isNot ? `${sql}=0` : sql;
     }
-    let res = this._buildConditionValues(condition.value);
+    let v = is.string(condition.value) ? condition.value.split(',').map(v => v.trim()) : condition.value;
+    let res = this._buildConditionValues(v);
     const opt = isNot ? 'NOT IN' : 'IN';
     return res ? `${this._buildFieldKey(condition.key)} ${opt} (${res})` : `${this._buildFieldKey(condition.key)} ${opt} (?)`;
   }

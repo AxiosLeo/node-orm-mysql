@@ -77,48 +77,42 @@ class QueryCondition {
   }
 
   whereIn(key, value) {
-    if (is.string(value)) {
-      value = value.split(',').map(v => v.trim());
-    }
-    this.options.conditions.push({ key, opt: 'IN', value });
+    this.where(key, 'IN', value);
     return this;
   }
 
   whereNotIn(key, value) {
-    if (is.string(value)) {
-      value = value.split(',').map(v => v.trim());
-    }
-    this.options.conditions.push({ key, opt: 'NOT IN', value });
+    this.where(key, 'NOT IN', value);
     return this;
   }
 
   whereContain(key, value) {
-    this.options.conditions.push({ key, opt: 'CONTAIN', value });
+    this.where(key, 'CONTAIN', value);
     return this;
   }
 
   whereNotContain(key, value) {
-    this.options.conditions.push({ key, opt: 'NOT CONTAIN', value });
+    this.where(key, 'NOT CONTAIN', value);
     return this;
   }
 
   whereBetween(key, value) {
-    this.options.conditions.push({ key, opt: 'BETWEEN', value });
+    this.where(key, 'BETWEEN', value);
     return this;
   }
 
   whereNotBetween(key, value) {
-    this.options.conditions.push({ key, opt: 'NOT BETWEEN', value });
+    this.where(key, 'NOT BETWEEN', value);
     return this;
   }
 
   whereOverlaps(key, value) {
-    this.options.conditions.push({ key, opt: 'OVERLAPS', value });
+    this.where(key, 'OVERLAPS', value);
     return this;
   }
 
   whereNotOverlaps(key, value) {
-    this.options.conditions.push({ key, opt: 'NOT OVERLAPS', value });
+    this.where(key, 'NOT OVERLAPS', value);
     return this;
   }
 
@@ -126,7 +120,7 @@ class QueryCondition {
     if (is.array(value)) {
       value = value.join('');
     }
-    this.options.conditions.push({ key, opt: 'LIKE', value });
+    this.where(key, 'LIKE', value);
     return this;
   }
 
@@ -134,7 +128,7 @@ class QueryCondition {
     if (is.array(value)) {
       value = value.join('');
     }
-    this.options.conditions.push({ key, opt: 'NOT LIKE', value });
+    this.where(key, 'NOT LIKE', value);
     return this;
   }
 
