@@ -251,4 +251,13 @@ describe('query test case', () => {
     const res = await handler.table('users', 'u').upsertRow({ id: 1, name: 'leo' }, condition);
     expect(res.affectedRows).to.be.equal(1);
   });
+
+  it('where like', () => {
+    const query = new Query('select');
+    query.table('users');
+    query.where('name', 'like', '%leo%');
+
+    const builder = new Builder(query.options);
+    expect(builder.sql).to.be.equal('SELECT * FROM `users` WHERE `name` LIKE ?');
+  });
 });

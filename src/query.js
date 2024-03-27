@@ -42,11 +42,11 @@ class QueryCondition {
       case 4:
       case 3: {
         const [key, opt, value] = args;
-        if (is.string(value) && optType.includes(value.toUpperCase()) >= -1) {
-          this.options.conditions.push({ key, opt: value, value: opt });
+        if (is.string(value) && optType.includes(value.toUpperCase())) {
+          this.options.conditions.push({ key, opt: value.toUpperCase(), value: opt });
           break;
         }
-        this.options.conditions.push({ key, opt, value });
+        this.options.conditions.push({ key, opt: opt.toUpperCase(), value });
         break;
       }
       case 2: {
