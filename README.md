@@ -107,7 +107,7 @@ async function insertExample() {
 
   // The insert operation will be changed to the update operation if the uuid already exists
   row = await query.keys('uuid').insert({
-    uuid: 'uuid-string',
+    uuid: 'uuid-string', // uuid is unique index
     name: "Joe",
     age: 18,
   })
