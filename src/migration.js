@@ -96,7 +96,7 @@ async function init(context) {
   });
   let res = await _execSQL(conn, builder.sql);
   conn.end();
-  if (res.serverStatus !== 2) {
+  if (res.serverStatus !== 2 && res.serverStatus !== 16386) {
     printer.error('create migration table failed.');
     process.exit(1);
   }
