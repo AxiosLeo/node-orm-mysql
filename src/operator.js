@@ -224,6 +224,13 @@ class QueryHandler {
       .count();
     return !!c;
   }
+
+  async getTableFields(database, table, ...attrs) {
+    return await this.query({
+      sql: `SELECT ${attrs.length ? '*' : attrs.join(',')} FROM information_schema.columns WHERE table_schema=? AND table_name=?`,
+      values: [database, table]
+    });
+  }
 }
 
 module.exports = {
