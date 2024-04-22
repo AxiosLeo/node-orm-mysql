@@ -1,6 +1,6 @@
 {
   "name": "@axiosleo/orm-mysql",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "MySQL ORM tool",
   "keywords": [
     "mysql",
