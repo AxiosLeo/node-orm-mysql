@@ -45,8 +45,8 @@ class QueryOperator extends Query {
     if (this.conn === null) {
       throw new Error('Connection is null');
     }
-    const from = this.options.tables.map(t => t.tableName).join(',');
-    Hook.listen({ label: 'pre', table: from, opt: this.options.operator }, this.options);
+    const from = this.options.tables.map(t => t.table).join(',');
+    Hook.listen({ label: 'pre', table: from, opt: this.options.operator }, this.options, this.conn);
     let res;
     try {
       switch (this.options.operator) {
@@ -63,7 +63,7 @@ class QueryOperator extends Query {
         default:
           res = await _query(this.conn, this.options);
       }
-      Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, res);
+      Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, res, this.conn);
     } catch (err) {
       const e = new Error();
       let f = e.stack.split(os.EOL).find(s =>
@@ -77,7 +77,7 @@ class QueryOperator extends Query {
         printer.print('[MySQL] message: '.data).print(err.message.error).println();
         printer.print('[MySQL] query  : '.data).print(err.sql).println().println();
       }
-      Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, err);
+      Hook.listen({ label: 'post', table: from, opt: this.options.operator }, this.options, err, this.conn);
       throw err;
     }
     return res;
@@ -192,17 +192,17 @@ class QueryHandler {
 
   /**
    * @deprecated
-   * @param {*} tableName 
+   * @param {*} table
    * @param {*} data 
    * @param {*} condition 
    * @returns 
    */
-  async upsert(tableName, data, condition = {}) {
-    const count = await this.table(tableName).whereObject(condition).count();
+  async upsert(table, data, condition = {}) {
+    const count = await this.table(table).whereObject(condition).count();
     if (count) {
-      return await this.table(tableName).whereObject(condition).update(data);
+      return await this.table(table).whereObject(condition).update(data);
     }
-    return await this.table(tableName).insert(data);
+    return await this.table(table).insert(data);
   }
 
   async existTable(table, database = null) {

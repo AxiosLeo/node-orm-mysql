@@ -1,5 +1,6 @@
 'use strict';
 
+const is = require('@axiosleo/cli-tool/src/helper/is');
 const EventEmitter = require('events');
 
 const events = {}; // event tree
@@ -61,16 +62,34 @@ const eventRecur = (curr, trace, step, paths, args) => {
 class Hook {
   static pre(callback, options = {}) {
     const { table, opt } = options;
-    return pushEvent({
+    if (is.array(table)) {
+      table.forEach((t) => {
+        pushEvent({
+          label: 'pre', table: t, opt, callback
+        });
+      });
+      return;
+    }
+    pushEvent({
       label: 'pre', table, opt, callback
     });
+    return;
   }
 
   static post(callback, options = {}) {
     const { table, opt } = options;
-    return pushEvent({
+    if (is.array(table)) {
+      table.forEach((t) => {
+        pushEvent({
+          label: 'post', table: t, opt, callback
+        });
+      });
+      return;
+    }
+    pushEvent({
       label: 'post', table, opt, callback
     });
+    return;
   }
 
   static register(callback, ...paths) {

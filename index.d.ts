@@ -210,6 +210,7 @@ export type ExplainResult = {
 
 export declare class QueryOperator extends Query {
   conn: Connection | Pool;
+
   options: QueryOperatorOptions
 
   constructor(conn: Connection | Pool, opt?: QueryOperatorBaseOptions);
@@ -352,16 +353,16 @@ export declare class Hook {
    */
   static pre: (
     callback: (options: QueryOperatorOptions) => void,
-    option?: { table?: string, opt?: OperatorType }
-  ) => string;
+    option?: { table?: string | string[], opt?: OperatorType }
+  ) => void;
 
   /**
    * post hook for query operator
    */
   static post: (
     callback: (options: QueryOperatorOptions, result: QueryResult | Error) => void,
-    option?: { table?: string, opt?: OperatorType }
-  ) => string;
+    option?: { table?: string | string[], opt?: OperatorType }
+  ) => void;
 
   /**
    * register hook
