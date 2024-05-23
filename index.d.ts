@@ -352,7 +352,7 @@ export declare class Hook {
    * pre hook for query operator
    */
   static pre: (
-    callback: (options: QueryOperatorOptions) => void,
+    callback: (options: QueryOperatorOptions, conn: Connection | Pool) => void,
     option?: { table?: string | string[], opt?: OperatorType }
   ) => void;
 
@@ -360,7 +360,7 @@ export declare class Hook {
    * post hook for query operator
    */
   static post: (
-    callback: (options: QueryOperatorOptions, result: QueryResult | Error) => void,
+    callback: (options: QueryOperatorOptions, result: QueryResult | Error, conn: Connection | Pool) => void,
     option?: { table?: string | string[], opt?: OperatorType }
   ) => void;
 
