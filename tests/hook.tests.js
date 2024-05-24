@@ -24,5 +24,7 @@ describe('hook test case', () => {
     };
     Hook.post(callback, { table: 'test', opt: 'test' });
     Hook.trigger('post', { table: 'test', opt: 'test' }, 1, 2, 3);
+
+    Hook.post(callback, { table: ['test1', 'test2'], opt: ['insert', 'find'] });
   });
 });

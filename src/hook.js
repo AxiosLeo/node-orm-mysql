@@ -61,33 +61,37 @@ const eventRecur = (curr, trace, step, paths, args) => {
 
 class Hook {
   static pre(callback, options = {}) {
-    const { table, opt } = options;
-    if (is.array(table)) {
-      table.forEach((t) => {
+    let { table, opt } = options;
+    if (!is.array(table)) {
+      table = [table];
+    }
+    if (!is.array(opt)) {
+      opt = [opt];
+    }
+    table.forEach((t) => {
+      opt.forEach((o) => {
         pushEvent({
-          label: 'pre', table: t, opt, callback
+          label: 'pre', table: t, opt: o, callback
         });
       });
-      return;
-    }
-    pushEvent({
-      label: 'pre', table, opt, callback
     });
     return;
   }
 
   static post(callback, options = {}) {
-    const { table, opt } = options;
-    if (is.array(table)) {
-      table.forEach((t) => {
+    let { table, opt } = options;
+    if (!is.array(table)) {
+      table = [table];
+    }
+    if (!is.array(opt)) {
+      opt = [opt];
+    }
+    table.forEach((t) => {
+      opt.forEach((o) => {
         pushEvent({
-          label: 'post', table: t, opt, callback
+          label: 'post', table: t, opt: o, callback
         });
       });
-      return;
-    }
-    pushEvent({
-      label: 'post', table, opt, callback
     });
     return;
   }

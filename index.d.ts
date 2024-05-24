@@ -353,7 +353,7 @@ export declare class Hook {
    */
   static pre: (
     callback: (options: QueryOperatorOptions, conn: Connection | Pool) => void,
-    option?: { table?: string | string[], opt?: OperatorType }
+    option?: { table?: string | string[], opt?: OperatorType | OperatorType[] }
   ) => void;
 
   /**
@@ -361,7 +361,7 @@ export declare class Hook {
    */
   static post: (
     callback: (options: QueryOperatorOptions, result: QueryResult | Error, conn: Connection | Pool) => void,
-    option?: { table?: string | string[], opt?: OperatorType }
+    option?: { table?: string | string[], opt?: OperatorType | OperatorType[] }
   ) => void;
 
   /**
