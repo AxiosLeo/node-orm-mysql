@@ -465,7 +465,7 @@ class ManageSQLBuilder extends Builder {
       visible: 'boolean'
     });
 
-    let str = options.uniqIndex === true ? 'CREATE UNIQUE INDEX' : 'CREATE INDEX';
+    let str = options.unique === true ? 'CREATE UNIQUE INDEX' : 'CREATE INDEX';
 
     return _render(str + ' `${index_name}` ON `${table_name}` (${column_names}) ${visible}', {
       index_name: options.name,
