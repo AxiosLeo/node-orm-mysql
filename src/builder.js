@@ -55,11 +55,11 @@ class Builder {
         emit(tmp, this._buildJoins(options.joins));
         emit(tmp, this._buildCondition(options.conditions));
         emit(tmp, this._buildOrders(options.orders));
-        emit(tmp, this._buildPagination(options.pageLimit, options.pageOffset));
         if (options.having && options.having.length && !options.groupField.length) {
           throw new Error('having is not allowed without "GROUP BY"');
         }
         emit(tmp, this._buildGroupField(options.groupField));
+        emit(tmp, this._buildPagination(options.pageLimit, options.pageOffset));
         emit(tmp, this._buildHaving(options.having));
         sql = tmp.join(' ');
         if (options.suffix) {
