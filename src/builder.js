@@ -210,20 +210,23 @@ class Builder {
   }
 
   _buildPagination(limit, offset) {
-    if (!is.integer(limit) || limit < 0) {
-      throw new Error('Invalid limit value');
-    }
-    if (!is.integer(offset) || offset < 0) {
-      throw new Error('Invalid offset value');
-    }
-    limit = parseInt(limit);
-    offset = parseInt(offset);
     let sql = '';
-    if (limit) {
+    if (!is.invalid(limit)) {
+      if (!is.integer(limit) || limit < 0) {
+        throw new Error('Invalid limit value');
+      }
+      limit = parseInt(limit, 10);
       sql += ` LIMIT ${limit}`;
     }
-    if (offset) {
-      sql += ` OFFSET ${offset}`;
+
+    if (!is.invalid(offset)) {
+      if (!is.integer(offset) || offset < 0) {
+        throw new Error('Invalid offset value');
+      }
+      offset = parseInt(offset, 10);
+      if (offset > 0) {
+        sql += ` OFFSET ${offset}`;
+      }
     }
     return sql;
   }
