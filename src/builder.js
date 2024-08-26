@@ -210,6 +210,14 @@ class Builder {
   }
 
   _buildPagination(limit, offset) {
+    if (!is.integer(limit) || limit < 0) {
+      throw new Error('Invalid limit value');
+    }
+    if (!is.integer(offset) || offset < 0) {
+      throw new Error('Invalid offset value');
+    }
+    limit = parseInt(limit);
+    offset = parseInt(offset);
     let sql = '';
     if (limit) {
       sql += ` LIMIT ${limit}`;
