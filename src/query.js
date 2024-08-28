@@ -186,12 +186,18 @@ class Query extends QueryCondition {
   }
 
   limit(limit) {
-    this.options.pageLimit = limit;
+    if (!is.integer(limit)) {
+      throw new Error('limit must be an integer');
+    }
+    this.options.pageLimit = parseInt(limit, 10);
     return this;
   }
 
   offset(offset) {
-    this.options.pageOffset = offset;
+    if (!is.integer(offset)) {
+      throw new Error('offset must be an integer');
+    }
+    this.options.pageOffset = parseInt(offset, 10);
     return this;
   }
 
@@ -205,7 +211,8 @@ class Query extends QueryCondition {
   }
 
   orderBy(sortField, sortOrder = 'asc') {
-    this.options.orders.push({ sortField, sortOrder });
+    const order = sortOrder.toLocaleLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    this.options.orders.push({ sortField, sortOrder: order });
     return this;
   }
 
