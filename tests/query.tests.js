@@ -55,7 +55,12 @@ describe('query test case', () => {
       .where('mir.disabled', 0)
       .where('mi.disabled', 0)
       .orderBy('mi.id', 'desc');
-    expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `meta_items_relationship` AS `mir` LEFT JOIN `meta_items` AS `mi` ON `mi`.`id` = `mir`.`item_child` WHERE `mir`.`item_parent` = ? AND `mir`.`disabled` = ? AND `mi`.`disabled` = ? ORDER BY `mi`.`id` desc');
+    expect(query.buildSql('select').sql).to.be.equal(
+      'SELECT * FROM `meta_items_relationship` AS `mir` ' +
+      'LEFT JOIN `meta_items` AS `mi` ON `mi`.`id` = `mir`.`item_child` ' +
+      'WHERE `mir`.`item_parent` = ? AND `mir`.`disabled` = ? AND `mi`.`disabled` = ? ' +
+      'ORDER BY `mi`.`id` DESC'
+    );
   });
   it('join count should be ok', () => {
     const query = handler.table('meta_items_relationship', 'mir')
