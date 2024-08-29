@@ -9,7 +9,7 @@ const app = new App({
   name: 'MySQL ORM CLI',
   desc: 'migrate, model, seed, etc.',
   bin: 'orm-mysql',
-  version: '0.10.10',
+  version: '0.10.11',
   commands_dir: path.join(__dirname, '../commands'),
 });
 
