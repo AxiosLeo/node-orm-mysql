@@ -14,3 +14,4 @@ node_modules/*
 README.md
 coverage/*
 .prettierignore
+pnpm-lock.yaml
