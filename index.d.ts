@@ -1,12 +1,12 @@
 import {
-  Pool,
-  OkPacket,
   Connection,
+  ConnectionOptions,
+  OkPacket,
+  Pool,
   PoolOptions,
   QueryOptions,
-  RowDataPacket,
   ResultSetHeader,
-  ConnectionOptions
+  RowDataPacket
 } from 'mysql2';
 
 import {

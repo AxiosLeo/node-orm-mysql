@@ -6,7 +6,8 @@ const is = require('@axiosleo/cli-tool/src/helper/is');
 
 const optType = [
   '=', '!=', '>', '<', '>=', '<=',
-  'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'IS', 'IS NOT', 'REGEXP', 'NOT REGEXP', 'AND', 'OR', 'GROUP', 'CONTAIN', 'NOT CONTAIN', 'OVERLAPS', 'NOT OVERLAPS'
+  'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'IS', 'IS NOT',
+  'REGEXP', 'NOT REGEXP', 'AND', 'OR', 'GROUP', 'CONTAIN', 'NOT CONTAIN', 'OVERLAPS', 'NOT OVERLAPS'
 ];
 
 function joinOn(table, on, options = {}) {
