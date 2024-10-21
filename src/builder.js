@@ -51,16 +51,16 @@ class Builder {
           }
           return attr;
         });
-        emit(tmp, `SELECT ${attrs.length ? attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
-        emit(tmp, this._buildJoins(options.joins));
-        emit(tmp, this._buildCondition(options.conditions));
-        emit(tmp, this._buildOrders(options.orders));
         if (options.having && options.having.length && !options.groupField.length) {
           throw new Error('having is not allowed without "GROUP BY"');
         }
+        emit(tmp, `SELECT ${attrs.length ? attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
+        emit(tmp, this._buildJoins(options.joins));
+        emit(tmp, this._buildCondition(options.conditions));
         emit(tmp, this._buildGroupField(options.groupField));
         emit(tmp, this._buildPagination(options.pageLimit, options.pageOffset));
         emit(tmp, this._buildHaving(options.having));
+        emit(tmp, this._buildOrders(options.orders));
         sql = tmp.join(' ');
         if (options.suffix) {
           sql += ' ' + options.suffix;
