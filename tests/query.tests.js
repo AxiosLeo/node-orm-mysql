@@ -153,6 +153,24 @@ describe('query test case', () => {
     expect(JSON.stringify(res.values)).to.be.equal('[1]');
   });
 
+  it('group conditions', () => {
+    const startDate = '2024-10-01';
+    const endDate = '2024-10-31';
+    const startCondition = new QueryCondition();
+    startCondition.where('json->$.startDate', '>=', startDate)
+      .where('json->$.startDate', '<=', endDate);
+    const endCondition = new QueryCondition();
+    endCondition.where('json->$.endDate', '>=', startDate)
+      .where('json->$.endDate', '<=', endDate);
+
+    const dateCondition = new QueryCondition();
+    dateCondition.whereCondition(startCondition).whereOr().whereCondition(endCondition);
+
+    let query = handler.table('users', 'u');
+    query.where('u.user_id', 1).whereCondition(dateCondition).buildSql('select');
+    expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`user_id` = ? AND ((JSON_EXTRACT(`json`, \'$.startDate\') >= ? AND JSON_EXTRACT(`json`, \'$.startDate\') <= ?) OR (JSON_EXTRACT(`json`, \'$.endDate\') >= ? AND JSON_EXTRACT(`json`, \'$.endDate\') <= ?))');
+  });
+
   it('timestamp field', () => {
     const query = handler.table('users', 'u');
     const date = new Date();

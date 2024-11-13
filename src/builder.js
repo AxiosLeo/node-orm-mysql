@@ -331,7 +331,14 @@ class Builder {
         const opt = c.opt.toLowerCase();
         if (opt === 'group' && Array.isArray(c.value)) {
           let t = `(${this._buildCondition(c.value, '')})`;
-          return index === 0 ? t : ` AND ${t}`;
+          if (index === 0 || conditions[index - 1].opt === 'group') {
+            return t;
+          }
+          const lastOpt = conditions[index - 1].opt;
+          if (['AND', 'OR'].indexOf(lastOpt) > -1) {
+            return t;
+          }
+          return ` AND ${t}`;
         }
         if (opt === 'in') {
           return this._buildConditionIn(c);
