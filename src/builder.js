@@ -58,9 +58,9 @@ class Builder {
         emit(tmp, this._buildJoins(options.joins));
         emit(tmp, this._buildCondition(options.conditions));
         emit(tmp, this._buildGroupField(options.groupField));
-        emit(tmp, this._buildPagination(options.pageLimit, options.pageOffset));
         emit(tmp, this._buildHaving(options.having));
         emit(tmp, this._buildOrders(options.orders));
+        emit(tmp, this._buildPagination(options.pageLimit, options.pageOffset));
         sql = tmp.join(' ');
         if (options.suffix) {
           sql += ' ' + options.suffix;
