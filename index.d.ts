@@ -126,6 +126,9 @@ export declare class QueryCondition {
 
   whereCondition(condition: QueryCondition): this;
 
+  /**
+   * @deprecated will deprecated on v1.0+ version
+   */
   whereObject(obj: Record<string, ConditionValueType>): this;
 }
 
