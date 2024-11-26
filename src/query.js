@@ -56,6 +56,13 @@ class QueryCondition {
         break;
       }
       case 1: {
+        if (is.object(args[0])) {
+          const obj = args[0];
+          Object.keys(obj).forEach((key) => {
+            this.options.conditions.push({ key, opt: '=', value: obj[key] });
+          });
+          break;
+        }
         const [opt] = args;
         this.options.conditions.push({ key: null, opt, value: null });
         break;

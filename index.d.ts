@@ -98,6 +98,8 @@ export declare class QueryCondition {
 
   where(key: string, opt: OptType, value: ConditionValueType | WhereOptions[], isOr?: boolean): this;
 
+  where(obj: Record<string, ConditionValueType>): this;
+
   whereAnd(): this;
 
   whereOr(): this;

@@ -249,6 +249,11 @@ describe('query test case', () => {
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?');
   });
 
+  it('where object', () => {
+    const query = handler.table('users', 'u').attr(...[]).where({ id: 1 });
+    expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?');
+  });
+
   it('limit&offset', () => {
     const query = handler.table('users', 'u').attr(...[]).where('id', 1).limit(2).offset(1);
     expect(query.buildSql('select').sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `id` = ?  LIMIT 2 OFFSET 1');
