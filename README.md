@@ -121,6 +121,22 @@ async function updateExample() {
     name: "Joe",
     age: 18,
   });
+
+  // incrBy with number
+  row = await query.where("name", "Joe").incrBy("age", 1);
+
+  // incrBy with string
+  row = await query.where("name", "Joe").incrBy("age", "1");
+
+  // incrBy with Callback
+  let result = { status: "success" };
+  row = await query.where("id", 1).incrBy("error_times", () => {
+    // increase error_times if result.status is not success
+    if (result.status !== "success") {
+      return 1;
+    }
+    return 0;
+  });
 }
 
 async function deleteExample() {
