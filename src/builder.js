@@ -17,134 +17,139 @@ const emit = (arr, res) => {
   }
 };
 
-const operations = ['find', 'select', 'insert', 'update', 'delete', 'count', 'manage'];
+const operations = ['find', 'select', 'insert', 'update', 'incrBy', 'delete', 'count', 'manage'];
 
 class Builder {
   /**
    * @param {import('../index').QueryOperatorOptions} options 
    */
   constructor(options) {
-    let sql = '';
     this.values = [];
+    if (operations.includes(options.operator) === false) {
+      throw new Error(`Unsupported '${options.operator}' operation.`);
+    }
+    if (options.operator !== 'manage') {
+      const action = `_${options.operator}Operator`;
+      let sql = this[action].call(this, options);
+      if (options.explain) {
+        sql = 'EXPLAIN ' + sql;
+      }
+      this.sql = sql;
+    }
+  }
+
+  _findOperator(options) {
+    options.pageLimit = 1;
+    options.pageOffset = 0;
+    return this._selectOperator(options);
+  }
+
+  _selectOperator(options) {
     let tmp = [];
-    switch (options.operator) {
-      case 'find': {
-        options.pageLimit = 1;
-        options.pageOffset = 0;
+    let sql = '';
+    options.attrs = options.attrs || [];
+    const attrs = options.attrs.map((attr) => {
+      if (attr instanceof Function) {
+        attr = attr();
       }
-      // eslint-disable-next-line no-fallthrough
-      case 'select': {
-        options.attrs = options.attrs || [];
-        const attrs = options.attrs.map((attr) => {
-          if (attr instanceof Function) {
-            attr = attr();
-          }
-          if (attr instanceof Query) {
-            const builder = new Builder(attr.options);
-            this.values = this.values.concat(builder.values);
-            let s = `(${builder.sql})`;
-            if (attr.alias) {
-              return attr.alias.indexOf(' ') > -1 ? s + ' ' + this._buildFieldKey(attr.alias)
-                : s + ' AS ' + this._buildFieldKey(attr.alias);
-            }
-            return s;
-          }
-          return attr;
-        });
-        if (options.having && options.having.length && !options.groupField.length) {
-          throw new Error('having is not allowed without "GROUP BY"');
+      if (attr instanceof Query) {
+        const builder = new Builder(attr.options);
+        this.values = this.values.concat(builder.values);
+        let s = `(${builder.sql})`;
+        if (attr.alias) {
+          return attr.alias.indexOf(' ') > -1 ? s + ' ' + this._buildFieldKey(attr.alias)
+            : s + ' AS ' + this._buildFieldKey(attr.alias);
         }
-        emit(tmp, `SELECT ${attrs.length ? attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
-        emit(tmp, this._buildJoins(options.joins));
-        emit(tmp, this._buildCondition(options.conditions));
-        emit(tmp, this._buildGroupField(options.groupField));
-        emit(tmp, this._buildHaving(options.having));
-        emit(tmp, this._buildOrders(options.orders));
-        emit(tmp, this._buildPagination(options.pageLimit, options.pageOffset));
-        sql = tmp.join(' ');
-        if (options.suffix) {
-          sql += ' ' + options.suffix;
-        }
-        break;
+        return s;
       }
-      case 'insert': {
-        const { fields, sqlStr } = this._buildValues(options.data);
-        emit(tmp, `INSERT INTO ${this._buildTables(options.tables)}(${fields.map((f) => `\`${f}\``).join(',')})`);
-        emit(tmp, `VALUES ${sqlStr}`);
-        if (options.keys) {
-          let columns = fields.filter(f => !options.keys.includes(f));
-          emit(tmp, `ON DUPLICATE KEY UPDATE ${columns.map((f) => `\`${f}\` = VALUES(\`${f}\`)`).join(',')}`);
-        }
-        sql = tmp.join(' ');
-        break;
-      }
-      case 'update': {
-        if (is.invalid(options.data)) {
-          throw new Error('Data is required for update operation');
-        }
-        const fields = this._buildValue(options.data);
-        emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
-        emit(tmp, `SET ${fields.map((f) => `\`${f}\` = ?`).join(',')}`);
-        if (!options.conditions.length) {
-          throw new Error('At least one condition is required for update operation');
-        }
-        emit(tmp, this._buildCondition(options.conditions));
-        sql = tmp.join(' ');
-        break;
-      }
-      case 'incrBy': {
-        emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
-        let key = this._buildFieldKey(options.attrs[0]);
-        emit(tmp, `SET ${key} = ${key} + ?`);
-        if (is.string(options.increment)) {
-          this.values.push(parseInt(options.increment, 10));
-        } else if (is.func(options.increment)) {
-          this.values.push(options.increment());
-        } else if (is.number(options.increment)) {
-          this.values.push(options.increment);
-        } else {
-          throw new Error('Invalid increment value');
-        }
-        if (!options.conditions.length) {
-          throw new Error('At least one condition is required for update operation');
-        }
-        emit(tmp, this._buildCondition(options.conditions));
-        sql = tmp.join(' ');
-        break;
-      }
-      case 'delete': {
-        emit(tmp, `DELETE FROM ${this._buildTables(options.tables)}`);
-        if (!options.conditions.length) {
-          throw new Error('At least one where condition is required for delete operation');
-        }
-        emit(tmp, this._buildCondition(options.conditions));
-        sql = tmp.join(' ');
-        break;
-      }
-      case 'count': {
-        emit(tmp, `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`);
-        emit(tmp, this._buildJoins(options.joins));
-        emit(tmp, this._buildCondition(options.conditions));
-        if (options.having && options.having.length && !options.groupField.length) {
-          throw new Error('"HAVING" is not allowed without "GROUP BY"');
-        }
-        emit(tmp, this._buildGroupField(options.groupField));
-        emit(tmp, this._buildHaving(options.having));
-        sql = tmp.join(' ');
-        break;
-      }
-      case 'manage': {
-        break;
-      }
-      default:
-        throw new Error('Invalid operator: ' + options.operator);
+      return attr;
+    });
+    if (options.having && options.having.length && !options.groupField.length) {
+      throw new Error('having is not allowed without "GROUP BY"');
     }
-
-    if (options.explain) {
-      sql = 'EXPLAIN ' + sql;
+    emit(tmp, `SELECT ${attrs.length ? attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
+    emit(tmp, this._buildJoins(options.joins));
+    emit(tmp, this._buildCondition(options.conditions));
+    emit(tmp, this._buildGroupField(options.groupField));
+    emit(tmp, this._buildHaving(options.having));
+    emit(tmp, this._buildOrders(options.orders));
+    emit(tmp, this._buildPagination(options.pageLimit, options.pageOffset));
+    sql = tmp.join(' ');
+    if (options.suffix) {
+      sql += ' ' + options.suffix;
     }
+    return sql;
+  }
 
-    this.sql = sql;
+  _insertOperator(options) {
+    let tmp = [];
+    const { fields, sqlStr } = this._buildValues(options.data);
+    emit(tmp, `INSERT INTO ${this._buildTables(options.tables)}(${fields.map((f) => `\`${f}\``).join(',')})`);
+    emit(tmp, `VALUES ${sqlStr}`);
+    if (options.keys) {
+      let columns = fields.filter(f => !options.keys.includes(f));
+      emit(tmp, `ON DUPLICATE KEY UPDATE ${columns.map((f) => `\`${f}\` = VALUES(\`${f}\`)`).join(',')}`);
+    }
+    return tmp.join(' ');
+  }
+
+  _updateOperator(options) {
+    let tmp = [];
+    if (is.invalid(options.data)) {
+      throw new Error('Data is required for update operation');
+    }
+    const fields = this._buildValue(options.data);
+    emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
+    emit(tmp, `SET ${fields.map((f) => `\`${f}\` = ?`).join(',')}`);
+    if (!options.conditions.length) {
+      throw new Error('At least one condition is required for update operation');
+    }
+    emit(tmp, this._buildCondition(options.conditions));
+    return tmp.join(' ');
+  }
+
+  _incrByOperator(options) {
+    let tmp = [];
+    emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
+    const key = this._buildFieldKey(options.attrs[0]);
+    emit(tmp, `SET ${key} = ${key} + ?`);
+    if (is.string(options.increment)) {
+      this.values.push(parseInt(options.increment, 10));
+    } else if (is.func(options.increment)) {
+      this.values.push(options.increment());
+    } else if (is.number(options.increment)) {
+      this.values.push(options.increment);
+    } else {
+      throw new Error('Invalid increment value');
+    }
+    if (!options.conditions.length) {
+      throw new Error('At least one condition is required for update operation');
+    }
+    emit(tmp, this._buildCondition(options.conditions));
+    return tmp.join(' ');
+  }
+
+  _deleteOperator(options) {
+    let tmp = [];
+    emit(tmp, `DELETE FROM ${this._buildTables(options.tables)}`);
+    if (!options.conditions.length) {
+      throw new Error('At least one where condition is required for delete operation');
+    }
+    emit(tmp, this._buildCondition(options.conditions));
+    return tmp.join(' ');
+  }
+
+  _countOperator(options) {
+    let tmp = [];
+    emit(tmp, `SELECT COUNT(*) AS count FROM ${this._buildTables(options.tables)}`);
+    emit(tmp, this._buildJoins(options.joins));
+    emit(tmp, this._buildCondition(options.conditions));
+    if (options.having && options.having.length && !options.groupField.length) {
+      throw new Error('"HAVING" is not allowed without "GROUP BY"');
+    }
+    emit(tmp, this._buildGroupField(options.groupField));
+    emit(tmp, this._buildHaving(options.having));
+    return tmp.join(' ');
   }
 
   _buildGroupField(groupFields = []) {
