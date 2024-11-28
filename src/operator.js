@@ -27,8 +27,14 @@ class QueryOperator extends Query {
     }
   }
 
+  /**
+   * @deprecated use QueryOperator.notExec() instead
+   * @param {*} operator 
+   * @returns 
+   */
   buildSql(operator) {
     this.options.operator = operator;
+    this.options.notExec = true;
     return new Builder(this.options);
   }
 
@@ -39,6 +45,9 @@ class QueryOperator extends Query {
   }
 
   async exec() {
+    if (this.options.notExec === true) {
+      return new Builder(this.options);
+    }
     if (!this.options.operator) {
       throw new Error('Invalid operator: ' + this.options.operator);
     }
@@ -173,6 +182,11 @@ class QueryOperator extends Query {
       return await q.update(data);
     }
     return await query.insert(data);
+  }
+
+  notExec() {
+    this.options.notExec = true;
+    return this;
   }
 }
 
