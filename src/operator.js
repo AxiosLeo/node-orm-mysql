@@ -134,6 +134,19 @@ class QueryOperator extends Query {
     return await this.exec();
   }
 
+  /**
+   * increment a column value
+   * @param {string} attr 
+   * @param {string | number, callback?: Callback} increment 
+   * @returns 
+   */
+  async incrBy(attr, increment = 1) {
+    this.options.attrs = [attr];
+    this.options.operator = 'incrBy';
+    this.options.increment = increment;
+    return await this.exec();
+  }
+
   async delete(id, index_field_name = 'id') {
     if (id) {
       this.where(index_field_name, id);
