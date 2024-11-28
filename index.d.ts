@@ -220,6 +220,9 @@ export declare class QueryOperator extends Query {
 
   constructor(conn: Connection | Pool, opt?: QueryOperatorBaseOptions);
 
+  /**
+   * @deprecated will deprecated on v1.0+ version
+   */
   buildSql(operator: OperatorType): { sql: string, values: any[] };
 
   exec(): Promise<QueryResult>;
@@ -231,6 +234,13 @@ export declare class QueryOperator extends Query {
   find<T>(): Promise<T>;
 
   count(): Promise<number>;
+
+  /**
+   * increment a column value
+   * @param attr 
+   * @param increment default is 1
+   */
+  incrBy(attr: string, increment?: string | number | ((number: number) => number)): Promise<MySQLQueryResult>;
 
   delete(id?: number, index_field_name?: string): Promise<MySQLQueryResult>;
 
@@ -249,6 +259,8 @@ export declare class QueryOperator extends Query {
   upsertRow(row: any, condition: QueryCondition): Promise<MySQLQueryResult>;
 
   upsertRow<T extends Object>(row: T, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
+
+  notExec(): this;
 }
 
 export type TableInfoColumn = 'TABLE_CATALOG' | 'TABLE_SCHEMA' | 'TABLE_NAME' | 'COLUMN_NAME' | 'ORDINAL_POSITION' |
