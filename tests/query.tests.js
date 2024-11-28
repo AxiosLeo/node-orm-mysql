@@ -288,4 +288,38 @@ describe('query test case', () => {
     const builder = new Builder(query.options);
     expect(builder.sql).to.be.equal('SELECT * FROM `users` WHERE `name` LIKE ?');
   });
+
+  it('incrBy query should be ok', async () => {
+    const handle = new QueryHandler();
+    let res = await handle.table('test').where('id', 1)
+      .notExec()
+      .incrBy('number');
+
+    expect(res.sql).to.be.equal('UPDATE `test` SET `number` = `number` + ? WHERE `id` = ?');
+    expect(JSON.stringify(res.values)).to.be.equal('[1,1]');
+
+    res = await handle.table('test').where('id', 1)
+      .notExec()
+      .incrBy('number', '2');
+
+    expect(res.sql).to.be.equal('UPDATE `test` SET `number` = `number` + ? WHERE `id` = ?');
+    expect(JSON.stringify(res.values)).to.be.equal('[2,1]');
+
+    let data = {
+      status: 'success',
+      value: 200,
+    };
+    res = await handle.table('test').where('id', 1)
+      .notExec()
+      .incrBy('number', () => {
+        if (data.status === 'success') {
+          return 0;
+        }
+        // error times increase
+        return 1;
+      });
+
+    expect(res.sql).to.be.equal('UPDATE `test` SET `number` = `number` + ? WHERE `id` = ?');
+    expect(JSON.stringify(res.values)).to.be.equal('[0,1]');
+  });
 });
