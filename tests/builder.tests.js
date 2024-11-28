@@ -258,7 +258,7 @@ describe('builder test case', () => {
     };
     expect(() => {
       (new Builder(options)).sql;
-    }).to.throw('Invalid operator: invalid');
+    }).to.throw('Unsupported \'invalid\' operation.');
   });
 
   it('build manage sql', () => {
