@@ -92,6 +92,26 @@ class Builder {
         sql = tmp.join(' ');
         break;
       }
+      case 'incrBy': {
+        emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
+        let key = this._buildFieldKey(options.attrs[0]);
+        emit(tmp, `SET ${key} = ${key} + ?`);
+        if (is.string(options.increment)) {
+          this.values.push(parseInt(options.increment, 10));
+        } else if (is.func(options.increment)) {
+          this.values.push(options.increment());
+        } else if (is.number(options.increment)) {
+          this.values.push(options.increment);
+        } else {
+          throw new Error('Invalid increment value');
+        }
+        if (!options.conditions.length) {
+          throw new Error('At least one condition is required for update operation');
+        }
+        emit(tmp, this._buildCondition(options.conditions));
+        sql = tmp.join(' ');
+        break;
+      }
       case 'delete': {
         emit(tmp, `DELETE FROM ${this._buildTables(options.tables)}`);
         if (!options.conditions.length) {
