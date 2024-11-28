@@ -174,6 +174,7 @@ class Query extends QueryCondition {
       transaction: false,
       keys: null,
       explain: false,
+      notExec: false,
     };
     this.alias = alias || null;
   }
