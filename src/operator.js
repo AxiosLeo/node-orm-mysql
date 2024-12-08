@@ -41,6 +41,7 @@ class QueryOperator extends Query {
   async explain(operator) {
     this.options.operator = operator;
     this.options.explain = true;
+    this.options.notExec = false;
     return await this.exec();
   }
 
