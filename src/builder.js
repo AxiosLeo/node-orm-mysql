@@ -298,6 +298,24 @@ class Builder {
     return null;
   }
 
+  _buildConditionBetween(condition, isNot = false) {
+    if (!Array.isArray(condition.value) || condition.value.length !== 2) {
+      throw new Error('Value must be an array with two elements for "BETWEEN" condition');
+    }
+    this.values.push(condition.value[0] || null);
+    this.values.push(condition.value[1] || null);
+    if (condition.key.indexOf('->') !== -1) {
+      let keys = condition.key.split('->');
+      let k = `${this._buildFieldKey(keys[0])}`;
+      let sql = `JSON_EXTRACT(${k}, '${keys[1]}') `;
+      sql += isNot ? 'NOT BETWEEN' : 'BETWEEN';
+      sql += ' ? AND ?';
+      return sql;
+    }
+    const opt = isNot ? 'NOT BETWEEN' : 'BETWEEN';
+    return `${this._buildFieldKey(condition.key)} ${opt} ? AND ?`;
+  }
+
   _buildConditionIn(condition, isNot = false) {
     if (Array.isArray(condition.value) && !condition.value.length) {
       throw new Error('Value must not be empty for "IN" condition');
@@ -369,6 +387,10 @@ class Builder {
           return this._buildConditionIn(c);
         } else if (opt === 'not in') {
           return this._buildConditionIn(c, true);
+        } else if (opt === 'between') {
+          return this._buildConditionBetween(c);
+        } else if (opt === 'not between') {
+          return this._buildConditionBetween(c, true);
         } else if (opt === 'contain') {
           return this._buildConditionContain(c);
         } else if (opt === 'not contain') {
