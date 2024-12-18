@@ -322,4 +322,27 @@ describe('query test case', () => {
     expect(res.sql).to.be.equal('UPDATE `test` SET `number` = `number` + ? WHERE `id` = ?');
     expect(JSON.stringify(res.values)).to.be.equal('[0,1]');
   });
+
+  it('between query should be ok', async () => {
+    const handle = new QueryHandler();
+    let res = await handle.table('test').where('id', 1)
+      .where('company_id', 1)
+      .where('type', 'company')
+      .where('disabled', 0)
+      .whereBetween('time_end', ['2024-12-09 00:00:00', '2024-12-15 23:59:59'])
+      .notExec()
+      .select();
+    expect(res.sql).to.be.equal('SELECT * FROM `test` WHERE `id` = ? AND `company_id` = ? AND `type` = ? AND `disabled` = ? AND `time_end` BETWEEN ? AND ?');
+    expect(JSON.stringify(res.values)).to.be.equal('[1,1,"company",0,"2024-12-09 00:00:00","2024-12-15 23:59:59"]');
+
+    res = await handle.table('test').where('id', 1)
+      .where('company_id', 1)
+      .where('type', 'company')
+      .where('disabled', 0)
+      .whereBetween('json->$.time_end', ['2024-12-09 00:00:00', '2024-12-15 23:59:59'])
+      .notExec()
+      .select();
+    expect(res.sql).to.be.equal('SELECT * FROM `test` WHERE `id` = ? AND `company_id` = ? AND `type` = ? AND `disabled` = ? AND JSON_EXTRACT(`json`, \'$.time_end\') BETWEEN ? AND ?');
+    expect(JSON.stringify(res.values)).to.be.equal('[1,1,"company",0,"2024-12-09 00:00:00","2024-12-15 23:59:59"]');
+  });
 });
