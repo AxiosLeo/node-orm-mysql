@@ -309,4 +309,196 @@ describe('builder test case', () => {
     };
     expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` AS `t1` LEFT JOIN `table2` AS `t2` ON `t1`.`id` = `t2`.`t1_id`');
   });
+
+  it('build with join using subquery', () => {
+    const subQuery = new Query('select');
+    subQuery.table('table3', 't3').where('t3.status', 1);
+
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [],
+      orders: [],
+      tables: [{ table: 'table1', alias: 't1' }],
+      operator: 'select',
+      data: null,
+      groupField: [],
+      having: [],
+      joins: [
+        {
+          table: subQuery,
+          alias: 't2',
+          self_column: 't1.id',
+          foreign_column: 't2.t1_id',
+          join_type: 'left'
+        }
+      ]
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'SELECT * FROM `table1` AS `t1` LEFT JOIN (SELECT * FROM `table3` AS `t3` WHERE `t3`.`status` = ?) AS `t2` ON `t1`.`id` = `t2`.`t1_id`'
+    );
+  });
+
+  it('test insert operation', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [],
+      tables: [{ table: 'table1' }],
+      operator: 'insert',
+      data: { name: 'test', age: 18 }
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'INSERT INTO `table1`(`name`,`age`) VALUES (?,?)'
+    );
+  });
+
+  it('test batch insert operation', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [],
+      tables: [{ table: 'table1' }],
+      operator: 'insert',
+      data: [
+        { name: 'test1', age: 18 },
+        { name: 'test2', age: 20 }
+      ]
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'INSERT INTO `table1`(`name`,`age`) VALUES (?,?),(?,?)'
+    );
+  });
+
+  it('test insert with on duplicate key update', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [],
+      tables: [{ table: 'table1' }],
+      operator: 'insert',
+      data: { id: 1, name: 'test', age: 18 },
+      keys: ['id']
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'INSERT INTO `table1`(`id`,`name`,`age`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`),`age` = VALUES(`age`)'
+    );
+  });
+
+  it('test incrBy operation', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [{ key: 'id', opt: '=', value: 1 }],
+      tables: [{ table: 'table1' }],
+      operator: 'incrBy',
+      attrs: ['count'],
+      increment: 1
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'UPDATE `table1` SET `count` = `count` + ? WHERE `id` = ?'
+    );
+  });
+
+  it('test condition with JSON field', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [{
+        key: 'data->$.name',
+        opt: '=',
+        value: 'test'
+      }],
+      tables: [{ table: 'table1' }],
+      operator: 'select'
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'SELECT * FROM `table1` WHERE JSON_EXTRACT(`data`, \'$.name\') = ?'
+    );
+  });
+
+  it('test condition with IN operator', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [{
+        key: 'id',
+        opt: 'in',
+        value: [1, 2, 3]
+      }],
+      tables: [{ table: 'table1' }],
+      operator: 'select'
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'SELECT * FROM `table1` WHERE `id` IN (?)'
+    );
+  });
+
+  it('test condition with BETWEEN operator', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [{
+        key: 'age',
+        opt: 'between',
+        value: [18, 30]
+      }],
+      tables: [{ table: 'table1' }],
+      operator: 'select'
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'SELECT * FROM `table1` WHERE `age` BETWEEN ? AND ?'
+    );
+  });
+
+  it('test condition with CONTAIN operator', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [{
+        key: 'name',
+        opt: 'contain',
+        value: 'test'
+      }],
+      tables: [{ table: 'table1' }],
+      operator: 'select'
+    };
+    expect((new Builder(options)).sql).to.be.equal(
+      'SELECT * FROM `table1` WHERE `name` LIKE CONCAT(\'%\', ?, \'%\')'
+    );
+  });
+
+  it('test ManageSQLBuilder create table', () => {
+    const options = {
+      operator: 'create',
+      target: 'table',
+      name: 'test_table',
+      columns: {
+        id: {
+          type: 'int',
+          primaryKey: true,
+          autoIncrement: true,
+          comment: 'Primary Key'
+        },
+        name: {
+          type: 'varchar',
+          length: 255,
+          allowNull: false,
+          comment: 'User Name'
+        },
+        status: {
+          type: 'tinyint',
+          default: 1,
+          comment: 'Status'
+        }
+      }
+    };
+
+    const sql = (new ManageSQLBuilder(options)).sql;
+    expect(sql).to.include('CREATE TABLE `test_table`');
+    expect(sql).to.include('`id` INT(11) NOT NULL AUTO_INCREMENT COMMENT \'Primary Key\'');
+    expect(sql).to.include('`name` VARCHAR(255) NOT NULL COMMENT \'User Name\'');
+    expect(sql).to.include('`status` TINYINT(4) DEFAULT 1 COMMENT \'Status\'');
+    expect(sql).to.include('PRIMARY KEY (`id`)');
+  });
 });
