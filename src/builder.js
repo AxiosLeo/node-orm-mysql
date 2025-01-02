@@ -680,7 +680,7 @@ class ManageSQLBuilder extends Builder {
     } else if (type === 'TINYINT') {
       str += '(4)';
     }
-    if (options.allowNull === false) {
+    if (options.allowNull === false || options.primaryKey === true) {
       str += ' NOT NULL';
     }
     if (options.unsigned === true) {
@@ -705,11 +705,11 @@ class ManageSQLBuilder extends Builder {
     if (options.onUpdate) {
       str += ` ON UPDATE ${options.onUpdate}`;
     }
-    if (is.string(options.comment) && is.empty(options.comment) === false) {
-      str += ` COMMENT '${options.comment}'`;
-    }
     if (options.autoIncrement === true) {
       str += ' AUTO_INCREMENT';
+    }
+    if (is.string(options.comment) && is.empty(options.comment) === false) {
+      str += ` COMMENT '${options.comment}'`;
     }
     if (options.after) {
       str += ' AFTER `' + options.after + '`';
