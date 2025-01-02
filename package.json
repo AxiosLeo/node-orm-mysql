@@ -1,6 +1,6 @@
 {
   "name": "@axiosleo/orm-mysql",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "description": "MySQL ORM tool",
   "keywords": [
     "mysql",
@@ -35,7 +35,7 @@
     "url": "https://github.com/AxiosLeo/node-orm-mysql"
   },
   "devDependencies": {
-    "@types/node": "^20.11.26",
+    "@types/node": "^20.11.36",
     "chai": "^5.0.3",
     "eslint": "^8.56.0",
     "expect.js": "^0.3.1",
