@@ -52,7 +52,7 @@ async function init(context) {
     files = files.reverse();
   }
   context.files = files.filter(f => f !== '.connect.js');
-
+  context.config.dir = path.resolve(context.config.dir);
   const connectPath = path.join(context.config.dir, '.connect.js');
   if (await _exists(connectPath)) {
     const connect = require(connectPath);
