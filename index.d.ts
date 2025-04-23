@@ -229,35 +229,48 @@ export declare class QueryOperator extends Query {
 
   explain(operator: OperatorType): Promise<ExplainResult[]>;
 
-  select<T>(...attrs: string[]): Promise<T[] | Builder>;
+  select<T extends Object>(...attrs: string[]): Promise<T[]>;
+  select<T extends Object>(...attrs: string[]): Promise<Builder>;
 
-  find<T>(): Promise<T | Builder>;
+  find<T extends Object>(): Promise<T>;
+  find<T extends Object>(): Promise<Builder>;
 
-  count(): Promise<number | Builder>;
+  count(): Promise<number>;
+  count(): Promise<Builder>;
 
   /**
    * increment a column value
    * @param attr 
    * @param increment default is 1
    */
-  incrBy(attr: string, increment?: string | number | ((number: number) => number)): Promise<MySQLQueryResult | Builder>;
+  incrBy(attr: string, increment?: string | number | ((number: number) => number)): Promise<MySQLQueryResult>;
+  incrBy(attr: string, increment?: string | number | ((number: number) => number)): Promise<Builder>;
 
-  delete(id?: number, index_field_name?: string): Promise<MySQLQueryResult | Builder>;
+  delete(id?: number, index_field_name?: string): Promise<MySQLQueryResult>;
+  delete(id?: number, index_field_name?: string): Promise<Builder>;
 
-  update(row?: any): Promise<MySQLQueryResult | Builder>;
+  update(row?: any): Promise<MySQLQueryResult>;
+  update(row?: any): Promise<Builder>;
 
-  update<T extends Object>(row?: T): Promise<MySQLQueryResult | Builder>;
+  update<T extends Object>(row?: T): Promise<MySQLQueryResult>;
+  update<T extends Object>(row?: T): Promise<Builder>;
 
-  insert(row?: any): Promise<MySQLQueryResult | Builder>;
+  insert(row?: any): Promise<MySQLQueryResult>;
+  insert(row?: any): Promise<Builder>;
 
-  insert<T extends Object>(row?: T): Promise<MySQLQueryResult | Builder>;
+  insert<T extends Object>(row?: T): Promise<MySQLQueryResult>;
+  insert<T extends Object>(row?: T): Promise<Builder>;
 
-  insertAll(rows: any[]): Promise<MySQLQueryResult[] | Builder>;
+  insertAll(rows: any[]): Promise<MySQLQueryResult[]>;
+  insertAll(rows: any[]): Promise<Builder>;
 
-  insertAll<T extends Object>(rows: T[]): Promise<MySQLQueryResult[] | Builder>;
+  insertAll<T extends Object>(rows: T[]): Promise<MySQLQueryResult[]>;
+  insertAll<T extends Object>(rows: T[]): Promise<Builder>;
 
-  upsertRow(row: any, condition: QueryCondition): Promise<MySQLQueryResult | Builder>;
+  upsertRow(row: any, condition: QueryCondition): Promise<MySQLQueryResult>;
+  upsertRow(row: any, condition: QueryCondition): Promise<Builder>;
 
+  upsertRow<T extends Object>(row: T, ...conditions: WhereItem[]): Promise<MySQLQueryResult>;
   upsertRow<T extends Object>(row: T, ...conditions: WhereItem[]): Promise<MySQLQueryResult | Builder>;
 
   notExec(): this;
