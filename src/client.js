@@ -70,7 +70,13 @@ const createPool = (options, name = null) => {
   const key = name ? name :
     `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
   if (clients[key]) {
-    return clients[key];
+    const existingPool = clients[key];
+
+    if (existingPool._closed) {
+      delete clients[key];
+    } else {
+      return existingPool;
+    }
   }
   const pool = mysql.createPool(options);
   clients[key] = pool;
