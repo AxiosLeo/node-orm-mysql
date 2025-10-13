@@ -488,7 +488,7 @@ class ManageSQLBuilder extends Builder {
   }
 
   /**
-   * @param {import('../index').ManageBuilderOptions} options 
+   * @param {import('./migration').ManageBuilderOptions} options 
    */
   createTable(options) {
     _validate(options, {
