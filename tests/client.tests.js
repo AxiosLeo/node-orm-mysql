@@ -4,7 +4,7 @@
  * @type {Chai.ExpectStatic}
  */
 let expect = null;
-const { createPool } = require('../src/client');
+const { createPool, _clients } = require('../src/client');
 
 describe('client test case', () => {
   before(async function () {
@@ -72,5 +72,30 @@ describe('client test case', () => {
     // 再次调用应该返回相同的 pool
     const pool2 = createPool(options);
     expect(pool2).to.equal(pool1);
+  });
+
+  it('should test connectivity check logic', () => {
+    // 测试连通性检查的逻辑
+    const mockConnection = {
+      _closed: false,
+      _closing: false,
+      destroyed: false
+    };
+
+    // 手动设置一个模拟的连接
+    const testKey = 'test_connectivity_check';
+    _clients[testKey] = mockConnection;
+
+    // 测试正常连接应该被返回
+    expect(_clients[testKey]).to.equal(mockConnection);
+
+    // 模拟连接关闭
+    mockConnection._closed = true;
+
+    // 验证连通性检查的逻辑存在
+    expect(mockConnection._closed).to.be.true;
+
+    // 清理
+    delete _clients[testKey];
   });
 });

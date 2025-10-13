@@ -25,7 +25,17 @@ const createClient = (options, name = null) => {
   const key = name ? name :
     `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
   if (clients[key]) {
-    return clients[key];
+    // 检查现有连接的连通性
+    const existingConnection = clients[key];
+
+    // 检查连接是否已关闭或销毁
+    if (existingConnection._closing || existingConnection._closed || existingConnection.destroyed) {
+      // 连接已关闭，清除并重新创建
+      delete clients[key];
+    } else {
+      // 如果连接看起来正常，返回现有的连接
+      return existingConnection;
+    }
   }
   clients[key] = mysql.createConnection(options);
   clients[key].connect();
@@ -48,7 +58,17 @@ const createPromiseClient = async (options, name = null) => {
   const key = name ? name :
     `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
   if (clients[key]) {
-    return clients[key];
+    // 检查现有连接的连通性
+    const existingConnection = clients[key];
+
+    // 检查连接是否已关闭或销毁
+    if (existingConnection._closing || existingConnection._closed || existingConnection.destroyed) {
+      // 连接已关闭，清除并重新创建
+      delete clients[key];
+    } else {
+      // 如果连接看起来正常，返回现有的连接
+      return existingConnection;
+    }
   }
   clients[key] = await mysqlPromise.createConnection(options);
   return clients[key];
@@ -66,6 +86,7 @@ const createPool = (options, name = null) => {
     password: 'required|string',
     port: 'required|integer',
     database: 'required|string',
+    enableKeepAlive: 'boolean',
   });
   const key = name ? name :
     `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
@@ -150,5 +171,8 @@ module.exports = {
   getClient,
   createPool,
   createClient,
-  createPromiseClient
+  createPromiseClient,
+
+  // 仅用于测试
+  _clients: clients
 };
