@@ -15,3 +15,4 @@ README.md
 coverage/*
 .prettierignore
 pnpm-lock.yaml
+.cursor/*
