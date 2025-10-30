@@ -10,7 +10,7 @@ const { _render } = require('@axiosleo/cli-tool/src/helper/str');
 const { _foreach } = require('@axiosleo/cli-tool/src/helper/cmd');
 const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
 const { TransactionHandler } = require('..');
-const { ManageSQLBuilder } = require('./builder');
+const { ManageSQLBuilder, Builder } = require('./builder');
 
 const migrationColumns = [
   {
@@ -263,6 +263,17 @@ function _initMigration(file, queries = {}) {
         target: 'foreignKey',
         name,
         table
+      });
+      queries[file].push({ sql: builder.sql, values: builder.values });
+    }, ...baseAttr
+  });
+
+  Object.defineProperty(migration, 'insertData', {
+    value: function (table, data) {
+      const builder = new Builder({
+        operator: 'insert',
+        tables: [{ table }],
+        data
       });
       queries[file].push({ sql: builder.sql, values: builder.values });
     }, ...baseAttr

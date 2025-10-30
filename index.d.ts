@@ -537,4 +537,6 @@ export declare class MigrationInterface {
   dropIndex(indexName: string): void;
 
   dropForeignKey(foreign_key: string, tableName: string): void;
+
+  insertData(table: string, data: any[]): void;
 }
