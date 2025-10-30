@@ -274,7 +274,23 @@ class Builder {
   _buildValues(value) {
     let fields = [];
     if (is.array(value)) {
-      [fields] = value.map((v) => this._buildValue(v));
+      fields = this._buildValue(value[0]);
+
+      this.values = this.values.slice(0, -fields.length);
+
+      value.forEach((obj) => {
+        fields.forEach((field) => {
+          const val = obj[field];
+          if (val instanceof Date) {
+            this.values.push(val);
+          } else if (Array.isArray(val) || is.object(val)) {
+            this.values.push(JSON.stringify(val));
+          } else {
+            this.values.push(val);
+          }
+        });
+      });
+
       let item = '(' + fields.map(f => '?').join(',') + ')';
       return { fields, sqlStr: new Array(value.length).fill(item).join(',') };
     }
