@@ -501,4 +501,62 @@ describe('builder test case', () => {
     expect(sql).to.include('`status` TINYINT(4) DEFAULT 1 COMMENT \'Status\'');
     expect(sql).to.include('PRIMARY KEY (`id`)');
   });
+
+  it('test ManageSQLBuilder create table with DECIMAL type - with length and precision', () => {
+    const options = {
+      operator: 'create',
+      target: 'table',
+      name: 'test_table',
+      columns: {
+        price: {
+          type: 'decimal',
+          length: 10,
+          precision: 2,
+          allowNull: false,
+          comment: 'Price'
+        }
+      }
+    };
+
+    const sql = (new ManageSQLBuilder(options)).sql;
+    expect(sql).to.include('CREATE TABLE `test_table`');
+    expect(sql).to.include('`price` DECIMAL(10, 2) NOT NULL COMMENT \'Price\'');
+  });
+
+  it('test ManageSQLBuilder create table with DECIMAL type - with length only (default precision)', () => {
+    const options = {
+      operator: 'create',
+      target: 'table',
+      name: 'test_table',
+      columns: {
+        amount: {
+          type: 'decimal',
+          length: 15,
+          comment: 'Amount'
+        }
+      }
+    };
+
+    const sql = (new ManageSQLBuilder(options)).sql;
+    expect(sql).to.include('CREATE TABLE `test_table`');
+    expect(sql).to.include('`amount` DECIMAL(15, 6) COMMENT \'Amount\'');
+  });
+
+  it('test ManageSQLBuilder create table with DECIMAL type - without length (default 10,6)', () => {
+    const options = {
+      operator: 'create',
+      target: 'table',
+      name: 'test_table',
+      columns: {
+        total: {
+          type: 'decimal',
+          comment: 'Total'
+        }
+      }
+    };
+
+    const sql = (new ManageSQLBuilder(options)).sql;
+    expect(sql).to.include('CREATE TABLE `test_table`');
+    expect(sql).to.include('`total` DECIMAL(10, 6) COMMENT \'Total\'');
+  });
 });

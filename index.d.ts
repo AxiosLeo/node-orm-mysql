@@ -447,6 +447,7 @@ type FieldType =
 interface ColumnItem {
   type: FieldType,
   length?: number,
+  precision?: number,
   unsigned?: boolean,
   allowNull?: boolean,
   default?: string | number | boolean | null | 'timestamp',

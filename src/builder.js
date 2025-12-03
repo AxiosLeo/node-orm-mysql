@@ -675,6 +675,7 @@ class ManageSQLBuilder extends Builder {
       type: 'required|string',
       onUpdate: 'string',
       length: 'integer',
+      precision: 'integer',
       comment: 'string',
       allowNull: 'boolean',
       autoIncrement: 'boolean',
@@ -688,13 +689,19 @@ class ManageSQLBuilder extends Builder {
     }
     let str = `\`${options.name}\` ${type}`;
     if (typeof options.length !== 'undefined') {
-      str += `(${options.length})`;
+      if (type === 'DECIMAL') {
+        str += `(${options.length}, ${options.precision || 6})`;
+      } else {
+        str += `(${options.length})`;
+      }
     } else if (type === 'INT') {
       str += '(11)';
     } else if (type === 'VARCHAR') {
       str += '(255)';
     } else if (type === 'TINYINT') {
       str += '(4)';
+    } else if (type === 'DECIMAL') {
+      str += '(10, 6)';
     }
     if (options.allowNull === false || options.primaryKey === true) {
       str += ' NOT NULL';
