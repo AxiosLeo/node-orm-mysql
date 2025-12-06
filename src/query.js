@@ -164,6 +164,7 @@ class Query extends QueryCondition {
       conditions: [],
       orders: [],
       tables: [],
+      forceIndex: null,
       attrs: [],
       operator,
       data: null,
@@ -186,6 +187,11 @@ class Query extends QueryCondition {
 
   tables(...tables) {
     this.options.tables = tables;
+    return this;
+  }
+
+  force(indexName) {
+    this.options.forceIndex = indexName;
     return this;
   }
 

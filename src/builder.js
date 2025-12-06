@@ -68,6 +68,7 @@ class Builder {
       throw new Error('having is not allowed without "GROUP BY"');
     }
     emit(tmp, `SELECT ${attrs.length ? attrs.map((a) => this._buildFieldKey(a)).join(',') : '*'} FROM ${this._buildTables(options.tables)}`);
+    emit(tmp, this._buildForceIndex(options.forceIndex || null));
     emit(tmp, this._buildJoins(options.joins));
     emit(tmp, this._buildCondition(options.conditions));
     emit(tmp, this._buildGroupField(options.groupField));
@@ -79,6 +80,13 @@ class Builder {
       sql += ' ' + options.suffix;
     }
     return sql;
+  }
+
+  _buildForceIndex(forceIndex) {
+    if (!forceIndex) {
+      return '';
+    }
+    return `FORCE INDEX(${forceIndex})`;
   }
 
   _insertOperator(options) {
@@ -100,6 +108,7 @@ class Builder {
     }
     const fields = this._buildValue(options.data);
     emit(tmp, `UPDATE ${this._buildTables(options.tables)}`);
+    emit(tmp, this._buildForceIndex(options.forceIndex || null));
     emit(tmp, `SET ${fields.map((f) => `\`${f}\` = ?`).join(',')}`);
     if (!options.conditions.length) {
       throw new Error('At least one condition is required for update operation');

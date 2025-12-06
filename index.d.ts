@@ -74,6 +74,7 @@ export type QueryOperatorOptions = QueryOperatorBaseOptions & {
   pageLimit?: number;
   pageOffset?: number;
   tables: TableOption[];
+  forceIndex: string | null;
   operator: OperatorType | null;
   data: any | null;
   groupField: string[];

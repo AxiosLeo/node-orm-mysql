@@ -559,4 +559,21 @@ describe('builder test case', () => {
     expect(sql).to.include('CREATE TABLE `test_table`');
     expect(sql).to.include('`total` DECIMAL(10, 6) COMMENT \'Total\'');
   });
+
+  it('test force index', () => {
+    const options = {
+      sql: '',
+      values: [],
+      conditions: [],
+      tables: [{ table: 'table1' }],
+      operator: 'select',
+      forceIndex: 'idx_table1_id'
+    };
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` FORCE INDEX(idx_table1_id)');
+
+    options.operator = 'update';
+    options.data = { name: 'test' };
+    options.conditions = [{ key: 'id', opt: '=', value: 1 }];
+    expect((new Builder(options)).sql).to.be.equal('UPDATE `table1` FORCE INDEX(idx_table1_id) SET `name` = ? WHERE `id` = ?');
+  });
 });
