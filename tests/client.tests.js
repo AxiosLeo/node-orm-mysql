@@ -1,10 +1,14 @@
 'use strict';
 
+const mm = require('mm');
 /**
  * @type {Chai.ExpectStatic}
  */
 let expect = null;
-const { createPool, _clients } = require('../src/client');
+const mysql = require('mysql2');
+const mysqlPromise = require('mysql2/promise');
+const { createPool, createClient, createPromiseClient, getClient, MySQLClient, _clients } = require('../src/client');
+const { Query } = require('../src/query');
 
 describe('client test case', () => {
   before(async function () {
@@ -97,5 +101,506 @@ describe('client test case', () => {
 
     // 清理
     delete _clients[testKey];
+  });
+
+  describe('createClient', () => {
+    beforeEach(() => {
+      // 清理 _clients
+      Object.keys(_clients).forEach(key => {
+        delete _clients[key];
+      });
+    });
+
+    it('should create new client', () => {
+      mm(mysql, 'createConnection', (options) => {
+        return {
+          connect: () => { },
+          _closed: false,
+          _closing: false,
+          destroyed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = createClient(options);
+      expect(client).to.not.be.null;
+      mm.restore();
+    });
+
+    it('should return existing client when active', () => {
+      const mockConnection = {
+        connect: () => { },
+        _closed: false,
+        _closing: false,
+        destroyed: false
+      };
+      mm(mysql, 'createConnection', (options) => {
+        return mockConnection;
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client1 = createClient(options);
+      const client2 = createClient(options);
+      expect(client1).to.equal(client2);
+      mm.restore();
+    });
+
+    it('should recreate client when closed', () => {
+      const mockConnection1 = {
+        connect: () => { },
+        _closed: true,
+        _closing: false,
+        destroyed: false
+      };
+      const mockConnection2 = {
+        connect: () => { },
+        _closed: false,
+        _closing: false,
+        destroyed: false
+      };
+      let callCount = 0;
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const key = `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
+      _clients[key] = mockConnection1;
+      mm(mysql, 'createConnection', (opts) => {
+        callCount++;
+        if (callCount === 1) {
+          return mockConnection2;
+        }
+        return mockConnection2;
+      });
+      const client = createClient(options);
+      expect(client).to.equal(mockConnection2);
+      expect(client._closed).to.be.false;
+      mm.restore();
+    });
+
+    it('should recreate client when closing', () => {
+      const mockConnection1 = {
+        connect: () => { },
+        _closed: false,
+        _closing: true,
+        destroyed: false
+      };
+      const mockConnection2 = {
+        connect: () => { },
+        _closed: false,
+        _closing: false,
+        destroyed: false
+      };
+
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const key = `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
+      _clients[key] = mockConnection1;
+      let callCount = 0;
+      mm(mysql, 'createConnection', (opts) => {
+        callCount++;
+        return mockConnection2;
+      });
+      const client = createClient(options);
+      expect(client).to.equal(mockConnection2);
+      expect(client._closing).to.be.false;
+      expect(callCount).to.be.equal(1);
+      mm.restore();
+    });
+
+    it('should recreate client when destroyed', () => {
+      const mockConnection1 = {
+        connect: () => { },
+        _closed: false,
+        _closing: false,
+        destroyed: true
+      };
+      const mockConnection2 = {
+        connect: () => { },
+        _closed: false,
+        _closing: false,
+        destroyed: false
+      };
+      let callCount = 0;
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const key = `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
+      _clients[key] = mockConnection1;
+      mm(mysql, 'createConnection', (opts) => {
+        callCount++;
+        return mockConnection2;
+      });
+      const client = createClient(options);
+      expect(client).to.equal(mockConnection2);
+      expect(client.destroyed).to.be.false;
+      expect(callCount).to.be.equal(1);
+      mm.restore();
+    });
+
+    it('should use name parameter', () => {
+      mm(mysql, 'createConnection', (options) => {
+        return {
+          connect: () => { },
+          _closed: false,
+          _closing: false,
+          destroyed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client1 = createClient(options, 'named_client');
+      const client2 = createClient(options, 'named_client');
+      expect(client1).to.equal(client2);
+      expect(_clients['named_client']).to.equal(client1);
+      mm.restore();
+    });
+
+    it('should validate required options', () => {
+      expect(() => {
+        createClient({});
+      }).to.throw();
+    });
+  });
+
+  describe('createPromiseClient', () => {
+    beforeEach(() => {
+      Object.keys(_clients).forEach(key => {
+        delete _clients[key];
+      });
+    });
+
+    it('should create new promise client', async () => {
+      const mockConnection = {
+        _closed: false,
+        _closing: false,
+        destroyed: false
+      };
+      mm(mysqlPromise, 'createConnection', async (options) => {
+        return mockConnection;
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = await createPromiseClient(options);
+      expect(client).to.not.be.null;
+      mm.restore();
+    });
+
+    it('should return existing promise client when active', async () => {
+      const mockConnection = {
+        _closed: false,
+        _closing: false,
+        destroyed: false
+      };
+      mm(mysqlPromise, 'createConnection', async (options) => {
+        return mockConnection;
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client1 = await createPromiseClient(options);
+      const client2 = await createPromiseClient(options);
+      expect(client1).to.equal(client2);
+      mm.restore();
+    });
+
+    it('should recreate promise client when closed', async () => {
+      const mockConnection1 = {
+        _closed: true,
+        _closing: false,
+        destroyed: false
+      };
+      const mockConnection2 = {
+        _closed: false,
+        _closing: false,
+        destroyed: false
+      };
+      let callCount = 0;
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const key = `${options.host}:${options.port}:${options.user}:${options.password}:${options.database}`;
+      _clients[key] = mockConnection1;
+      mm(mysqlPromise, 'createConnection', async (opts) => {
+        callCount++;
+        return mockConnection2;
+      });
+      const client = await createPromiseClient(options);
+      expect(client).to.equal(mockConnection2);
+      expect(client._closed).to.be.false;
+      expect(callCount).to.be.equal(1);
+      mm.restore();
+    });
+
+    it('should use name parameter', async () => {
+      const mockConnection = {
+        _closed: false,
+        _closing: false,
+        destroyed: false
+      };
+      mm(mysqlPromise, 'createConnection', async (options) => {
+        return mockConnection;
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client1 = await createPromiseClient(options, 'named_promise_client');
+      const client2 = await createPromiseClient(options, 'named_promise_client');
+      expect(client1).to.equal(client2);
+      expect(_clients['named_promise_client']).to.equal(client1);
+      mm.restore();
+    });
+
+    it('should validate required options', async () => {
+      try {
+        await createPromiseClient({});
+        expect.fail('Should have thrown an error');
+      } catch (err) {
+        expect(err).to.exist;
+      }
+    });
+  });
+
+  describe('getClient', () => {
+    beforeEach(() => {
+      Object.keys(_clients).forEach(key => {
+        delete _clients[key];
+      });
+    });
+
+    it('should get existing client', () => {
+      const mockClient = { test: 'client' };
+      _clients['test_client'] = mockClient;
+      const client = getClient('test_client');
+      expect(client).to.equal(mockClient);
+    });
+
+    it('should throw error when name is missing', () => {
+      expect(() => {
+        getClient();
+      }).to.throw('name is required');
+    });
+
+    it('should throw error when client not found', () => {
+      expect(() => {
+        getClient('non_existent_client');
+      }).to.throw('client non_existent_client not found');
+    });
+  });
+
+  describe('MySQLClient', () => {
+    beforeEach(() => {
+      Object.keys(_clients).forEach(key => {
+        delete _clients[key];
+      });
+    });
+
+    it('should create MySQLClient with default type', () => {
+      mm(mysql, 'createConnection', (options) => {
+        return {
+          connect: () => { },
+          _closed: false,
+          _closing: false,
+          destroyed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = new MySQLClient(options);
+      expect(client).to.be.instanceOf(MySQLClient);
+      expect(client.database).to.be.equal('test_db');
+      mm.restore();
+    });
+
+    it('should create MySQLClient with pool type', () => {
+      mm(mysql, 'createPool', (options) => {
+        return {
+          _closed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = new MySQLClient(options, 'pool_client', 'pool');
+      expect(client).to.be.instanceOf(MySQLClient);
+      expect(client.database).to.be.equal('test_db');
+      mm.restore();
+    });
+
+    it('should throw error with invalid type', () => {
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      expect(() => {
+        new MySQLClient(options, 'test', 'invalid');
+      }).to.throw('client type invalid not found');
+    });
+
+    it('should execQuery with Query instance', async () => {
+      mm(mysql, 'createConnection', (options) => {
+        return {
+          connect: () => { },
+          query: (opt, callback) => {
+            callback(null, [{ id: 1 }]);
+          },
+          _closed: false,
+          _closing: false,
+          destroyed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = new MySQLClient(options);
+      const query = new Query('select');
+      query.table('users');
+      const result = await client.execQuery(query, 'select');
+      expect(result).to.be.an('array');
+      mm.restore();
+    });
+
+    it('should execQuery with operator parameter', async () => {
+      mm(mysql, 'createConnection', (options) => {
+        return {
+          connect: () => { },
+          query: (opt, callback) => {
+            callback(null, [{ id: 1 }]);
+          },
+          _closed: false,
+          _closing: false,
+          destroyed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = new MySQLClient(options);
+      const query = new Query();
+      query.table('users');
+      const result = await client.execQuery(query, 'select');
+      expect(result).to.be.an('array');
+      mm.restore();
+    });
+
+    it('should close connection', async () => {
+      let closed = false;
+      mm(mysql, 'createConnection', (options) => {
+        return {
+          connect: () => { },
+          end: (callback) => {
+            closed = true;
+            callback(null);
+          },
+          _closed: false,
+          _closing: false,
+          destroyed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = new MySQLClient(options);
+      await client.close();
+      expect(closed).to.be.true;
+      mm.restore();
+    });
+
+    it('should handle close error', async () => {
+      mm(mysql, 'createConnection', (options) => {
+        return {
+          connect: () => { },
+          end: (callback) => {
+            callback(new Error('Close error'));
+          },
+          _closed: false,
+          _closing: false,
+          destroyed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = new MySQLClient(options);
+      try {
+        await client.close();
+        expect.fail('Should have thrown an error');
+      } catch (err) {
+        expect(err.message).to.be.equal('Close error');
+      }
+      mm.restore();
+    });
   });
 });
