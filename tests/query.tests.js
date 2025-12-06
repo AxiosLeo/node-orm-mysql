@@ -345,4 +345,302 @@ describe('query test case', () => {
     expect(res.sql).to.be.equal('SELECT * FROM `test` WHERE `id` = ? AND `company_id` = ? AND `type` = ? AND `disabled` = ? AND JSON_EXTRACT(`json`, \'$.time_end\') BETWEEN ? AND ?');
     expect(JSON.stringify(res.values)).to.be.equal('[1,1,"company",0,"2024-12-09 00:00:00","2024-12-15 23:59:59"]');
   });
+
+  describe('QueryCondition methods', () => {
+    it('should handle where with 4 arguments and OR flag', () => {
+      const condition = new QueryCondition();
+      condition.where('id', '>', 1, true);
+      expect(condition.options.conditions.length).to.be.greaterThan(0);
+    });
+
+    it('should handle where with optType value swap', () => {
+      const condition = new QueryCondition();
+      condition.where('id', 1, 'IN');
+      expect(condition.options.conditions[0].opt).to.be.equal('IN');
+      expect(condition.options.conditions[0].value).to.be.equal(1);
+    });
+
+    it('should handle whereAnd', () => {
+      const condition = new QueryCondition();
+      condition.where('id', 1).whereAnd().where('name', 'test');
+      expect(condition.options.conditions[1].opt).to.be.equal('AND');
+    });
+
+    it('should handle whereOr', () => {
+      const condition = new QueryCondition();
+      condition.where('id', 1).whereOr().where('name', 'test');
+      expect(condition.options.conditions[1].opt).to.be.equal('OR');
+    });
+
+    it('should handle whereIn', () => {
+      const condition = new QueryCondition();
+      condition.whereIn('id', [1, 2, 3]);
+      expect(condition.options.conditions[0].opt).to.be.equal('IN');
+    });
+
+    it('should handle whereNotIn', () => {
+      const condition = new QueryCondition();
+      condition.whereNotIn('id', [1, 2, 3]);
+      expect(condition.options.conditions[0].opt).to.be.equal('NOT IN');
+    });
+
+    it('should handle whereContain', () => {
+      const condition = new QueryCondition();
+      condition.whereContain('name', 'test');
+      expect(condition.options.conditions[0].opt).to.be.equal('CONTAIN');
+    });
+
+    it('should handle whereNotContain', () => {
+      const condition = new QueryCondition();
+      condition.whereNotContain('name', 'test');
+      expect(condition.options.conditions[0].opt).to.be.equal('NOT CONTAIN');
+    });
+
+    it('should handle whereBetween', () => {
+      const condition = new QueryCondition();
+      condition.whereBetween('age', [18, 30]);
+      expect(condition.options.conditions[0].opt).to.be.equal('BETWEEN');
+    });
+
+    it('should handle whereNotBetween', () => {
+      const condition = new QueryCondition();
+      condition.whereNotBetween('age', [18, 30]);
+      expect(condition.options.conditions[0].opt).to.be.equal('NOT BETWEEN');
+    });
+
+    it('should handle whereOverlaps', () => {
+      const condition = new QueryCondition();
+      condition.whereOverlaps('tags', [1, 2]);
+      expect(condition.options.conditions[0].opt).to.be.equal('OVERLAPS');
+    });
+
+    it('should handle whereNotOverlaps', () => {
+      const condition = new QueryCondition();
+      condition.whereNotOverlaps('tags', [1, 2]);
+      expect(condition.options.conditions[0].opt).to.be.equal('NOT OVERLAPS');
+    });
+
+    it('should handle whereLike with array value', () => {
+      const condition = new QueryCondition();
+      condition.whereLike('name', ['%', 'test', '%']);
+      expect(condition.options.conditions[0].value).to.be.equal('%test%');
+    });
+
+    it('should handle whereNotLike with array value', () => {
+      const condition = new QueryCondition();
+      condition.whereNotLike('name', ['%', 'test', '%']);
+      expect(condition.options.conditions[0].value).to.be.equal('%test%');
+    });
+
+    it('should handle whereCondition', () => {
+      const condition1 = new QueryCondition();
+      condition1.where('id', 1);
+      const condition2 = new QueryCondition();
+      condition2.whereCondition(condition1);
+      expect(condition2.options.conditions[0].opt).to.be.equal('GROUP');
+    });
+
+    it('should handle whereObject', () => {
+      const condition = new QueryCondition();
+      condition.whereObject({ id: 1, name: 'test' });
+      // whereObject calls where for each key, and where adds AND between conditions
+      expect(condition.options.conditions.length).to.be.greaterThanOrEqual(2);
+    });
+
+    it('should throw error with invalid arguments', () => {
+      const condition = new QueryCondition();
+      expect(() => {
+        condition.where();
+      }).to.throw('Invalid arguments');
+    });
+  });
+
+  describe('Query methods', () => {
+    it('should handle tables method', () => {
+      const query = new Query('select');
+      query.tables({ table: 'users' }, { table: 'posts' });
+      expect(query.options.tables.length).to.be.equal(2);
+    });
+
+    it('should handle force method', () => {
+      const query = new Query('select');
+      query.table('users').force('idx_users_id');
+      expect(query.options.forceIndex).to.be.equal('idx_users_id');
+    });
+
+    it('should handle keys method', () => {
+      const query = new Query('insert');
+      query.keys('id', 'name');
+      expect(query.options.keys.length).to.be.equal(2);
+    });
+
+    it('should handle limit with validation', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.limit('invalid');
+      }).to.throw('limit must be an integer');
+    });
+
+    it('should handle offset with validation', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.offset('invalid');
+      }).to.throw('offset must be an integer');
+    });
+
+    it('should handle attr with empty array', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.attr();
+      expect(query.options.attrs.length).to.be.equal(0);
+    });
+
+    it('should handle orderBy', () => {
+      const query = new Query('select');
+      query.table('users').orderBy('id', 'desc');
+      expect(query.options.orders[0].sortOrder).to.be.equal('DESC');
+    });
+
+    it('should handle orderBy with lowercase asc', () => {
+      const query = new Query('select');
+      query.table('users').orderBy('id', 'asc');
+      expect(query.options.orders[0].sortOrder).to.be.equal('ASC');
+    });
+
+    it('should handle groupBy', () => {
+      const query = new Query('select');
+      query.table('users').groupBy('status', 'type');
+      expect(query.options.groupField.length).to.be.equal(2);
+    });
+
+    it('should handle having with AND', () => {
+      const query = new Query('select');
+      query.table('users').groupBy('status').having('count', '>', 1).having('sum', '>', 10);
+      expect(query.options.having.length).to.be.equal(3); // count condition + AND + sum condition
+    });
+
+    it('should handle having with OR', () => {
+      const query = new Query('select');
+      query.table('users').groupBy('status').having('count', '>', 1).having('OR').having('sum', '>', 10);
+      // having adds AND between conditions, so: count condition + OR + sum condition = 3
+      // But if OR is already there, it might add AND before OR, so could be more
+      expect(query.options.having.length).to.be.greaterThanOrEqual(3);
+    });
+
+    it('should handle page method', () => {
+      const query = new Query('select');
+      query.table('users').page(10, 20);
+      expect(query.options.pageLimit).to.be.equal(10);
+      expect(query.options.pageOffset).to.be.equal(20);
+    });
+
+    it('should handle set with validation', () => {
+      const query = new Query('update');
+      query.table('users');
+      expect(() => {
+        query.set(null);
+      }).to.throw('data is required');
+    });
+
+    it('should handle join with validation', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.join({});
+      }).to.throw();
+    });
+
+    it('should handle join with invalid join type', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.join({
+          table: 'posts',
+          self_column: 'users.id',
+          foreign_column: 'posts.user_id',
+          join_type: 'invalid'
+        });
+      }).to.throw('Invalid join type');
+    });
+
+    it('should handle leftJoin', () => {
+      const query = new Query('select');
+      query.table('users').leftJoin('posts', 'users.id = posts.user_id');
+      expect(query.options.joins[0].join_type).to.be.equal('LEFT');
+    });
+
+    it('should handle rightJoin', () => {
+      const query = new Query('select');
+      query.table('users').rightJoin('posts', 'users.id = posts.user_id');
+      expect(query.options.joins[0].join_type).to.be.equal('RIGHT');
+    });
+
+    it('should handle innerJoin', () => {
+      const query = new Query('select');
+      query.table('users').innerJoin('posts', 'users.id = posts.user_id');
+      expect(query.options.joins[0].join_type).to.be.equal('INNER');
+    });
+
+    it('should handle leftJoin error - table required', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.leftJoin(null, 'users.id = posts.user_id');
+      }).to.throw('table is required');
+    });
+
+    it('should handle leftJoin error - on required', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.leftJoin('posts', null);
+      }).to.throw('on is required');
+    });
+
+    it('should handle whereConditions deprecated method', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.whereConditions('AND', { id: 1 });
+      expect(query.options.conditions.length).to.be.greaterThan(0);
+    });
+
+    it('should handle groupWhere deprecated method', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.groupWhere('AND', { id: 1 });
+      expect(query.options.conditions.length).to.be.greaterThan(0);
+    });
+
+    it('should handle orWhere deprecated method', () => {
+      const query = new Query('select');
+      query.table('users').where('id', 1);
+      query.orWhere('name', '=', 'test');
+      expect(query.options.conditions.length).to.be.equal(3); // id condition + OR + name condition
+    });
+
+    it('should handle orWhere error when no conditions', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.orWhere('name', '=', 'test');
+      }).to.throw('At least one where condition is required');
+    });
+
+    it('should handle andWhere deprecated method', () => {
+      const query = new Query('select');
+      query.table('users').where('id', 1);
+      query.andWhere('name', '=', 'test');
+      expect(query.options.conditions.length).to.be.equal(3);
+    });
+
+    it('should handle andWhere error when no conditions', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.andWhere('name', '=', 'test');
+      }).to.throw('At least one where condition is required');
+    });
+  });
 });
