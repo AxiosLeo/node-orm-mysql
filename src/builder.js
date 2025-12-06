@@ -86,7 +86,18 @@ class Builder {
     if (!forceIndex) {
       return '';
     }
-    return `FORCE INDEX(${forceIndex})`;
+    if (Array.isArray(forceIndex)) {
+      if (forceIndex.length === 0) {
+        return '';
+      }
+      return `FORCE INDEX(${forceIndex.join(',')})`;
+    } else if (is.string(forceIndex)) {
+      if (forceIndex.toUpperCase() === 'PRIMARY') {
+        return 'FORCE INDEX(PRIMARY)';
+      }
+      return `FORCE INDEX(${forceIndex})`;
+    }
+    throw new Error('Invalid force index, must be index name or array of index names or PRIMARY');
   }
 
   _insertOperator(options) {

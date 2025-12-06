@@ -561,6 +561,7 @@ describe('builder test case', () => {
   });
 
   it('test force index', () => {
+    // Test with string index name in SELECT
     const options = {
       sql: '',
       values: [],
@@ -571,9 +572,67 @@ describe('builder test case', () => {
     };
     expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` FORCE INDEX(idx_table1_id)');
 
+    // Test with string index name in UPDATE
     options.operator = 'update';
     options.data = { name: 'test' };
     options.conditions = [{ key: 'id', opt: '=', value: 1 }];
     expect((new Builder(options)).sql).to.be.equal('UPDATE `table1` FORCE INDEX(idx_table1_id) SET `name` = ? WHERE `id` = ?');
+
+    // Test with array of index names
+    options.operator = 'select';
+    options.forceIndex = ['idx_table1_id', 'idx_table1_name'];
+    options.conditions = [];
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` FORCE INDEX(idx_table1_id,idx_table1_name)');
+
+    // Test with PRIMARY index (string)
+    options.forceIndex = 'PRIMARY';
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` FORCE INDEX(PRIMARY)');
+
+    // Test with PRIMARY index (lowercase string - should be converted to PRIMARY)
+    options.forceIndex = 'primary';
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` FORCE INDEX(PRIMARY)');
+
+    // Test without forceIndex (should not include FORCE INDEX)
+    delete options.forceIndex;
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1`');
+
+    // Test with null forceIndex
+    options.forceIndex = null;
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1`');
+
+    // Test with undefined forceIndex
+    options.forceIndex = void 0;
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1`');
+
+    // Test with empty string forceIndex
+    options.forceIndex = '';
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1`');
+
+    // Test with empty array forceIndex
+    options.forceIndex = [];
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1`');
+
+    // Test with array containing single index
+    options.forceIndex = ['idx_table1_id'];
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` FORCE INDEX(idx_table1_id)');
+
+    // Test with array containing multiple indices
+    options.forceIndex = ['idx_table1_id', 'idx_table1_status', 'idx_table1_created'];
+    expect((new Builder(options)).sql).to.be.equal('SELECT * FROM `table1` FORCE INDEX(idx_table1_id,idx_table1_status,idx_table1_created)');
+
+    // Test UPDATE with array of indices
+    options.operator = 'update';
+    options.data = { name: 'test' };
+    options.conditions = [{ key: 'id', opt: '=', value: 1 }];
+    options.forceIndex = ['idx_table1_id', 'idx_table1_name'];
+    expect((new Builder(options)).sql).to.be.equal('UPDATE `table1` FORCE INDEX(idx_table1_id,idx_table1_name) SET `name` = ? WHERE `id` = ?');
+
+    // Test UPDATE with PRIMARY index
+    options.forceIndex = 'PRIMARY';
+    expect((new Builder(options)).sql).to.be.equal('UPDATE `table1` FORCE INDEX(PRIMARY) SET `name` = ? WHERE `id` = ?');
+
+    // Test UPDATE without forceIndex
+    delete options.forceIndex;
+    expect((new Builder(options)).sql).to.be.equal('UPDATE `table1` SET `name` = ? WHERE `id` = ?');
   });
 });
