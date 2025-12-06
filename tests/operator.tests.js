@@ -21,6 +21,54 @@ describe('operator test case', () => {
     expect(res).to.be.an('array');
   });
 
+  it('should return first result for find operator', async () => {
+    const conn = {
+      query: (opt, callback) => {
+        callback(null, [{ id: 1, name: 'test1' }, { id: 2, name: 'test2' }]);
+      }
+    };
+    const operator = new QueryOperator(conn);
+    operator.table('test');
+    operator.options.operator = 'find';
+    const res = await operator.exec();
+    expect(res).to.be.an('object');
+    expect(res.id).to.be.equal(1);
+    expect(res.name).to.be.equal('test1');
+  });
+
+  it('should return undefined when find result is empty', async () => {
+    const conn = {
+      query: (opt, callback) => {
+        callback(null, []);
+      }
+    };
+    const operator = new QueryOperator(conn);
+    operator.table('test');
+    operator.options.operator = 'find';
+    const res = await operator.exec();
+    expect(res).to.be.undefined;
+  });
+
+  it('should handle error with sql property and stack trace', async () => {
+    const conn = {
+      query: (opt, callback) => {
+        const err = new Error('Database error');
+        err.sql = 'SELECT * FROM test';
+        callback(err, null);
+      }
+    };
+    const operator = new QueryOperator(conn);
+    operator.table('test');
+    operator.options.operator = 'select';
+    try {
+      await operator.exec();
+      expect.fail('Should have thrown an error');
+    } catch (err) {
+      expect(err.message).to.be.equal('Database error');
+      expect(err.sql).to.be.equal('SELECT * FROM test');
+    }
+  });
+
   it('custom driver', async () => {
     const conn = {
       query: async (_, callback) => {
@@ -105,6 +153,7 @@ describe('operator test case', () => {
       operator.table('users');
       const result = await operator.explain('select');
       expect(result).to.be.an('array');
+      expect(result.length).to.be.greaterThanOrEqual(1);
     });
 
     it('should throw error when operator is invalid', async () => {
@@ -144,6 +193,7 @@ describe('operator test case', () => {
       operator.table('users');
       const result = await operator.select('id', 'name');
       expect(result).to.be.an('array');
+      expect(result.length).to.be.greaterThanOrEqual(1);
     });
 
     it('should handle update with data', async () => {
@@ -367,6 +417,23 @@ describe('operator test case', () => {
       handler.database = 'test_db';
       const result = await handler.upsert('users', { name: 'test' }, { id: 1 });
       expect(result.affectedRows).to.be.equal(1);
+    });
+
+    it('should handle upsert deprecated method with insert path', async () => {
+      const conn = {
+        query: (opt, callback) => {
+          if (opt.sql && opt.sql.includes('COUNT(*)')) {
+            callback(null, [{ count: 0 }]);
+          } else {
+            callback(null, { affectedRows: 1, insertId: 123 });
+          }
+        }
+      };
+      const handler = new QueryHandler(conn);
+      handler.database = 'test_db';
+      const result = await handler.upsert('users', { name: 'test' }, { id: 999 });
+      expect(result.affectedRows).to.be.equal(1);
+      expect(result.insertId).to.be.equal(123);
     });
 
     it('should handle existTable', async () => {

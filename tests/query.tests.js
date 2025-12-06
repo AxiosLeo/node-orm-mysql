@@ -453,6 +453,15 @@ describe('query test case', () => {
         condition.where();
       }).to.throw('Invalid arguments');
     });
+
+    it('should handle where with single string argument (opt only)', () => {
+      const condition = new QueryCondition();
+      condition.where('AND');
+      expect(condition.options.conditions.length).to.be.equal(1);
+      expect(condition.options.conditions[0].opt).to.be.equal('AND');
+      expect(condition.options.conditions[0].key).to.be.null;
+      expect(condition.options.conditions[0].value).to.be.null;
+    });
   });
 
   describe('Query methods', () => {
@@ -527,6 +536,24 @@ describe('query test case', () => {
       // having adds AND between conditions, so: count condition + OR + sum condition = 3
       // But if OR is already there, it might add AND before OR, so could be more
       expect(query.options.having.length).to.be.greaterThanOrEqual(3);
+    });
+
+    it('should handle having with AND directly', () => {
+      const query = new Query('select');
+      query.table('users').groupBy('status');
+      // having('AND') means having(null, 'AND', null)
+      query.having(null, 'AND', null);
+      expect(query.options.having.length).to.be.equal(1);
+      expect(query.options.having[0].opt).to.be.equal('AND');
+    });
+
+    it('should handle having with OR directly', () => {
+      const query = new Query('select');
+      query.table('users').groupBy('status');
+      // having('OR') means having(null, 'OR', null)
+      query.having(null, 'OR', null);
+      expect(query.options.having.length).to.be.equal(1);
+      expect(query.options.having[0].opt).to.be.equal('OR');
     });
 
     it('should handle page method', () => {
@@ -606,11 +633,139 @@ describe('query test case', () => {
       expect(query.options.conditions.length).to.be.greaterThan(0);
     });
 
+    it('should handle whereConditions with empty array', () => {
+      const query = new Query('select');
+      query.table('users');
+      const result = query.whereConditions();
+      expect(result).to.equal(query);
+      expect(query.options.conditions.length).to.be.equal(0);
+    });
+
+    it('should handle whereConditions with first condition not string', () => {
+      const query = new Query('select');
+      query.table('users').where('id', 1);
+      query.whereConditions({ id: 2 });
+      expect(query.options.conditions.length).to.be.greaterThan(1);
+      expect(query.options.conditions[1].opt).to.be.equal('AND');
+    });
+
+    it('should handle whereConditions with array length 2', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.whereConditions(['id', 1]);
+      expect(query.options.conditions.length).to.be.equal(1);
+      expect(query.options.conditions[0].key).to.be.equal('id');
+      expect(query.options.conditions[0].opt).to.be.equal('=');
+      expect(query.options.conditions[0].value).to.be.equal(1);
+    });
+
+    it('should handle whereConditions with array length 3', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.whereConditions(['id', '>', 1]);
+      expect(query.options.conditions.length).to.be.equal(1);
+      expect(query.options.conditions[0].key).to.be.equal('id');
+      expect(query.options.conditions[0].opt).to.be.equal('>');
+      expect(query.options.conditions[0].value).to.be.equal(1);
+    });
+
+    it('should handle whereConditions with invalid array length', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.whereConditions(['id', '>', 1, 'extra']);
+      }).to.throw('Invalid condition');
+    });
+
+    it('should handle whereConditions with object condition', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.whereConditions({ key: 'id', opt: '=', value: 1 });
+      expect(query.options.conditions.length).to.be.equal(1);
+    });
+
+    it('should handle whereConditions with other type condition', () => {
+      const query = new Query('select');
+      query.table('users');
+      const conditionObj = { key: 'id', opt: '=', value: 1 };
+      query.whereConditions(conditionObj);
+      expect(query.options.conditions.length).to.be.equal(1);
+    });
+
+    it('should handle whereConditions with non-string, non-object, non-array condition', () => {
+      const query = new Query('select');
+      query.table('users');
+      const conditionObj = { key: 'id', opt: '=', value: 1 };
+      query.whereConditions(conditionObj);
+      expect(query.options.conditions.length).to.be.equal(1);
+      expect(query.options.conditions[0].key).to.be.equal('id');
+      expect(query.options.conditions[0].opt).to.be.equal('=');
+      expect(query.options.conditions[0].value).to.be.equal(1);
+    });
+
     it('should handle groupWhere deprecated method', () => {
       const query = new Query('select');
       query.table('users');
       query.groupWhere('AND', { id: 1 });
       expect(query.options.conditions.length).to.be.greaterThan(0);
+    });
+
+    it('should handle groupWhere with empty array', () => {
+      const query = new Query('select');
+      query.table('users');
+      const result = query.groupWhere();
+      expect(result).to.equal(query);
+      expect(query.options.conditions.length).to.be.equal(0);
+    });
+
+    it('should handle groupWhere with array length 2', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.groupWhere(['id', 1]);
+      expect(query.options.conditions.length).to.be.equal(1);
+      expect(query.options.conditions[0].opt).to.be.equal('group');
+      expect(query.options.conditions[0].value.length).to.be.equal(1);
+      expect(query.options.conditions[0].value[0].key).to.be.equal('id');
+    });
+
+    it('should handle groupWhere with array length 3', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.groupWhere(['id', '>', 1]);
+      expect(query.options.conditions.length).to.be.equal(1);
+      expect(query.options.conditions[0].opt).to.be.equal('group');
+      expect(query.options.conditions[0].value.length).to.be.equal(1);
+      expect(query.options.conditions[0].value[0].key).to.be.equal('id');
+      expect(query.options.conditions[0].value[0].opt).to.be.equal('>');
+    });
+
+    it('should handle groupWhere with invalid array length', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(() => {
+        query.groupWhere(['id', '>', 1, 'extra']);
+      }).to.throw('Invalid condition');
+    });
+
+    it('should handle groupWhere with object condition', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.groupWhere({ key: 'id', opt: '=', value: 1 });
+      expect(query.options.conditions.length).to.be.equal(1);
+      expect(query.options.conditions[0].opt).to.be.equal('group');
+    });
+
+    it('should handle groupWhere with other type condition', () => {
+      const query = new Query('select');
+      query.table('users');
+      const conditionObj = { key: 'id', opt: '=', value: 1 };
+      query.groupWhere(conditionObj);
+      expect(query.options.conditions.length).to.be.equal(1);
+      expect(query.options.conditions[0].opt).to.be.equal('group');
+      expect(query.options.conditions[0].value.length).to.be.equal(1);
+      expect(query.options.conditions[0].value[0].key).to.be.equal('id');
+      expect(query.options.conditions[0].value[0].opt).to.be.equal('=');
+      expect(query.options.conditions[0].value[0].value).to.be.equal(1);
     });
 
     it('should handle orWhere deprecated method', () => {

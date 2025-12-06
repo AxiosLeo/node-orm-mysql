@@ -635,4 +635,335 @@ describe('builder test case', () => {
     delete options.forceIndex;
     expect((new Builder(options)).sql).to.be.equal('UPDATE `table1` SET `name` = ? WHERE `id` = ?');
   });
+
+  describe('ManageSQLBuilder renderSingleColumn', () => {
+    it('should handle VARCHAR type without length (default 255)', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'description',
+        type: 'varchar'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`description` VARCHAR(255)');
+    });
+
+    it('should handle UNSIGNED attribute', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'age',
+        type: 'int',
+        unsigned: true
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`age` INT(11) UNSIGNED');
+    });
+
+    it('should throw error when PRIMARY KEY has default value', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'id',
+        type: 'int',
+        primaryKey: true,
+        default: 1
+      };
+      expect(() => {
+        (new ManageSQLBuilder(options)).sql;
+      }).to.throw('Primary key can not have default value.');
+    });
+
+    it('should handle default value as null', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'status',
+        type: 'int',
+        default: null
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`status` INT(11) DEFAULT NULL');
+    });
+
+    it('should handle default value as timestamp', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'created_at',
+        type: 'timestamp',
+        default: 'timestamp'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('DEFAULT CURRENT_TIMESTAMP');
+    });
+
+    it('should handle default value as TIMESTAMP', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'created_at',
+        type: 'timestamp',
+        default: 'TIMESTAMP'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('DEFAULT CURRENT_TIMESTAMP');
+    });
+
+    it('should handle default value as CURRENT_TIMESTAMP', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'updated_at',
+        type: 'timestamp',
+        default: 'CURRENT_TIMESTAMP'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('DEFAULT CURRENT_TIMESTAMP');
+    });
+
+    it('should handle default value as string', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'name',
+        type: 'varchar',
+        default: 'default_name'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('DEFAULT \'default_name\'');
+    });
+
+    it('should handle default value as number', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'count',
+        type: 'int',
+        default: 0
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('DEFAULT 0');
+    });
+
+    it('should handle onUpdate attribute', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'updated_at',
+        type: 'timestamp',
+        onUpdate: 'CURRENT_TIMESTAMP'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('ON UPDATE CURRENT_TIMESTAMP');
+    });
+
+    it('should handle after attribute', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'description',
+        type: 'varchar',
+        after: 'name'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('AFTER `name`');
+    });
+
+    it('should handle INT type without length (default 11)', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'id',
+        type: 'int'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`id` INT(11)');
+    });
+
+    it('should handle TINYINT type without length (default 4)', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'status',
+        type: 'tinyint'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`status` TINYINT(4)');
+    });
+  });
+
+  describe('ManageSQLBuilder other methods', () => {
+    it('should handle createColumn', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'new_column',
+        type: 'varchar',
+        length: 100
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('ALTER TABLE `test_table` ADD COLUMN');
+      expect(sql).to.include('`new_column` VARCHAR(100)');
+    });
+
+    it('should throw error when createColumn table is missing', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        name: 'new_column',
+        type: 'varchar'
+      };
+      expect(() => {
+        (new ManageSQLBuilder(options)).sql;
+      }).to.throw('Table name is required');
+    });
+
+    it('should handle createIndex with unique', () => {
+      const options = {
+        operator: 'create',
+        target: 'index',
+        table: 'test_table',
+        name: 'idx_unique_name',
+        columns: ['name'],
+        unique: true
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('CREATE UNIQUE INDEX');
+      expect(sql).to.include('`idx_unique_name`');
+    });
+
+    it('should handle createIndex with visible false', () => {
+      const options = {
+        operator: 'create',
+        target: 'index',
+        table: 'test_table',
+        name: 'idx_name',
+        columns: ['name'],
+        visible: false
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('INVISIBLE');
+    });
+
+    it('should handle createIndex with order desc', () => {
+      const options = {
+        operator: 'create',
+        target: 'index',
+        table: 'test_table',
+        name: 'idx_name',
+        columns: ['name desc']
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`name` DESC');
+    });
+
+    it('should handle dropIndex', () => {
+      const options = {
+        operator: 'drop',
+        target: 'index',
+        table: 'test_table',
+        name: 'idx_name'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.be.equal('DROP INDEX `idx_name` ON `test_table`');
+    });
+
+    it('should handle dropForeignKey', () => {
+      const options = {
+        operator: 'drop',
+        target: 'foreignKey',
+        table: 'test_table',
+        name: 'fk_test'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.be.equal('ALTER TABLE `test_table` DROP FOREIGN KEY `fk_test`');
+    });
+
+    it('should handle createColumns with uniqIndex', () => {
+      const options = {
+        operator: 'create',
+        target: 'table',
+        name: 'test_table',
+        columns: {
+          id: {
+            type: 'int',
+            primaryKey: true
+          },
+          email: {
+            type: 'varchar',
+            length: 255,
+            uniqIndex: true
+          }
+        }
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('UNIQUE INDEX `email`');
+    });
+
+    it('should handle createColumns with reference', () => {
+      const options = {
+        operator: 'create',
+        target: 'table',
+        name: 'test_table',
+        columns: {
+          id: {
+            type: 'int',
+            primaryKey: true
+          },
+          user_id: {
+            type: 'int',
+            reference: {
+              table: 'users',
+              column: 'id',
+              onDelete: 'CASCADE',
+              onUpdate: 'RESTRICT'
+            }
+          }
+        }
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('FOREIGN KEY');
+      expect(sql).to.include('ON DELETE CASCADE');
+      expect(sql).to.include('ON UPDATE RESTRICT');
+    });
+
+    it('should handle createColumns with reference default actions', () => {
+      const options = {
+        operator: 'create',
+        target: 'table',
+        name: 'test_table',
+        columns: {
+          id: {
+            type: 'int',
+            primaryKey: true
+          },
+          user_id: {
+            type: 'int',
+            reference: {
+              table: 'users',
+              column: 'id'
+            }
+          }
+        }
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('ON DELETE NO ACTION');
+      expect(sql).to.include('ON UPDATE NO ACTION');
+    });
+  });
 });
