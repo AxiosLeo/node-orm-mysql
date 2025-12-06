@@ -547,6 +547,28 @@ describe('client test case', () => {
       mm.restore();
     });
 
+    it('should return undefined when execQuery receives non-Query instance', async () => {
+      mm(mysql, 'createConnection', (options) => {
+        return {
+          connect: () => { },
+          _closed: false,
+          _closing: false,
+          destroyed: false
+        };
+      });
+      const options = {
+        host: 'localhost',
+        port: 3306,
+        user: 'test',
+        password: 'test',
+        database: 'test_db'
+      };
+      const client = new MySQLClient(options);
+      const result = await client.execQuery({ notAQuery: true });
+      expect(result).to.be.undefined;
+      mm.restore();
+    });
+
     it('should close connection', async () => {
       let closed = false;
       mm(mysql, 'createConnection', (options) => {

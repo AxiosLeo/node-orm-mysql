@@ -343,6 +343,44 @@ describe('transaction test case', () => {
       expect(result.affectedRows).to.be.equal(1);
     });
 
+    it('should upsert row with insert path when count is 0', async () => {
+      let countCalled = false;
+      let insertCalled = false;
+      const conn = {
+        beginTransaction: async () => { },
+        commit: async () => { },
+        rollback: async () => { },
+        execute: async (sql, values) => {
+          if (sql.includes('COUNT(*)')) {
+            countCalled = true;
+            return [[{ count: 0 }]];
+          }
+          if (sql.includes('INSERT')) {
+            insertCalled = true;
+            return [{ affectedRows: 1, insertId: 123 }];
+          }
+          return [];
+        },
+        query: (opt, callback) => {
+          if (opt.sql && opt.sql.includes('COUNT(*)')) {
+            callback(null, [{ count: 0 }]);
+          } else if (opt.sql && opt.sql.includes('INSERT')) {
+            callback(null, { affectedRows: 1, insertId: 123 });
+          } else {
+            callback(null, []);
+          }
+        }
+      };
+      const handler = new TransactionHandler(conn);
+      await handler.begin();
+      const result = await handler.upsert('users', { name: 'test' }, { id: 999 });
+      expect(countCalled).to.be.true;
+      expect(insertCalled).to.be.true;
+      expect(result).to.be.an('object');
+      expect(result.affectedRows).to.be.equal(1);
+      expect(result.insertId).to.be.equal(123);
+    });
+
     it('should commit transaction', async () => {
       let committed = false;
       const conn = {
