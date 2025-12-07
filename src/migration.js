@@ -178,6 +178,7 @@ function _initMigration(file, queries = {}) {
       queries[file].push({ sql: builder.sql, values: builder.values });
     }, ...baseAttr
   });
+
   Object.defineProperty(migration, 'createColumn', {
     value: function (name, type, table, options = {}) {
       _assign(options, {
@@ -186,6 +187,19 @@ function _initMigration(file, queries = {}) {
         table,
         name,
         type
+      });
+      const builder = new ManageSQLBuilder(options);
+      queries[file].push({ sql: builder.sql, values: builder.values });
+    }, ...baseAttr
+  });
+
+  Object.defineProperty(migration, 'addColumn', {
+    value: function (tableName, columnName, options = {}) {
+      _assign(options, {
+        operator: 'create',
+        target: 'column',
+        table: tableName,
+        name: columnName
       });
       const builder = new ManageSQLBuilder(options);
       queries[file].push({ sql: builder.sql, values: builder.values });
@@ -279,6 +293,12 @@ function _initMigration(file, queries = {}) {
     }, ...baseAttr
   });
 
+  Object.defineProperty(migration, 'raw', {
+    value: function (sql, values) {
+      queries[file].push({ sql, values });
+    }, ...baseAttr
+  });
+
   return migration;
 }
 
@@ -328,5 +348,6 @@ async function end(context) {
 module.exports = {
   init,
   run,
+  _initMigration,
   end
 };
