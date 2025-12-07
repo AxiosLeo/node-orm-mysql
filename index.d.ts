@@ -495,6 +495,7 @@ export declare class MigrationInterface {
   }): void;
 
   /**
+   * create column in table
    * @param columnName 
    * @param columnType 
    * @param tableName 
@@ -512,6 +513,16 @@ export declare class MigrationInterface {
     uniqIndex?: boolean,
     after?: string,
   }): void;
+
+  /**
+   * add column to table
+   * @param tableName 
+   * @param columnName 
+   * @param options 
+   */
+  addColumn(tableName: string, columnName: string, options?: {
+    type: FieldType,
+  } & CreateColumnOptions): void;
 
   createIndex(tableName: string, columns: string[], options?: {
     indexName?: string,
@@ -541,4 +552,6 @@ export declare class MigrationInterface {
   dropForeignKey(foreign_key: string, tableName: string): void;
 
   insertData(table: string, data: any[]): void;
+
+  raw(sql: string, values: any[]): void;
 }
