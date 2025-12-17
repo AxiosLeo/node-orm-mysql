@@ -142,36 +142,115 @@ export declare class Query extends QueryCondition {
 
   options: QueryOperatorOptions;
 
+  /**
+   * Create a new Query instance
+   * @param operator Query operator type, default is 'select'
+   * @param alias Table alias
+   */
   constructor(operator?: OperatorType, alias?: string | null);
 
+  /**
+   * Add a table to the query
+   * @param table Table name
+   * @param alias Table alias
+   */
   table(table: string, alias?: string | null): this;
 
+  /**
+   * Set multiple tables for the query
+   * @param tables Table options array
+   */
   tables(...tables: TableOption[]): this;
 
+  /**
+   * Set columns for INSERT operation
+   * @param keys Column names
+   */
   keys(...keys: string[]): this;
 
+  /**
+   * Set the maximum number of rows to return
+   * @param limit Maximum number of rows (must be an integer)
+   */
   limit(limit: number): this;
 
+  /**
+   * Set the number of rows to skip before returning results
+   * @param offset Number of rows to skip (must be an integer)
+   */
   offset(offset: number): this;
 
+  /**
+   * Set or append attributes (columns) to select
+   * If called with no arguments, clears all attributes
+   * If attributes array is empty, sets new attributes
+   * Otherwise, appends new attributes to existing ones
+   * @param attr Attributes to select (can be string, Query instance, or function returning Query)
+   */
   attr(...attr: Attr[]): this;
 
+  /**
+   * Add an ORDER BY clause to the query
+   * @param sortField Field name to sort by
+   * @param sortOrder Sort order ('asc' or 'desc')
+   */
   orderBy(sortField: string, sortOrder: 'asc' | 'desc'): this;
 
+  /**
+   * Add a GROUP BY clause to the query
+   * @param groupField Field names to group by
+   */
   groupBy(...groupField: string[]): this;
 
+  /**
+   * Add a HAVING clause to the query (requires GROUP BY)
+   * @param key Field name or null for logical operators (AND/OR)
+   * @param opt Comparison operator
+   * @param value Value to compare against
+   */
   having(key: string | null, opt: OptType, value: ConditionValueType | WhereOptions[]): this;
 
+  /**
+   * Set pagination parameters (limit and offset)
+   * @param limit Maximum number of rows to return
+   * @param offset Number of rows to skip, default is 0
+   */
   page(limit: number, offset?: number): this;
 
+  /**
+   * Set data for INSERT or UPDATE operations
+   * @param data Data object to insert or update
+   */
   set(data: any): this;
 
+  /**
+   * Add a JOIN clause to the query
+   * @param opt Join options including table, alias, columns, and join type
+   */
   join(opt: JoinOption): this;
 
+  /**
+   * Add a LEFT JOIN clause to the query
+   * @param table Table name or Query instance to join
+   * @param on Join condition (e.g., 'users.id = posts.user_id')
+   * @param options Additional options including alias
+   */
   leftJoin(table: string | Query, on: string, options?: { alias?: string }): this;
 
+  /**
+   * Add a RIGHT JOIN clause to the query
+   * @param table Table name or Query instance to join
+   * @param on Join condition (e.g., 'users.id = posts.user_id')
+   * @param options Additional options including alias
+   */
   rightJoin(table: string | Query, on: string, options?: { alias?: string }): this;
 
+  /**
+   * Add an INNER JOIN clause to the query
+   * @param table Table name or Query instance to join
+   * @param on Join condition (e.g., 'users.id = posts.user_id')
+   * @param options Additional options including alias
+   */
   innerJoin(table: string | Query, on: string, options?: { alias?: string }): this;
 
   /**

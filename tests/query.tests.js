@@ -506,6 +506,72 @@ describe('query test case', () => {
       expect(query.options.attrs.length).to.be.equal(0);
     });
 
+    it('should handle attr - clear attrs when called with no arguments', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.attr('id', 'name');
+      expect(query.options.attrs.length).to.be.equal(2);
+      query.attr();
+      expect(query.options.attrs.length).to.be.equal(0);
+      expect(query.options.attrs).to.be.an('array');
+    });
+
+    it('should handle attr - set attrs when attrs array is empty', () => {
+      const query = new Query('select');
+      query.table('users');
+      expect(query.options.attrs.length).to.be.equal(0);
+      const result = query.attr('id', 'name', 'email');
+      expect(query.options.attrs.length).to.be.equal(3);
+      expect(query.options.attrs).to.deep.equal(['id', 'name', 'email']);
+      expect(result).to.equal(query); // should return this for chaining
+    });
+
+    it('should handle attr - append attrs when attrs array is not empty', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.attr('id', 'name');
+      expect(query.options.attrs.length).to.be.equal(2);
+      expect(query.options.attrs).to.deep.equal(['id', 'name']);
+
+      query.attr('email', 'created_at');
+      expect(query.options.attrs.length).to.be.equal(4);
+      expect(query.options.attrs).to.deep.equal(['id', 'name', 'email', 'created_at']);
+    });
+
+    it('should handle attr - multiple calls should append', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.attr('id');
+      query.attr('name');
+      query.attr('email', 'phone');
+      expect(query.options.attrs.length).to.be.equal(4);
+      expect(query.options.attrs).to.deep.equal(['id', 'name', 'email', 'phone']);
+    });
+
+    it('should handle attr - return this for chaining', () => {
+      const query = new Query('select');
+      query.table('users');
+      const result1 = query.attr('id');
+      const result2 = query.attr('name');
+      expect(result1).to.equal(query);
+      expect(result2).to.equal(query);
+      expect(query.options.attrs.length).to.be.equal(2);
+    });
+
+    it('should handle attr - clear and then set new attrs', () => {
+      const query = new Query('select');
+      query.table('users');
+      query.attr('id', 'name', 'email');
+      expect(query.options.attrs.length).to.be.equal(3);
+
+      query.attr(); // clear
+      expect(query.options.attrs.length).to.be.equal(0);
+
+      query.attr('username', 'password'); // set new
+      expect(query.options.attrs.length).to.be.equal(2);
+      expect(query.options.attrs).to.deep.equal(['username', 'password']);
+    });
+
     it('should handle orderBy', () => {
       const query = new Query('select');
       query.table('users').orderBy('id', 'desc');

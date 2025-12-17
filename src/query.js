@@ -221,7 +221,11 @@ class Query extends QueryCondition {
       this.options.attrs = [];
       return this;
     }
-    this.options.attrs = attrs;
+    if (!this.options.attrs.length) {
+      this.options.attrs = attrs;
+      return this;
+    }
+    this.options.attrs = this.options.attrs.concat(attrs);
     return this;
   }
 
