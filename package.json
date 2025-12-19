@@ -20,7 +20,7 @@
     "test-one": "mocha --reporter spec --timeout 3000 ",
     "feature-test": "node tests/transaction.ft.js",
     "setup-feature-db": "node tests/setup-feature-db.js",
-    "feature-test:local": "docker-compose up -d && sleep 10 && npm run setup-feature-db && npm run feature-test && docker-compose down",
+    "feature-test:local": "docker compose up -d && sleep 10 && npm run setup-feature-db && npm run feature-test && docker compose down",
     "ci": "npm run lint && npm run test-cov",
     "clear": "rm -rf ./nyc_output ./coverage && rm -rf ./node_modules && npm cache clean --force"
   },
