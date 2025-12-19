@@ -1,0 +1,60 @@
+# This workflow runs feature tests with MySQL container
+name: Feature Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  feature-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    
+    name: Node.js ${{ matrix.node-version }} Feature Tests
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Start MySQL container
+        run: docker-compose up -d
+      
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          timeout 60 sh -c 'until docker-compose exec -T mysql mysqladmin ping -h localhost -uroot -p3AQqZTfmww=Ftj --silent; do echo "Waiting..."; sleep 2; done'
+          echo "MySQL is ready!"
+      
+      - name: Setup test database
+        run: npm run setup-feature-db
+        env:
+          MYSQL_HOST: localhost
+          MYSQL_PORT: 3306
+          MYSQL_USER: root
+          MYSQL_PASS: 3AQqZTfmww=Ftj
+          MYSQL_DB: feature_tests
+      
+      - name: Run feature tests
+        run: npm run feature-test
+        env:
+          MYSQL_HOST: localhost
+          MYSQL_PORT: 3306
+          MYSQL_USER: root
+          MYSQL_PASS: 3AQqZTfmww=Ftj
+          MYSQL_DB: feature_tests
+      
+      - name: Cleanup
+        if: always()
+        run: docker-compose down -v
+
