@@ -412,6 +412,32 @@ export declare class QueryHandler {
    * @param attrs 
    */
   getTableFields<T extends Object>(database: string, table: string, ...attrs: TableInfoColumn[]): Promise<T>;
+
+  /**
+   * Begin a transaction and return a TransactionHandler instance
+   * 
+   * Note: If using a Pool, this will automatically get a new connection from the pool
+   * to avoid blocking other operations. The connection will be released back to pool
+   * after commit/rollback.
+   * 
+   * @param options - Transaction options
+   * @param options.level - Transaction isolation level
+   * @param options.useNewConnection - Force create new connection from pool (default: true for Pool, false for Connection)
+   */
+  beginTransaction(options?: {
+    level?: TransactionLevel;
+    useNewConnection?: boolean;
+  }): Promise<TransactionHandler>;
+
+  /**
+   * Commit current connection transaction (if using promise connection directly)
+   */
+  commit(): Promise<void>;
+
+  /**
+   * Rollback current connection transaction (if using promise connection directly)
+   */
+  rollback(): Promise<void>;
 }
 
 export declare class TransactionOperator extends QueryOperator {
