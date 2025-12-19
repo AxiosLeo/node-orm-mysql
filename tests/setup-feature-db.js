@@ -26,10 +26,21 @@ async function setupTestDatabase() {
   let connection;
 
   try {
-    // Connect to MySQL
+    // Connect to MySQL with retry
     console.log('Connecting to MySQL...');
-    connection = await mysql.createConnection(config);
-    console.log('✓ Connected successfully\n');
+    let retries = 5;
+    while (retries > 0) {
+      try {
+        connection = await mysql.createConnection(config);
+        console.log('✓ Connected successfully\n');
+        break;
+      } catch (err) {
+        retries--;
+        if (retries === 0) throw err;
+        console.log(`Connection failed, retrying... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
 
     // Read SQL file
     const sqlFile = path.join(__dirname, 'init-feature-tables.sql');
