@@ -259,6 +259,111 @@ class QueryHandler {
       values: [database, table]
     });
   }
+
+  /**
+   * Begin a transaction and return a TransactionHandler instance
+   * 
+   * Note: If using a Pool, this will automatically get a new connection from the pool
+   * to avoid blocking other operations. The connection will be released back to pool
+   * after commit/rollback.
+   * 
+   * @param {object} options - Transaction options
+   * @param {string} options.level - Transaction isolation level (RU, RC, RR, S or full name)
+   * @param {boolean} options.useNewConnection - Force create new connection from pool (default: true for Pool, false for Connection)
+   * @returns {Promise<import('./transaction').TransactionHandler>}
+   */
+  async beginTransaction(options = {}) {
+    const { TransactionHandler } = require('./transaction');
+    const transactionOptions = {
+      ...this.options,
+      level: options.level || 'SERIALIZABLE'
+    };
+
+    let conn = this.conn;
+    let isPoolConnection = false;
+
+    // Check if this.conn is a Pool
+    if (this.conn && typeof this.conn.getConnection === 'function') {
+      // This is a Pool, get a new connection from pool for transaction
+      const useNewConnection = options.useNewConnection !== false; // default true for pool
+      if (useNewConnection) {
+        // Get connection from pool (works for both callback and promise pools)
+        conn = await new Promise((resolve, reject) => {
+          this.conn.getConnection((err, connection) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(connection);
+            }
+          });
+        });
+        // Convert callback connection to promise-based if needed
+        if (conn && typeof conn.promise === 'function') {
+          conn = conn.promise();
+        }
+        isPoolConnection = true;
+      }
+    } else if (this.conn && typeof this.conn.promise === 'function') {
+      // This is a mysql2 Connection, convert to promise-based
+      conn = this.conn.promise();
+    }
+
+    const transaction = new TransactionHandler(conn, transactionOptions);
+
+    // Store pool connection flag for cleanup
+    if (isPoolConnection) {
+      transaction._poolConnection = conn;
+      transaction._originalCommit = transaction.commit.bind(transaction);
+      transaction._originalRollback = transaction.rollback.bind(transaction);
+
+      // Override commit to release connection back to pool
+      transaction.commit = async function () {
+        try {
+          await this._originalCommit();
+        } finally {
+          if (this._poolConnection && typeof this._poolConnection.release === 'function') {
+            this._poolConnection.release();
+          }
+        }
+      };
+
+      // Override rollback to release connection back to pool
+      transaction.rollback = async function () {
+        try {
+          await this._originalRollback();
+        } finally {
+          if (this._poolConnection && typeof this._poolConnection.release === 'function') {
+            this._poolConnection.release();
+          }
+        }
+      };
+    }
+
+    await transaction.begin();
+    return transaction;
+  }
+
+  /**
+   * Commit current connection transaction (if using promise connection directly)
+   */
+  async commit() {
+    if (this.conn && typeof this.conn.commit === 'function') {
+      await this.conn.commit();
+    } else {
+      throw new Error('Connection does not support commit operation');
+    }
+  }
+
+  /**
+   * Rollback current connection transaction (if using promise connection directly)
+   */
+  async rollback() {
+    if (this.conn && typeof this.conn.rollback === 'function') {
+      await this.conn.rollback();
+    } else {
+      throw new Error('Connection does not support rollback operation');
+    }
+  }
 }
 
 module.exports = {
