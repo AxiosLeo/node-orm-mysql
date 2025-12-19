@@ -177,6 +177,53 @@ Hook.post(async (options, result) => {
 
 ### Transaction
 
+#### Method 1: Using Connection Pool (Recommended)
+
+```javascript
+const mysql = require("mysql2");
+const { QueryHandler } = require("@axiosleo/orm-mysql");
+
+// Create connection pool
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,
+  port: process.env.MYSQL_PORT,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASS,
+  database: process.env.MYSQL_DB,
+  connectionLimit: 10
+});
+
+const handler = new QueryHandler(pool);
+
+// Begin transaction - automatically gets a connection from pool
+const transaction = await handler.beginTransaction({ 
+  level: "RC" // READ COMMITTED
+});
+
+try {
+  // Insert user info
+  let row = await transaction.table("users").insert({
+    name: "Joe",
+    age: 18,
+  });
+  const lastInsertId = row.insertId;
+
+  // Insert student info
+  await transaction.table("students").insert({
+    user_id: lastInsertId,
+  });
+  
+  // Commit transaction - connection automatically released back to pool
+  await transaction.commit();
+} catch (e) {
+  // Rollback transaction - connection automatically released back to pool
+  await transaction.rollback();
+  throw e;
+}
+```
+
+#### Method 2: Using TransactionHandler Directly
+
 ```javascript
 const { TransactionHandler, createPromiseClient } = require("@axiosleo/orm-mysql");
 
@@ -190,25 +237,25 @@ const conn = await createPromiseClient({
 
 const transaction = new TransactionHandler(conn, {
   /*
-  level = 'READ UNCOMMITTED' | 'RU'
-        | 'READ COMMITTED' | 'RC'
-        | 'REPEATABLE READ' | 'RR'
-        | 'SERIALIZABLE' | 'S'
+  Transaction Isolation Levels:
+  - 'READ UNCOMMITTED' | 'RU'  : Lowest isolation, may read dirty data
+  - 'READ COMMITTED'   | 'RC'  : Prevents dirty reads
+  - 'REPEATABLE READ'  | 'RR'  : MySQL default, prevents non-repeatable reads
+  - 'SERIALIZABLE'     | 'S'   : Highest isolation, full serialization
   */
   level: "SERIALIZABLE", // 'SERIALIZABLE' as default value
 });
 await transaction.begin();
 
 try {
-  // insert user info
-  // will not really create a record.
+  // Insert user info
   let row = await transaction.table("users").insert({
     name: "Joe",
     age: 18,
   });
   const lastInsertId = row[0].insertId;
 
-  // insert student info
+  // Insert student info
   await transaction.table("students").insert({
     user_id: lastInsertId,
   });
@@ -218,6 +265,95 @@ try {
   throw e;
 }
 ```
+
+#### Row Locking with FOR UPDATE
+
+```javascript
+const transaction = await handler.beginTransaction({ level: "RC" });
+
+try {
+  // Lock rows for update
+  const product = await transaction.table("products")
+    .where("sku", "LAPTOP-001")
+    .append("FOR UPDATE")  // Lock the row
+    .find();
+
+  if (product.stock < 1) {
+    throw new Error("Out of stock");
+  }
+
+  // Update stock
+  await transaction.table("products")
+    .where("sku", "LAPTOP-001")
+    .update({ stock: product.stock - 1 });
+
+  // Create order
+  await transaction.table("orders").insert({
+    product_id: product.id,
+    quantity: 1,
+    total: product.price
+  });
+
+  await transaction.commit();
+} catch (e) {
+  await transaction.rollback();
+  throw e;
+}
+```
+
+#### Concurrent Transactions
+
+When using a connection pool, multiple transactions can run concurrently without blocking each other:
+
+```javascript
+const pool = mysql.createPool({ /* ... */ });
+const handler = new QueryHandler(pool);
+
+// Run 3 transactions concurrently
+await Promise.all([
+  (async () => {
+    const tx = await handler.beginTransaction();
+    try {
+      await tx.table("users").insert({ name: "User1" });
+      await tx.commit();
+    } catch (err) {
+      await tx.rollback();
+      throw err;
+    }
+  })(),
+  
+  (async () => {
+    const tx = await handler.beginTransaction();
+    try {
+      await tx.table("users").insert({ name: "User2" });
+      await tx.commit();
+    } catch (err) {
+      await tx.rollback();
+      throw err;
+    }
+  })(),
+  
+  (async () => {
+    const tx = await handler.beginTransaction();
+    try {
+      await tx.table("users").insert({ name: "User3" });
+      await tx.commit();
+    } catch (err) {
+      await tx.rollback();
+      throw err;
+    }
+  })()
+]);
+```
+
+#### Best Practices
+
+1. **Always use connection pools in production** - Prevents connection exhaustion and enables concurrent transactions
+2. **Choose appropriate isolation level** - Balance between consistency and performance
+3. **Use try-catch-finally** - Ensure transactions are always committed or rolled back
+4. **Keep transactions short** - Avoid long-running operations inside transactions
+5. **Use row locking when needed** - `FOR UPDATE` prevents concurrent modifications
+6. **Handle errors properly** - Always rollback on errors to maintain data consistency
 
 ### Migration
 
