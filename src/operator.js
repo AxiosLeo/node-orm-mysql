@@ -287,19 +287,29 @@ class QueryHandler {
       // This is a Pool, get a new connection from pool for transaction
       const useNewConnection = options.useNewConnection !== false; // default true for pool
       if (useNewConnection) {
-        // Get connection from pool (works for both callback and promise pools)
-        conn = await new Promise((resolve, reject) => {
-          this.conn.getConnection((err, connection) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(connection);
-            }
+        // Detect pool type by checking constructor name or promise() method
+        // Callback pool (mysql2): has promise() method, constructor name is "Pool"
+        // Promise pool (mysql2/promise): no promise() method, constructor name is "PromisePool"
+        const isCallbackPool = typeof this.conn.promise === 'function';
+
+        if (isCallbackPool) {
+          // Callback-based pool (mysql2) - need to wrap getConnection in Promise
+          conn = await new Promise((resolve, reject) => {
+            this.conn.getConnection((err, connection) => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(connection);
+              }
+            });
           });
-        });
-        // Convert callback connection to promise-based if needed
-        if (conn && typeof conn.promise === 'function') {
-          conn = conn.promise();
+          // Convert callback connection to promise-based
+          if (conn && typeof conn.promise === 'function') {
+            conn = conn.promise();
+          }
+        } else {
+          // Promise-based pool (mysql2/promise) - getConnection() already returns a Promise
+          conn = await this.conn.getConnection();
         }
         isPoolConnection = true;
       }
