@@ -510,8 +510,8 @@ describe('builder test case', () => {
       columns: {
         price: {
           type: 'decimal',
-          length: 10,
-          precision: 2,
+          length: 2,
+          precision: 10,
           allowNull: false,
           comment: 'Price'
         }
@@ -531,7 +531,7 @@ describe('builder test case', () => {
       columns: {
         amount: {
           type: 'decimal',
-          length: 15,
+          precision: 15,
           comment: 'Amount'
         }
       }
