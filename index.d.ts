@@ -596,7 +596,7 @@ export declare class PostgreClient extends QueryHandler {
    * @param table Table name
    * @param attrs Column attributes to select
    */
-  getTableFields<T extends Object>(schema: string, table: string, ...attrs: string[]): Promise<T[]>;
+  getTableFields<T extends Object>(schema: string, table: string, ...attrs: TableInfoColumn[]): Promise<T>;
 }
 
 /**

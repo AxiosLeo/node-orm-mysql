@@ -3,9 +3,7 @@
 const path = require('path');
 const { _list, _exists } = require('@axiosleo/cli-tool/src/helper/fs');
 const { createClient, createPool, createPromiseClient } = require('./client');
-const { QueryHandler } = require('./operator');
 const { printer, debug } = require('@axiosleo/cli-tool');
-const { _execSQL } = require('./core');
 const { _render } = require('@axiosleo/cli-tool/src/helper/str');
 const { _foreach } = require('@axiosleo/cli-tool/src/helper/cmd');
 const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
