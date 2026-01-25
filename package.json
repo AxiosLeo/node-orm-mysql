@@ -31,6 +31,7 @@
   "dependencies": {
     "@axiosleo/cli-tool": "^1.6.1",
     "mysql2": "^3.9.1",
+    "pg": "^8.11.3",
     "validatorjs": "^3.22.1"
   },
   "repository": {

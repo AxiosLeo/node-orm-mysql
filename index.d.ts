@@ -13,10 +13,19 @@ import {
   Connection as PromiseConnection,
 } from 'mysql2/promise';
 
+import {
+  Client as PgClient,
+  ClientConfig as PgClientConfig,
+  Pool as PgPool,
+  PoolConfig as PgPoolConfig
+} from 'pg';
+
 type MySQLQueryResult = OkPacket | ResultSetHeader;
 
+export type DriverType = 'mysql' | 'postgre';
+
 export type Clients = {
-  [key: string]: Connection | Pool
+  [key: string]: Connection | Pool | PgClient | PgPool
 }
 
 export type ConditionValueType = null | string | number | boolean | Date | Array<string | number | boolean | Date> | Query;
@@ -60,7 +69,7 @@ interface TableOption {
 }
 
 export type QueryOperatorBaseOptions = {
-  driver?: string | 'mysql';
+  driver?: DriverType;
   queryHandler?: QueryHandler;
 };
 
@@ -454,14 +463,20 @@ export type TransactionLevel = 'READ UNCOMMITTED' | 'RU'
   | 'SERIALIZABLE' | 'S';
 
 export declare class TransactionHandler {
-  constructor(conn: PromiseConnection, options?: {
-    level: TransactionLevel
+  constructor(conn: PromiseConnection | PgClient, options?: {
+    level?: TransactionLevel;
+    driver?: DriverType;
   });
 
   query(options: QueryOptions): Promise<any>;
 
   execute(sql: string, values: any[]): Promise<any>;
 
+  /**
+   * Get last insert ID (MySQL only)
+   * For PostgreSQL, use RETURNING clause in INSERT statement
+   * @param alias Alias for the returned column
+   */
   lastInsertId(alias?: string): Promise<number>;
 
   table(table: string, alias?: string | null): TransactionOperator;
@@ -475,13 +490,16 @@ export declare class TransactionHandler {
   upsert(tableName: string, data: any, condition: Record<string, ConditionValueType>): Promise<MySQLQueryResult>;
 }
 
-export function createClient(options: ConnectionOptions, name?: string | null | undefined): Connection;
+export type ClientOptions = (ConnectionOptions | PgClientConfig) & { driver?: DriverType };
+export type PoolOptionsType = (PoolOptions | PgPoolConfig) & { driver?: DriverType };
 
-export function getClient(name: string): Connection | Pool;
+export function createClient(options: ClientOptions, name?: string | null | undefined): Connection | PgClient;
 
-export function createPool(options: PoolOptions, name?: string | null | undefined): Pool;
+export function getClient(name: string): Connection | Pool | PgClient | PgPool;
 
-export function createPromiseClient(options: ConnectionOptions, name?: string | null | undefined): PromiseConnection;
+export function createPool(options: PoolOptionsType, name?: string | null | undefined): Pool | PgPool;
+
+export function createPromiseClient(options: ClientOptions, name?: string | null | undefined): Promise<PromiseConnection | PgClient>;
 
 export declare class Hook {
   /**
@@ -542,6 +560,65 @@ export declare class MySQLClient extends QueryHandler {
   execQuery(query: Query, operator?: OperatorType): Promise<QueryResult>;
 
   close(): Promise<void>;
+}
+
+/**
+ * PostgreSQL Client class
+ */
+export declare class PostgreClient extends QueryHandler {
+
+  constructor(options?: PgClientConfig | PgPoolConfig, name?: string | null | undefined, type?: 'default' | 'pool');
+
+  /**
+   * @param query 
+   * @param operator default is 'select'
+   */
+  execQuery(query: Query, operator?: OperatorType): Promise<QueryResult>;
+
+  close(): Promise<void>;
+
+  /**
+   * Check if a table exists in the database
+   * @param table Table name
+   * @param schema Schema name, default is 'public'
+   */
+  existTable(table: string, schema?: string): Promise<boolean>;
+
+  /**
+   * Check if a database exists
+   * @param database Database name
+   */
+  existDatabase(database: string): Promise<boolean>;
+
+  /**
+   * Get table columns information
+   * @param schema Schema name
+   * @param table Table name
+   * @param attrs Column attributes to select
+   */
+  getTableFields<T extends Object>(schema: string, table: string, ...attrs: string[]): Promise<T[]>;
+}
+
+/**
+ * PostgreSQL Query Builder
+ * Uses PostgreSQL-specific syntax:
+ * - Double quotes for identifiers instead of backticks
+ * - $1, $2, $3... placeholders instead of ?
+ * - IS NULL instead of ISNULL()
+ * - ON CONFLICT ... DO UPDATE instead of ON DUPLICATE KEY UPDATE
+ */
+export declare class PostgreBuilder {
+  sql: string;
+  values: any[];
+  paramIndex: number;
+  constructor(options: QueryOperatorOptions);
+}
+
+/**
+ * PostgreSQL Migration SQL Builder
+ */
+export declare class PostgreManageSQLBuilder extends PostgreBuilder {
+  constructor(options: any);
 }
 
 type FieldType =
@@ -652,7 +729,7 @@ export declare class MigrationInterface {
 
   dropColumn(columnName: string, tableName: string): void;
 
-  dropIndex(indexName: string): void;
+  dropIndex(indexName: string, tableName: string): void;
 
   dropForeignKey(foreign_key: string, tableName: string): void;
 

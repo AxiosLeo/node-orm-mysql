@@ -18,15 +18,19 @@ const {
   createClient,
   createPromiseClient,
 
-  MySQLClient
+  MySQLClient,
+  PostgreClient
 } = require('./src/client');
 
 const Hook = require('./src/hook');
 const { Builder } = require('./src/builder');
+const { PostgreBuilder, PostgreManageSQLBuilder } = require('./src/postgre-builder');
 
 module.exports = {
   Hook,
   Builder,
+  PostgreBuilder,
+  PostgreManageSQLBuilder,
 
   Query,
   QueryHandler,
@@ -37,6 +41,7 @@ module.exports = {
   TransactionHandler,
 
   MySQLClient,
+  PostgreClient,
   getClient,
   createPool,
   createClient,

@@ -1,11 +1,12 @@
 'use strict';
 
 const { Builder } = require('./builder');
+const { PostgreBuilder } = require('./postgre-builder');
 const is = require('@axiosleo/cli-tool/src/helper/is');
 
 /**
  * 
- * @param {import('mysql2/promise').Connection} conn 
+ * @param {import('mysql2/promise').Connection | import('pg').Client | import('pg').Pool} conn 
  * @param {*} options 
  * @param {*} opt 
  * @returns 
@@ -40,6 +41,19 @@ const _query = (conn, options, opt = null) => {
 
       });
     }
+    case 'postgre': {
+      if (opt === null) {
+        const builder = new PostgreBuilder(options);
+        opt = {
+          text: builder.sql,
+          values: builder.values || [],
+        };
+      }
+      // PostgreSQL pg library uses promise-based API
+      return conn.query(opt.text || opt.sql, opt.values || []).then((res) => {
+        return res.rows;
+      });
+    }
     default: {
       if (typeof options.queryHandler === 'function') {
         const promise = options.queryHandler(conn, options, opt);
@@ -52,10 +66,16 @@ const _query = (conn, options, opt = null) => {
   }
 };
 
-const _execSQL = (conn, sql, values = []) => {
+const _execSQL = (conn, sql, values = [], driver = 'mysql') => {
+  if (driver === 'postgre') {
+    // PostgreSQL pg library - promise-based
+    return conn.query(sql, values).then((res) => res.rows);
+  }
+  // MySQL
   let opt = { sql, values };
   return new Promise((resolve, reject) => {
-    if (conn.query instanceof Function) {
+    if (conn.query instanceof Function && conn.query.length >= 2) {
+      // Callback-based MySQL connection
       conn.query(opt, (err, result) => {
         if (err) {
           reject(err);
@@ -64,6 +84,7 @@ const _execSQL = (conn, sql, values = []) => {
         }
       });
     } else {
+      // Promise-based MySQL connection
       conn.execute(opt)
         .then((res) => resolve(res))
         .catch((err) => reject(err));
