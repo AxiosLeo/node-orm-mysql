@@ -231,7 +231,7 @@ class Builder {
       return '';
     }
     const sql = 'ORDER BY ' + orders.map((o) => {
-      return `${this._buildFieldKey(o.sortField)} ${o.sortOrder}`;
+      return `${this._buildFieldKey(o.sortField)} ${o.sortOrder.toUpperCase()}`;
     }).join(',');
     return sql;
   }

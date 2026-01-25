@@ -25,6 +25,7 @@ export type OptType = '=' | '!=' | '>' | '<' | '>=' | '<=' |
   'LIKE' | 'NOT LIKE' | 'IN' | 'NOT IN' | 'BETWEEN' | 'NOT BETWEEN' | 'IS' | 'IS NOT' | 'REGEXP' | 'NOT REGEXP' | 'AND' | 'OR' | 'GROUP' | 'CONTAIN' | 'NOT CONTAIN' | 'OVERLAPS' | 'NOT OVERLAPS' |
   'like' | 'not like' | 'in' | 'not in' | 'between' | 'not between' | 'is' | 'is not' | 'regexp' | 'not regexp' | 'and' | 'or' | 'group' | 'contain' | 'not contain' | 'overlaps' | 'not overlaps';
 
+export type SortOrderType = 'asc' | 'desc' | 'ASC' | 'DESC';
 export interface WhereOptions {
   key: string | null;
   opt: OptType;
@@ -38,7 +39,7 @@ export type WhereItem = WhereOptions | OptType | WhereArrayOptions;
 
 export interface OrderByOptions {
   sortField: string,
-  sortOrder: 'asc' | 'desc'
+  sortOrder: SortOrderType
 }
 
 export type OperatorType = 'select' | 'find' | 'insert' | 'update' | 'delete' | 'count';
@@ -192,9 +193,9 @@ export declare class Query extends QueryCondition {
   /**
    * Add an ORDER BY clause to the query
    * @param sortField Field name to sort by
-   * @param sortOrder Sort order ('asc' or 'desc')
+   * @param sortOrder Sort order ('asc' or 'desc' or 'ASC' or 'DESC')
    */
-  orderBy(sortField: string, sortOrder: 'asc' | 'desc'): this;
+  orderBy(sortField: string, sortOrder: SortOrderType): this;
 
   /**
    * Add a GROUP BY clause to the query
