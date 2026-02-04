@@ -653,7 +653,7 @@ export declare class MigrationInterface {
 
   dropColumn(columnName: string, tableName: string): void;
 
-  dropIndex(indexName: string): void;
+  dropIndex(indexName: string, tableName: string): void;
 
   dropForeignKey(foreign_key: string, tableName: string): void;
 
