@@ -2,6 +2,7 @@
 
 const { Command, debug } = require('@axiosleo/cli-tool');
 const { migrate } = require('../index');
+const is = require('@axiosleo/cli-tool/src/helper/is');
 
 class MigrateCommand extends Command {
   constructor() {
@@ -28,7 +29,8 @@ class MigrateCommand extends Command {
     try {
       await migrate(args.action, args.dir, {
         host: options.host,
-        port: options.port,
+        port: is.string(options.port) ?
+          parseInt(options.port) : options.port || 3306,
         user: options.user,
         password: options.pass,
         database: options.db,

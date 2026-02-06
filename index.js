@@ -1,7 +1,6 @@
 'use strict';
 
 const { Workflow } = require('@axiosleo/cli-tool');
-const is = require('@axiosleo/cli-tool/src/helper/is');
 const Hook = require('./src/hook');
 const { Builder } = require('./src/builder');
 const migration = require('./src/migration');
@@ -37,12 +36,11 @@ const _runMigration = async (action, dir, options = {}) => {
         dir: dir
       },
       connection: {
-        host: options.host,
-        port: is.number(options.port) ?
-          options.port : parseInt(options.port),
-        user: options.user,
-        password: options.password,
-        database: options.database
+        host: options.host || 'localhost',
+        port: options.port || 3306,
+        user: options.user || 'root',
+        password: options.password || '',
+        database: options.database || ''
       },
       debug: options.debug
     });
