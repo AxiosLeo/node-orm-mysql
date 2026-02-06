@@ -1,8 +1,7 @@
 'use strict';
 
-const { Command, debug, Workflow } = require('@axiosleo/cli-tool');
-const is = require('@axiosleo/cli-tool/src/helper/is');
-const migration = require('../src/migration');
+const { Command, debug } = require('@axiosleo/cli-tool');
+const { migrate } = require('../index');
 
 class MigrateCommand extends Command {
   constructor() {
@@ -26,31 +25,11 @@ class MigrateCommand extends Command {
    * @param {*} options 
    */
   async exec(args, options) {
-    const workflow = new Workflow(migration);
     try {
-      await workflow.start({
-        task_key: 'migrate_logs',
-        action: args.action,
-        config: {
-          dir: args.dir
-        },
-        connection: {
-          host: options.host,
-          port: is.number(options.port) ?
-            options.port : parseInt(options.port),
-          user: options.user,
-          password: options.pass,
-          database: options.db
-        },
-        debug: options.debug
-      });
+      await migrate(args.action, args.dir, options);
       process.exit(0);
     } catch (e) {
-      if (e.curr && e.curr.error) {
-        debug.error(e.curr.error);
-      } else {
-        debug.log(e);
-      }
+      debug.error(e);
       process.exit(1);
     }
   }

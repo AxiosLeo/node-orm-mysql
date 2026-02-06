@@ -1,5 +1,11 @@
 'use strict';
 
+const { Workflow } = require('@axiosleo/cli-tool');
+const is = require('@axiosleo/cli-tool/src/helper/is');
+const Hook = require('./src/hook');
+const { Builder } = require('./src/builder');
+const migration = require('./src/migration');
+
 const {
   QueryHandler,
   QueryOperator,
@@ -21,8 +27,33 @@ const {
   MySQLClient
 } = require('./src/client');
 
-const Hook = require('./src/hook');
-const { Builder } = require('./src/builder');
+const _runMigration = async (action, dir, options = {}) => {
+  const workflow = new Workflow(migration);
+  try {
+    await workflow.start({
+      task_key: 'migrate_logs',
+      action: action,
+      config: {
+        dir: dir
+      },
+      connection: {
+        host: options.host,
+        port: is.number(options.port) ?
+          options.port : parseInt(options.port),
+        user: options.user,
+        password: options.pass,
+        database: options.db
+      },
+      debug: options.debug
+    });
+  } catch (e) {
+    if (e.curr && e.curr.error) {
+      throw e.curr.error;
+    } else {
+      throw e;
+    }
+  }
+};
 
 module.exports = {
   Hook,
@@ -40,5 +71,6 @@ module.exports = {
   getClient,
   createPool,
   createClient,
-  createPromiseClient
+  createPromiseClient,
+  migrate: _runMigration
 };
