@@ -661,3 +661,12 @@ export declare class MigrationInterface {
 
   raw(sql: string, values: any[]): void;
 }
+
+export function migrate(action: 'up' | 'down' | 'UP' | 'DOWN', dir: string, options?: {
+  host?: string,
+  port?: number,
+  user?: string,
+  password?: string,
+  database?: string,
+  debug?: boolean
+}): Promise<void>;
