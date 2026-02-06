@@ -662,11 +662,20 @@ export declare class MigrationInterface {
   raw(sql: string, values: any[]): void;
 }
 
-export function migrate(action: 'up' | 'down' | 'UP' | 'DOWN', dir: string, options?: {
+export type MigrateAction = 'up' | 'down' | 'UP' | 'DOWN';
+export type MigrateOptions = {
   host?: string,
   port?: number,
   user?: string,
   password?: string,
   database?: string,
   debug?: boolean
-}): Promise<void>;
+};
+
+/**
+ * migrate database
+ * @param action 
+ * @param dir 
+ * @param options 
+ */
+export function migrate(action: MigrateAction, dir: string, options?: MigrateOptions): Promise<void>;
