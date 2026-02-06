@@ -26,7 +26,14 @@ class MigrateCommand extends Command {
    */
   async exec(args, options) {
     try {
-      await migrate(args.action, args.dir, options);
+      await migrate(args.action, args.dir, {
+        host: options.host,
+        port: options.port,
+        user: options.user,
+        password: options.pass,
+        database: options.db,
+        debug: options.debug
+      });
       process.exit(0);
     } catch (e) {
       debug.error(e);

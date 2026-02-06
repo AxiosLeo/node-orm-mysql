@@ -32,7 +32,7 @@ const _runMigration = async (action, dir, options = {}) => {
   try {
     await workflow.start({
       task_key: 'migrate_logs',
-      action: action,
+      action: action.toLowerCase(),
       config: {
         dir: dir
       },
@@ -41,8 +41,8 @@ const _runMigration = async (action, dir, options = {}) => {
         port: is.number(options.port) ?
           options.port : parseInt(options.port),
         user: options.user,
-        password: options.pass,
-        database: options.db
+        password: options.password,
+        database: options.database
       },
       debug: options.debug
     });
