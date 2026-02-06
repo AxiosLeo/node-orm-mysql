@@ -97,8 +97,7 @@ async function init(context) {
   let res = await _execSQL(conn, builder.sql);
   conn.end();
   if (res.serverStatus !== 2 && res.serverStatus !== 16386) {
-    printer.error('create migration table failed.');
-    process.exit(1);
+    throw new Error('create migration table failed.');
   }
 }
 
@@ -319,16 +318,14 @@ async function run(context) {
     switch (context.action) {
       case 'up': {
         if (typeof script.up !== 'function') {
-          printer.error(`Migration file "${file}" must have a function named up.`);
-          process.exit(1);
+          throw new Error(`Migration file "${file}" must have a function named up.`);
         }
         await script.up(migration);
         break;
       }
       case 'down': {
         if (typeof script.down !== 'function') {
-          printer.error(`Migration file "${file}" must have a function named down.`);
-          process.exit(1);
+          throw new Error(`Migration file "${file}" must have a function named down.`);
         }
         await script.down(migration);
         break;
