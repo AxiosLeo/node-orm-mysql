@@ -9,6 +9,6 @@
     "esbenp.prettier-vscode",
     "wayou.vscode-todo-highlight",
     "octref.vetur",
-    "pflannery.vscode-versionlens"
+    "legalfina.npm-version-lens"
   ]
 }
