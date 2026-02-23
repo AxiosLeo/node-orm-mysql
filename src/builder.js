@@ -657,11 +657,11 @@ class ManageSQLBuilder extends Builder {
       } else if (column.uniqIndex === true) {
         indexColumns.push(column);
       }
-      if (column.reference) {
-        column.reference.onDelete = column.reference.onDelete ? column.reference.onDelete.toUpperCase() : 'NO ACTION';
-        column.reference.onUpdate = column.reference.onUpdate ? column.reference.onUpdate.toUpperCase() : 'NO ACTION';
+      if (column.references) {
+        column.references.onDelete = column.references.onDelete ? column.references.onDelete.toUpperCase() : 'NO ACTION';
+        column.references.onUpdate = column.references.onUpdate ? column.references.onUpdate.toUpperCase() : 'NO ACTION';
 
-        _validate(column.reference, {
+        _validate(column.references, {
           table: 'required|string',
           column: 'required|string',
           onDelete: [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }],
@@ -671,11 +671,11 @@ class ManageSQLBuilder extends Builder {
           name: 'fk_' + table + '_' + column.name,
           table,
           column: column.name,
-          reference: {
-            tableName: column.reference.table,
-            columnName: column.reference.column,
-            onDelete: column.reference.onDelete,
-            onUpdate: column.reference.onUpdate
+          references: {
+            tableName: column.references.table,
+            columnName: column.references.column,
+            onDelete: column.references.onDelete,
+            onUpdate: column.references.onUpdate
           }
         });
       }
