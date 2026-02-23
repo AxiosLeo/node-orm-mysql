@@ -224,7 +224,7 @@ function _initMigration(file, queries = {}) {
       _assign(options, {
         operator: 'create',
         target: 'foreignKey',
-        name: options.foreignKey ? options.foreignKey : 'fk_' + options.table + '_' + options.columnName,
+        name: options.foreignKey ? options.foreignKey : 'fk_' + table + '_' + options.columnName,
         table: table,
         column: options.columnName,
         reference: options.reference

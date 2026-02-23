@@ -251,7 +251,6 @@ describe('migration test case', () => {
       const migrationObj = _initMigration(file, queries);
 
       migrationObj.createForeignKey('orders', {
-        tableName: 'orders',
         columnName: 'user_id',
         reference: {
           tableName: 'users',
