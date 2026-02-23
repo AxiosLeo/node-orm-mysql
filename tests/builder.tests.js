@@ -916,6 +916,28 @@ describe('builder test case', () => {
       expect(sql).to.be.equal('ALTER TABLE `test_table` DROP FOREIGN KEY `fk_test`');
     });
 
+    it('should handle createForeignKey with deprecated reference (singular) option', () => {
+      const builder = new ManageSQLBuilder({
+        operator: 'create',
+        target: 'foreignKey',
+        name: 'fk_orders_user_id',
+        table: 'orders',
+        column: 'user_id',
+        reference: {
+          tableName: 'users',
+          columnName: 'id',
+          onDelete: 'CASCADE',
+          onUpdate: 'RESTRICT'
+        }
+      });
+      const sql = builder.sql;
+      expect(sql).to.include('ALTER TABLE `orders`');
+      expect(sql).to.include('FOREIGN KEY (`user_id`)');
+      expect(sql).to.include('REFERENCES `users` (`id`)');
+      expect(sql).to.include('ON DELETE CASCADE');
+      expect(sql).to.include('ON UPDATE RESTRICT');
+    });
+
     it('should handle createColumns with uniqIndex', () => {
       const options = {
         operator: 'create',

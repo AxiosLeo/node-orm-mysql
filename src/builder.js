@@ -583,7 +583,16 @@ class ManageSQLBuilder extends Builder {
   }
 
   createForeignKey(options, onCreateTable = false) {
+    if (options.reference && !options.references) {
+      options.references = options.reference;
+    }
     if (options.references) {
+      if (options.references.tableName && !options.references.table) {
+        options.references.table = options.references.tableName;
+      }
+      if (options.references.columnName && !options.references.column) {
+        options.references.column = options.references.columnName;
+      }
       options.references.onDelete = options.references.onDelete ? options.references.onDelete.toUpperCase() : 'NO ACTION';
       options.references.onUpdate = options.references.onUpdate ? options.references.onUpdate.toUpperCase() : 'NO ACTION';
     }
