@@ -583,8 +583,10 @@ class ManageSQLBuilder extends Builder {
   }
 
   createForeignKey(options) {
-    options.references.onDelete = options.references.onDelete ? options.references.onDelete.toUpperCase() : 'NO ACTION';
-    options.references.onUpdate = options.references.onUpdate ? options.references.onUpdate.toUpperCase() : 'NO ACTION';
+    if (options.references) {
+      options.references.onDelete = options.references.onDelete ? options.references.onDelete.toUpperCase() : 'NO ACTION';
+      options.references.onUpdate = options.references.onUpdate ? options.references.onUpdate.toUpperCase() : 'NO ACTION';
+    }
     _validate(options, {
       name: 'required|string',
       table: 'required|string',
@@ -656,6 +658,9 @@ class ManageSQLBuilder extends Builder {
         primaryColumn = column;
       } else if (column.uniqIndex === true) {
         indexColumns.push(column);
+      }
+      if (column.reference && !column.references) {
+        column.references = column.reference;
       }
       if (column.references) {
         column.references.onDelete = column.references.onDelete ? column.references.onDelete.toUpperCase() : 'NO ACTION';

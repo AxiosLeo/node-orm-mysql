@@ -987,5 +987,32 @@ describe('builder test case', () => {
       expect(sql).to.include('ON DELETE NO ACTION');
       expect(sql).to.include('ON UPDATE NO ACTION');
     });
+
+    it('should handle createColumns with legacy reference property', () => {
+      const options = {
+        operator: 'create',
+        target: 'table',
+        name: 'test_table',
+        columns: {
+          id: {
+            type: 'int',
+            primaryKey: true
+          },
+          user_id: {
+            type: 'int',
+            reference: {
+              table: 'users',
+              column: 'id',
+              onDelete: 'CASCADE',
+              onUpdate: 'RESTRICT'
+            }
+          }
+        }
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('FOREIGN KEY');
+      expect(sql).to.include('ON DELETE CASCADE');
+      expect(sql).to.include('ON UPDATE RESTRICT');
+    });
   });
 });
