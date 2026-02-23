@@ -284,6 +284,31 @@ describe('migration test case', () => {
       expect(queries[file].length).to.be.equal(1);
       expect(queries[file][0].sql).to.include('fk_custom_key');
     });
+
+    it('should accept deprecated reference/tableName/columnName format', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.createForeignKey('orders', {
+        columnName: 'user_id',
+        reference: {
+          tableName: 'users',
+          columnName: 'id',
+          onDelete: 'CASCADE',
+          onUpdate: 'RESTRICT'
+        }
+      });
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.include('FOREIGN KEY');
+      expect(queries[file][0].sql).to.include('fk_orders_user_id');
+      expect(queries[file][0].sql).to.include('`users`');
+      expect(queries[file][0].sql).to.include('`id`');
+      expect(queries[file][0].sql).to.include('CASCADE');
+      expect(queries[file][0].sql).to.include('RESTRICT');
+    });
   });
 
   describe('dropTable method', () => {
