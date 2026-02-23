@@ -220,12 +220,12 @@ function _initMigration(file, queries = {}) {
   });
 
   Object.defineProperty(migration, 'createForeignKey', {
-    value: function (options = {}) {
+    value: function (table, options = {}) {
       _assign(options, {
         operator: 'create',
         target: 'foreignKey',
         name: options.foreignKey ? options.foreignKey : 'fk_' + options.tableName + '_' + options.columnName,
-        table: options.tableName,
+        table: table,
         column: options.columnName,
         reference: options.reference
       });
@@ -246,7 +246,7 @@ function _initMigration(file, queries = {}) {
   });
 
   Object.defineProperty(migration, 'dropColumn', {
-    value: function (name, table) {
+    value: function (table, name) {
       const builder = new ManageSQLBuilder({
         operator: 'drop',
         target: 'column',
@@ -258,10 +258,22 @@ function _initMigration(file, queries = {}) {
   });
 
   Object.defineProperty(migration, 'dropIndex', {
-    value: function (name, table) {
+    value: function (table, columns) {
       const builder = new ManageSQLBuilder({
         operator: 'drop',
         target: 'index',
+        columns,
+        table
+      });
+      queries[file].push({ sql: builder.sql, values: builder.values });
+    }, ...baseAttr
+  });
+
+  Object.defineProperty(migration, 'dropIndexWithName', {
+    value: function (table, name) {
+      const builder = new ManageSQLBuilder({
+        operator: 'drop',
+        target: 'indexWithName',
         name,
         table
       });
@@ -270,7 +282,7 @@ function _initMigration(file, queries = {}) {
   });
 
   Object.defineProperty(migration, 'dropForeignKey', {
-    value: function (name, table) {
+    value: function (table, name) {
       const builder = new ManageSQLBuilder({
         operator: 'drop',
         target: 'foreignKey',
