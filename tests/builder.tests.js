@@ -949,7 +949,7 @@ describe('builder test case', () => {
           },
           user_id: {
             type: 'int',
-            reference: {
+            references: {
               table: 'users',
               column: 'id',
               onDelete: 'CASCADE',
@@ -976,7 +976,7 @@ describe('builder test case', () => {
           },
           user_id: {
             type: 'int',
-            reference: {
+            references: {
               table: 'users',
               column: 'id'
             }
