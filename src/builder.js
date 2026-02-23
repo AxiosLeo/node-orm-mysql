@@ -583,25 +583,25 @@ class ManageSQLBuilder extends Builder {
   }
 
   createForeignKey(options) {
-    options.reference.onDelete = options.reference.onDelete ? options.reference.onDelete.toUpperCase() : 'NO ACTION';
-    options.reference.onUpdate = options.reference.onUpdate ? options.reference.onUpdate.toUpperCase() : 'NO ACTION';
+    options.references.onDelete = options.references.onDelete ? options.references.onDelete.toUpperCase() : 'NO ACTION';
+    options.references.onUpdate = options.references.onUpdate ? options.references.onUpdate.toUpperCase() : 'NO ACTION';
     _validate(options, {
       name: 'required|string',
       table: 'required|string',
       column: 'required|string',
-      'reference.tableName': 'required|string',
-      'reference.columnName': 'required|string',
-      'reference.onUpdate': [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }],
-      'reference.onDelete': [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }]
+      'references.tableName': 'required|string',
+      'references.columnName': 'required|string',
+      'references.onUpdate': [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }],
+      'references.onDelete': [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }]
     });
     return _render('ALTER TABLE `${table_name}` ADD CONSTRAINT `${name}` FOREIGN KEY (`${column_name}`) REFERENCES `${foreign_table}` (`${foreign_column}`) ON DELETE ${on_delete} ON UPDATE ${on_update}', {
       table_name: options.tableName,
       name: options.name,
       column_name: options.columnName,
-      foreign_table: options.reference.tableName,
-      foreign_column: options.reference.columnName,
-      on_delete: options.reference.onDelete || 'NO ACTION',
-      on_update: options.reference.onUpdate || 'NO ACTION',
+      foreign_table: options.references.tableName,
+      foreign_column: options.references.columnName,
+      on_delete: options.references.onDelete || 'NO ACTION',
+      on_update: options.references.onUpdate || 'NO ACTION',
     });
   }
 
