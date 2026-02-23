@@ -16,3 +16,6 @@ coverage/*
 .prettierignore
 pnpm-lock.yaml
 .cursor/*
+examples/*
+.vscode/*
+dist/*
