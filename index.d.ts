@@ -640,9 +640,20 @@ export declare class MigrationInterface {
   createForeignKey(table: string, options: {
     foreignKey?: string,
     columnName: string,
-    reference: {
-      tableName: string,
-      columnName: string,
+    references?: {
+      table: string,
+      column: string,
+      onDelete?: CascadeType,
+      onUpdate?: CascadeType,
+    },
+    /** @deprecated Use `references` instead */
+    reference?: {
+      table?: string,
+      column?: string,
+      /** @deprecated Use `table` instead */
+      tableName?: string,
+      /** @deprecated Use `column` instead */
+      columnName?: string,
       onDelete?: CascadeType,
       onUpdate?: CascadeType,
     }

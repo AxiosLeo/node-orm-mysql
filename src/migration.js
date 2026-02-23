@@ -227,13 +227,22 @@ function _initMigration(file, queries = {}) {
 
   Object.defineProperty(migration, 'createForeignKey', {
     value: function (table, options = {}) {
+      const refs = options.references || options.reference;
+      if (refs) {
+        if (refs.tableName && !refs.table) {
+          refs.table = refs.tableName;
+        }
+        if (refs.columnName && !refs.column) {
+          refs.column = refs.columnName;
+        }
+      }
       _assign(options, {
         operator: 'create',
         target: 'foreignKey',
         name: options.foreignKey ? options.foreignKey : 'fk_' + table + '_' + options.columnName,
         table: table,
         column: options.columnName,
-        references: options.references || options.reference  // 兼容性处理
+        references: refs
       });
       const builder = new ManageSQLBuilder(options);
       queries[file].push({ sql: builder.sql, values: builder.values });

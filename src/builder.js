@@ -673,6 +673,12 @@ class ManageSQLBuilder extends Builder {
         column.references = column.reference;
       }
       if (column.references) {
+        if (column.references.tableName && !column.references.table) {
+          column.references.table = column.references.tableName;
+        }
+        if (column.references.columnName && !column.references.column) {
+          column.references.column = column.references.columnName;
+        }
         column.references.onDelete = column.references.onDelete ? column.references.onDelete.toUpperCase() : 'NO ACTION';
         column.references.onUpdate = column.references.onUpdate ? column.references.onUpdate.toUpperCase() : 'NO ACTION';
 
