@@ -623,6 +623,15 @@ class ManageSQLBuilder extends Builder {
 
   dropIndex(options) {
     _validate(options, {
+      columns: 'required|array',
+      table: 'required|string',
+    });
+    options.name = 'idx_' + options.table + '_' + options.columns.join('_');
+    return _render('DROP INDEX `${name}` ON `${table}`', options);
+  }
+
+  dropIndexWithName(options) {
+    _validate(options, {
       name: 'required|string',
       table: 'required|string',
     });
