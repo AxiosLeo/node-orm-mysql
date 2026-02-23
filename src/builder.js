@@ -582,7 +582,7 @@ class ManageSQLBuilder extends Builder {
     });
   }
 
-  createForeignKey(options) {
+  createForeignKey(options, onCreateTable = false) {
     if (options.references) {
       options.references.onDelete = options.references.onDelete ? options.references.onDelete.toUpperCase() : 'NO ACTION';
       options.references.onUpdate = options.references.onUpdate ? options.references.onUpdate.toUpperCase() : 'NO ACTION';
@@ -591,17 +591,27 @@ class ManageSQLBuilder extends Builder {
       name: 'required|string',
       table: 'required|string',
       column: 'required|string',
-      'references.tableName': 'required|string',
-      'references.columnName': 'required|string',
+      'references.table': 'required|string',
+      'references.column': 'required|string',
       'references.onUpdate': [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }],
       'references.onDelete': [{ in: ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION'] }]
     });
+    if (onCreateTable === true) {
+      return _render('CONSTRAINT `${name}` FOREIGN KEY (`${column_name}`) REFERENCES `${foreign_table}` (`${foreign_column}`) ON DELETE ${on_delete} ON UPDATE ${on_update}', {
+        name: options.name,
+        column_name: options.column,
+        foreign_table: options.references.table,
+        foreign_column: options.references.column,
+        on_delete: options.references.onDelete || 'NO ACTION',
+        on_update: options.references.onUpdate || 'NO ACTION',
+      });
+    }
     return _render('ALTER TABLE `${table_name}` ADD CONSTRAINT `${name}` FOREIGN KEY (`${column_name}`) REFERENCES `${foreign_table}` (`${foreign_column}`) ON DELETE ${on_delete} ON UPDATE ${on_update}', {
-      table_name: options.tableName,
+      table_name: options.table,
       name: options.name,
-      column_name: options.columnName,
-      foreign_table: options.references.tableName,
-      foreign_column: options.references.columnName,
+      column_name: options.column,
+      foreign_table: options.references.table,
+      foreign_column: options.references.column,
       on_delete: options.references.onDelete || 'NO ACTION',
       on_update: options.references.onUpdate || 'NO ACTION',
     });
@@ -677,8 +687,8 @@ class ManageSQLBuilder extends Builder {
           table,
           column: column.name,
           references: {
-            tableName: column.references.table,
-            columnName: column.references.column,
+            table: column.references.table,
+            column: column.references.column,
             onDelete: column.references.onDelete,
             onUpdate: column.references.onUpdate
           }
@@ -697,7 +707,7 @@ class ManageSQLBuilder extends Builder {
     }
     if (referenceColumns.length) {
       referenceColumns.forEach((r) => {
-        strs.push(this.createForeignKey(r));
+        strs.push(this.createForeignKey(r, true));
       });
     }
     return strs.join(', ');
