@@ -19,3 +19,8 @@ pnpm-lock.yaml
 examples/*
 .vscode/*
 dist/*
+docker-compose.yml
+.prettierignore
+.prettierrc
+.prettierignore
+pnpm-workspace.yaml
