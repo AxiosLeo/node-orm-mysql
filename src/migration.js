@@ -9,7 +9,7 @@ const { _execSQL } = require('./core');
 const { _render } = require('@axiosleo/cli-tool/src/helper/str');
 const { _foreach } = require('@axiosleo/cli-tool/src/helper/cmd');
 const { _assign } = require('@axiosleo/cli-tool/src/helper/obj');
-const { TransactionHandler } = require('..');
+const { TransactionHandler } = require('./transaction');
 const { ManageSQLBuilder, Builder } = require('./builder');
 
 const migrationColumns = [
@@ -82,6 +82,12 @@ async function init(context) {
 
   handler = new QueryHandler(conn);
   if (await handler.existTable(context.task_key, database)) {
+    printer.yellow('table ' + context.task_key + ' already exists').println();
+    const items = await handler.table(context.task_key).select();
+    context.items = {};
+    items.forEach(item => {
+      context.items[item.filename] = true;
+    });
     conn.end();
     return;
   }
@@ -321,6 +327,12 @@ async function run(context) {
   const { files } = context;
   const queries = {};
   await _foreach(files, async (file) => {
+    if (context.action === 'up' && context.items[file]) {
+      printer.yellow(`Migration file "${file}" has been migrated.`).println();
+      return;
+    } else if (context.action === 'down' && !context.items[file]) {
+      return;
+    }
     const scriptPath = path.join(context.config.dir, file);
     const script = require(scriptPath);
     queries[file] = [];
