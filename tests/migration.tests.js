@@ -252,9 +252,9 @@ describe('migration test case', () => {
 
       migrationObj.createForeignKey('orders', {
         columnName: 'user_id',
-        reference: {
-          tableName: 'users',
-          columnName: 'id',
+        references: {
+          table: 'users',
+          column: 'id',
           onDelete: 'CASCADE',
           onUpdate: 'RESTRICT'
         }
@@ -275,9 +275,9 @@ describe('migration test case', () => {
       migrationObj.createForeignKey('orders', {
         foreignKey: 'fk_custom_key',
         columnName: 'user_id',
-        reference: {
-          tableName: 'users',
-          columnName: 'id'
+        references: {
+          table: 'users',
+          column: 'id'
         }
       });
 
