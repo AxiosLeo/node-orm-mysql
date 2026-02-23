@@ -233,7 +233,7 @@ function _initMigration(file, queries = {}) {
         name: options.foreignKey ? options.foreignKey : 'fk_' + table + '_' + options.columnName,
         table: table,
         column: options.columnName,
-        reference: options.reference
+        references: options.reference || options.references // 兼容性处理
       });
       const builder = new ManageSQLBuilder(options);
       queries[file].push({ sql: builder.sql, values: builder.values });
