@@ -81,10 +81,10 @@ async function init(context) {
   context.pool = conn;
 
   handler = new QueryHandler(conn);
+  context.items = {};
   if (await handler.existTable(context.task_key, database)) {
     printer.yellow('table ' + context.task_key + ' already exists').println();
     const items = await handler.table(context.task_key).select();
-    context.items = {};
     items.forEach(item => {
       context.items[item.filename] = true;
     });
