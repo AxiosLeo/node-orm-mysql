@@ -637,9 +637,8 @@ export declare class MigrationInterface {
     spatial?: boolean
   }): void;
 
-  createForeignKey(options: {
+  createForeignKey(table: string, options: {
     foreignKey?: string,
-    tableName: string,
     columnName: string,
     reference: {
       tableName: string,
@@ -649,13 +648,34 @@ export declare class MigrationInterface {
     }
   }): void;
 
+  /**
+   * drop table from database
+   * @param tableName 
+   */
   dropTable(tableName: string): void;
 
-  dropColumn(columnName: string, tableName: string): void;
+  /**
+   * drop column from table
+   * @param columnName 
+   * @param tableName 
+   */
+  dropColumn(tableName: string, columnName: string): void;
 
-  dropIndex(indexName: string, tableName: string): void;
+  /**
+   * drop index from table
+   * @param indexName 
+   * @param tableName 
+   */
+  dropIndex(tableName: string, columns: string[]): void;
 
-  dropForeignKey(foreign_key: string, tableName: string): void;
+  dropIndexWithName(tableName: string, indexName: string): void;
+
+  /**
+   * drop foreign key from table
+   * @param foreign_key 
+   * @param tableName 
+   */
+  dropForeignKey(tableName: string, foreign_key: string): void;
 
   insertData(table: string, data: any[]): void;
 
