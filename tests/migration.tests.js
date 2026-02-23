@@ -242,5 +242,145 @@ describe('migration test case', () => {
       expect(queries[file][2].sql).to.be.equal('SET FOREIGN_KEY_CHECKS = 1');
     });
   });
+
+  describe('createForeignKey method', () => {
+    it('should create foreign key with auto-generated name', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.createForeignKey('orders', {
+        tableName: 'orders',
+        columnName: 'user_id',
+        reference: {
+          tableName: 'users',
+          columnName: 'id',
+          onDelete: 'CASCADE',
+          onUpdate: 'RESTRICT'
+        }
+      });
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.include('orders');
+      expect(queries[file][0].sql).to.include('FOREIGN KEY');
+      expect(queries[file][0].sql).to.include('fk_orders_user_id');
+    });
+
+    it('should create foreign key with custom name', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.createForeignKey('orders', {
+        foreignKey: 'fk_custom_key',
+        columnName: 'user_id',
+        reference: {
+          tableName: 'users',
+          columnName: 'id'
+        }
+      });
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.include('fk_custom_key');
+    });
+  });
+
+  describe('dropTable method', () => {
+    it('should drop table', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.dropTable('users');
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.be.equal('DROP TABLE `users`');
+    });
+  });
+
+  describe('dropColumn method', () => {
+    it('should drop column with table as first param', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.dropColumn('users', 'email');
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.be.equal('ALTER TABLE `users` DROP COLUMN `email`');
+    });
+
+    it('should drop multiple columns separately', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.dropColumn('users', 'email');
+      migrationObj.dropColumn('users', 'phone');
+
+      expect(queries[file].length).to.be.equal(2);
+      expect(queries[file][0].sql).to.include('DROP COLUMN `email`');
+      expect(queries[file][1].sql).to.include('DROP COLUMN `phone`');
+    });
+  });
+
+  describe('dropIndex method', () => {
+    it('should drop index by columns with auto-generated name', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.dropIndex('users', ['email']);
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.be.equal('DROP INDEX `idx_users_email` ON `users`');
+    });
+
+    it('should drop index by multiple columns', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.dropIndex('users', ['first_name', 'last_name']);
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.be.equal('DROP INDEX `idx_users_first_name_last_name` ON `users`');
+    });
+  });
+
+  describe('dropIndexWithName method', () => {
+    it('should drop index by explicit name', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.dropIndexWithName('users', 'idx_custom_name');
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.be.equal('DROP INDEX `idx_custom_name` ON `users`');
+    });
+  });
+
+  describe('dropForeignKey method', () => {
+    it('should drop foreign key with table as first param', () => {
+      const queries = {};
+      const file = 'test_migration.js';
+      queries[file] = [];
+      const migrationObj = _initMigration(file, queries);
+
+      migrationObj.dropForeignKey('orders', 'fk_orders_user_id');
+
+      expect(queries[file].length).to.be.equal(1);
+      expect(queries[file][0].sql).to.be.equal('ALTER TABLE `orders` DROP FOREIGN KEY `fk_orders_user_id`');
+    });
+  });
 });
 

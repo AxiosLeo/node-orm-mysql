@@ -872,15 +872,37 @@ describe('builder test case', () => {
       expect(sql).to.include('`name` DESC');
     });
 
-    it('should handle dropIndex', () => {
+    it('should handle dropIndex with columns', () => {
       const options = {
         operator: 'drop',
         target: 'index',
         table: 'test_table',
-        name: 'idx_name'
+        columns: ['name']
       };
       const sql = (new ManageSQLBuilder(options)).sql;
-      expect(sql).to.be.equal('DROP INDEX `idx_name` ON `test_table`');
+      expect(sql).to.be.equal('DROP INDEX `idx_test_table_name` ON `test_table`');
+    });
+
+    it('should handle dropIndex with multiple columns', () => {
+      const options = {
+        operator: 'drop',
+        target: 'index',
+        table: 'test_table',
+        columns: ['first_name', 'last_name']
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.be.equal('DROP INDEX `idx_test_table_first_name_last_name` ON `test_table`');
+    });
+
+    it('should handle dropIndexWithName', () => {
+      const options = {
+        operator: 'drop',
+        target: 'indexWithName',
+        table: 'test_table',
+        name: 'idx_custom_name'
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.be.equal('DROP INDEX `idx_custom_name` ON `test_table`');
     });
 
     it('should handle dropForeignKey', () => {
