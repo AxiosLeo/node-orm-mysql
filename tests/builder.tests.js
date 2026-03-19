@@ -560,6 +560,63 @@ describe('builder test case', () => {
     expect(sql).to.include('`total` DECIMAL(10, 6) COMMENT \'Total\'');
   });
 
+  it('test ManageSQLBuilder create table with DECIMAL type - with scale option', () => {
+    const options = {
+      operator: 'create',
+      target: 'table',
+      name: 'test_table',
+      columns: {
+        price: {
+          type: 'decimal',
+          scale: 4,
+          precision: 12,
+          comment: 'Price'
+        }
+      }
+    };
+
+    const sql = (new ManageSQLBuilder(options)).sql;
+    expect(sql).to.include('`price` DECIMAL(12, 4) COMMENT \'Price\'');
+  });
+
+  it('test ManageSQLBuilder create table with DECIMAL type - scale takes priority over length', () => {
+    const options = {
+      operator: 'create',
+      target: 'table',
+      name: 'test_table',
+      columns: {
+        amount: {
+          type: 'decimal',
+          length: 2,
+          scale: 8,
+          precision: 16,
+          comment: 'Amount'
+        }
+      }
+    };
+
+    const sql = (new ManageSQLBuilder(options)).sql;
+    expect(sql).to.include('`amount` DECIMAL(16, 8) COMMENT \'Amount\'');
+  });
+
+  it('test ManageSQLBuilder create table with DECIMAL type - scale without length or precision', () => {
+    const options = {
+      operator: 'create',
+      target: 'table',
+      name: 'test_table',
+      columns: {
+        rate: {
+          type: 'decimal',
+          scale: 3,
+          comment: 'Rate'
+        }
+      }
+    };
+
+    const sql = (new ManageSQLBuilder(options)).sql;
+    expect(sql).to.include('`rate` DECIMAL(10, 3) COMMENT \'Rate\'');
+  });
+
   it('test force index', () => {
     // Test with string index name in SELECT
     const options = {
@@ -803,6 +860,48 @@ describe('builder test case', () => {
       };
       const sql = (new ManageSQLBuilder(options)).sql;
       expect(sql).to.include('`status` TINYINT(4)');
+    });
+
+    it('should handle DECIMAL with scale option (no length)', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'price',
+        type: 'decimal',
+        scale: 4,
+        precision: 12
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`price` DECIMAL(12, 4)');
+    });
+
+    it('should handle DECIMAL with scale taking priority over length', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'amount',
+        type: 'decimal',
+        length: 2,
+        scale: 5,
+        precision: 14
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`amount` DECIMAL(14, 5)');
+    });
+
+    it('should handle DECIMAL with scale and default precision', () => {
+      const options = {
+        operator: 'create',
+        target: 'column',
+        table: 'test_table',
+        name: 'rate',
+        type: 'decimal',
+        scale: 3
+      };
+      const sql = (new ManageSQLBuilder(options)).sql;
+      expect(sql).to.include('`rate` DECIMAL(10, 3)');
     });
   });
 

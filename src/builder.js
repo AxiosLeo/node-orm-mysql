@@ -749,7 +749,7 @@ class ManageSQLBuilder extends Builder {
     let str = `\`${options.name}\` ${type}`;
     if (typeof options.length !== 'undefined') {
       if (type === 'DECIMAL') {
-        str += `(${options.precision || 10}, ${options.length || 6})`;
+        str += `(${options.precision || 10}, ${options.scale || options.length || 6})`;
       } else {
         str += `(${options.length})`;
       }
@@ -760,7 +760,7 @@ class ManageSQLBuilder extends Builder {
     } else if (type === 'TINYINT') {
       str += '(4)';
     } else if (type === 'DECIMAL') {
-      str += `(${options.precision || 10}, ${options.length || 6})`;
+      str += `(${options.precision || 10}, ${options.scale || options.length || 6})`;
     }
     if (options.allowNull === false || options.primaryKey === true) {
       str += ' NOT NULL';
