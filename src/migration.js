@@ -325,6 +325,18 @@ function _initMigration(file, queries = {}) {
     }, ...baseAttr
   });
 
+  Object.defineProperty(migration, 'renameTable', {
+    value: function (oldTableName, newTableName) {
+      const builder = new ManageSQLBuilder({
+        operator: 'rename',
+        target: 'table',
+        oldName: oldTableName,
+        newName: newTableName
+      });
+      queries[file].push({ sql: builder.sql, values: builder.values });
+    }, ...baseAttr
+  });
+
   return migration;
 }
 
