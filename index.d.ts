@@ -708,6 +708,16 @@ export declare class MigrationInterface {
    * @param newTableName 
    */
   renameTable(oldTableName: string, newTableName: string): void;
+
+  /**
+   * change column
+   * @param tableName 
+   * @param columnName 
+   * @param options 
+   */
+  changeColumn(tableName: string, columnName: string, options: {
+    type: FieldType,
+  } & CreateColumnOptions): void;
 }
 
 export type MigrateAction = 'up' | 'down' | 'UP' | 'DOWN';

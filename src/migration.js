@@ -337,6 +337,19 @@ function _initMigration(file, queries = {}) {
     }, ...baseAttr
   });
 
+  Object.defineProperty(migration, 'changeColumn', {
+    value: function (tableName, columnName, options) {
+      const builder = new ManageSQLBuilder({
+        operator: 'change',
+        target: 'column',
+        tableName,
+        columnName,
+        options
+      });
+      queries[file].push({ sql: builder.sql, values: builder.values });
+    }, ...baseAttr
+  });
+
   return migration;
 }
 

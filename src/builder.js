@@ -523,6 +523,18 @@ class ManageSQLBuilder extends Builder {
     }
   }
 
+  changeColumn(options) {
+    _validate(options, {
+      tableName: 'required|string',
+      columnName: 'required|string',
+    });
+    const columnOptions = {
+      ...options.options,
+      name: options.columnName,
+    };
+    return _render('ALTER TABLE `${tableName}` MODIFY COLUMN ' + this.renderSingleColumn(columnOptions), { tableName: options.tableName });
+  }
+
   renameTable(options) {
     _validate(options, {
       oldName: 'required|string',
