@@ -688,9 +688,26 @@ export declare class MigrationInterface {
    */
   dropForeignKey(tableName: string, foreign_key: string): void;
 
+  /**
+   * insert data into table
+   * @param table 
+   * @param data 
+   */
   insertData(table: string, data: any[]): void;
 
+  /**
+   * execute raw sql
+   * @param sql 
+   * @param values 
+   */
   raw(sql: string, values: any[]): void;
+
+  /**
+   * rename table
+   * @param oldTableName 
+   * @param newTableName 
+   */
+  renameTable(oldTableName: string, newTableName: string): void;
 }
 
 export type MigrateAction = 'up' | 'down' | 'UP' | 'DOWN';

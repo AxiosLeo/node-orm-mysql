@@ -523,6 +523,14 @@ class ManageSQLBuilder extends Builder {
     }
   }
 
+  renameTable(options) {
+    _validate(options, {
+      oldName: 'required|string',
+      newName: 'required|string',
+    });
+    return _render('RENAME TABLE `${oldName}` TO `${newName}`', options);
+  }
+
   /**
    * @param {import('./migration').ManageBuilderOptions} options 
    */
