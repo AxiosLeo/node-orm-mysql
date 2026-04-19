@@ -477,6 +477,49 @@ const hanlder = new QueryHandler(conn, {
 });
 ```
 
+## AI Skills
+
+This project ships with AI Skills that teach AI coding assistants how to use this library correctly. You can install them with a single command:
+
+```bash
+# Cursor
+npx @axiosleo/orm-mysql skills --install=cursor
+
+# Claude Code
+npx @axiosleo/orm-mysql skills --install=claude
+
+# Windsurf
+npx @axiosleo/orm-mysql skills --install=windsurf
+```
+
+The command detects the locally installed version of `@axiosleo/orm-mysql` in your `node_modules/` and copies the matching skill files. If the package is not installed locally, it will use the bundled skills and remind you to run `npm install @axiosleo/orm-mysql`.
+
+To uninstall:
+
+```bash
+npx @axiosleo/orm-mysql skills --uninstall=cursor
+npx @axiosleo/orm-mysql skills --uninstall=claude
+npx @axiosleo/orm-mysql skills --uninstall=windsurf
+```
+
+### Skill Files
+
+| File | Content |
+|------|---------|
+| `SKILL.md` | Setup, class hierarchy, quick start |
+| `query-building.md` | table, attr, join, orderBy, limit, groupBy |
+| `where-conditions.md` | where, whereIn, whereLike, whereBetween |
+| `crud-operations.md` | select, find, insert, update, delete, incrBy |
+| `transactions.md` | beginTransaction, isolation levels, row locking |
+
+### Manual Installation
+
+For other AI tools, copy the skill files from `node_modules/@axiosleo/orm-mysql/skills/` into your tool's custom instructions directory:
+
+```bash
+cp -r node_modules/@axiosleo/orm-mysql/skills/ .your-tool/skills/orm-mysql-usage/
+```
+
 ## License
 
 This project is open-sourced software licensed under [MIT](LICENSE).
