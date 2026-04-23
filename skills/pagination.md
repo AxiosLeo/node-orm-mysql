@@ -162,6 +162,84 @@ async function listPlans(query) {
 }
 ```
 
+## Multi-Keyword Fuzzy Search
+
+A common pagination filter is "search by keyword across several columns", where the user may type multiple space-separated keywords (e.g. `"foo bar"`) and expect rows matching ANY keyword in ANY of the searchable columns.
+
+This pattern combines `whereCondition()` (for the per-keyword `column1 LIKE ? OR column2 LIKE ?` group) with logical operators between groups. Two foot-guns make it easy to write SQL that compiles but returns wrong results:
+
+1. **Consecutive `whereCondition()` calls join with `AND` by default.** No operator is auto-inserted "between" groups except the implicit `AND`. So writing one `whereCondition()` per keyword without anything between them means every keyword must match -- not what users expect from search.
+2. **Inserting `whereOr()` at the top level introduces an operator-precedence bug.** SQL evaluates `AND` before `OR`, so `WHERE other_filters AND (k1 group) OR (k2 group)` lets the second keyword match rows that ignore `other_filters` entirely.
+
+### Anti-Pattern A: All keywords required (silent AND)
+
+```javascript
+// BAD -- generates: ... AND (plan_no LIKE %k1% OR title LIKE %k1%) AND (plan_no LIKE %k2% OR title LIKE %k2%)
+// User searches "foo bar" but no row contains both "foo" and "bar" anywhere -- empty result.
+if (query.keyword && query.keyword.trim()) {
+  const keywords = query.keyword.trim().split(/\s+/).filter(Boolean);
+  for (const keyword of keywords) {
+    const keywordCondition = new QueryCondition();
+    keywordCondition
+      .where('pp.plan_no', 'like', `%${keyword}%`)
+      .whereOr()
+      .where('pp.title', 'like', `%${keyword}%`);
+    queryBuilder = queryBuilder.whereCondition(keywordCondition);
+  }
+}
+```
+
+### Anti-Pattern B: Top-level `whereOr()` between groups (precedence bug)
+
+```javascript
+// BAD -- generates: ... AND (k1 group) OR (k2 group)
+// AND binds tighter than OR, so disabled=0 / status / plan_type only constrain the first keyword group.
+// The second keyword group OR's against everything else, returning soft-deleted or wrong-tenant rows.
+keywords.forEach((keyword, index) => {
+  if (index !== 0) {
+    queryBuilder.whereOr();
+  }
+  const keywordCondition = new QueryCondition();
+  keywordCondition
+    .where('pp.plan_no', 'like', `%${keyword}%`)
+    .whereOr()
+    .where('pp.title', 'like', `%${keyword}%`);
+  queryBuilder = queryBuilder.whereCondition(keywordCondition);
+});
+```
+
+### Recommended: Wrap all keyword groups in a single outer `QueryCondition`
+
+Build one outer `QueryCondition` whose body is `(k1 group) OR (k2 group) OR ...`, then attach that single composite to the main builder with `whereCondition()`. The outer wrapper guarantees the `OR`s stay parenthesized, so `AND` from the surrounding filters cannot leak into them.
+
+```javascript
+// GOOD -- generates: ... AND ((plan_no LIKE %k1% OR title LIKE %k1%) OR (plan_no LIKE %k2% OR title LIKE %k2%))
+const { QueryCondition } = require('@axiosleo/orm-mysql');
+
+if (query.keyword && query.keyword.trim()) {
+  const keywords = query.keyword.trim().split(/\s+/).filter(Boolean);
+  const keywordWrapper = new QueryCondition();
+  keywords.forEach((keyword, index) => {
+    if (index !== 0) {
+      keywordWrapper.whereOr();
+    }
+    const perKeyword = new QueryCondition();
+    perKeyword
+      .where('pp.plan_no', 'like', `%${keyword}%`)
+      .whereOr()
+      .where('pp.title', 'like', `%${keyword}%`);
+    keywordWrapper.whereCondition(perKeyword);
+  });
+  queryBuilder = queryBuilder.whereCondition(keywordWrapper);
+}
+```
+
+### Rules of Thumb
+
+- One `whereCondition()` call -> one parenthesized group joined to the surrounding `WHERE` with `AND`. Safe and unambiguous.
+- Multiple `whereCondition()` calls that should be `OR`'d together -> wrap them in a single outer `QueryCondition` first, then attach that one composite via a single `whereCondition()`. Never mix `whereOr()` and `whereCondition()` at the top level.
+- The same rule applies to `count()` reuse: this composite condition is just data on `options.conditions`, so the same builder still produces a correct `COUNT(*)`.
+
 ## Edge Case: GROUP BY
 
 `count()` includes `GROUP BY` in the generated SQL, which means with grouping it returns one row per group rather than the total number of groups. In that case the same builder cannot be reused as-is for "how many groups are there".

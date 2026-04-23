@@ -131,6 +131,48 @@ query
 // WHERE `status` = ? AND (`age` > ? AND `age` < ?)
 ```
 
+### Default Joining Between Multiple `whereCondition()` Calls
+
+Each `whereCondition()` call appends one parenthesized group to `WHERE`, joined to whatever came before with **`AND`**. There is no implicit `OR` between groups.
+
+```javascript
+const g1 = new QueryCondition();
+g1.where("a", 1).whereOr().where("b", 2);
+
+const g2 = new QueryCondition();
+g2.where("c", 3).whereOr().where("d", 4);
+
+query.where("status", "active")
+  .whereCondition(g1)
+  .whereCondition(g2);
+// WHERE `status` = ? AND (`a` = ? OR `b` = ?) AND (`c` = ? OR `d` = ?)
+```
+
+### Combining Multiple Groups with `OR`: Wrap, Don't Sprinkle
+
+To `OR` two groups together, do **not** insert a top-level `whereOr()` between them on the main builder. SQL evaluates `AND` before `OR`, so the surrounding filters silently bind only to the first group:
+
+```javascript
+// BAD -- generates: WHERE `status` = ? AND (`a` = ? OR `b` = ?) OR (`c` = ? OR `d` = ?)
+// `status` = ? only constrains the first group. The second group OR's against everything.
+query.where("status", "active")
+  .whereCondition(g1)
+  .whereOr()
+  .whereCondition(g2);
+```
+
+Instead, build a single outer `QueryCondition` containing the `OR`'d groups, then attach it once:
+
+```javascript
+// GOOD -- generates: WHERE `status` = ? AND ((`a` = ? OR `b` = ?) OR (`c` = ? OR `d` = ?))
+const outer = new QueryCondition();
+outer.whereCondition(g1).whereOr().whereCondition(g2);
+
+query.where("status", "active").whereCondition(outer);
+```
+
+Rule of thumb: `whereOr()` between two `whereCondition()` calls is safe **inside** a `QueryCondition` (it only changes that group's internal logic), but at the top level of the main query builder it leaks the `OR` past your other `AND` filters.
+
 ## Complete Example
 
 ```javascript
