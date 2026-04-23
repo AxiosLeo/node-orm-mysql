@@ -173,6 +173,8 @@ query.where("status", "active").whereCondition(outer);
 
 Rule of thumb: `whereOr()` between two `whereCondition()` calls is safe **inside** a `QueryCondition` (it only changes that group's internal logic), but at the top level of the main query builder it leaks the `OR` past your other `AND` filters.
 
+When the clauses you want to `OR` together are programmatically generated and share the same shape (e.g. an N-keyword fuzzy search across the same columns), skip the nested `g1`/`g2` and pour every clause directly into a single `QueryCondition` using its own `where()`/`whereOr()` calls -- then attach it to the main builder once. See [pagination.md](pagination.md) (Multi-Keyword Fuzzy Search) for the exact pattern.
+
 ## Complete Example
 
 ```javascript

@@ -208,37 +208,41 @@ keywords.forEach((keyword, index) => {
 });
 ```
 
-### Recommended: Wrap all keyword groups in a single outer `QueryCondition`
+### Recommended: Build a single `QueryCondition` and attach it once
 
-Build one outer `QueryCondition` whose body is `(k1 group) OR (k2 group) OR ...`, then attach that single composite to the main builder with `whereCondition()`. The outer wrapper guarantees the `OR`s stay parenthesized, so `AND` from the surrounding filters cannot leak into them.
+Declare **one** `QueryCondition` outside the loop, push every keyword's `OR`-clauses into it, and attach the whole thing to the main builder with **one** `whereCondition()` call after the loop. All keyword `LIKE`s stay inside one parenthesized group, joined to the surrounding `AND` filters as a single safe sub-expression.
+
+The diff from Anti-Pattern B is small and worth memorizing:
+
+1. Move `const keywordCondition = new QueryCondition()` **out** of the loop.
+2. Inside the loop, call `.whereOr()` on `keywordCondition` (the inner condition), **not** on `queryBuilder`.
+3. Call `queryBuilder.whereCondition(keywordCondition)` **once**, after the loop, not on every iteration.
 
 ```javascript
-// GOOD -- generates: ... AND ((plan_no LIKE %k1% OR title LIKE %k1%) OR (plan_no LIKE %k2% OR title LIKE %k2%))
+// GOOD -- generates: ... AND (plan_no LIKE %k1% OR title LIKE %k1% OR plan_no LIKE %k2% OR title LIKE %k2%)
 const { QueryCondition } = require('@axiosleo/orm-mysql');
 
 if (query.keyword && query.keyword.trim()) {
   const keywords = query.keyword.trim().split(/\s+/).filter(Boolean);
-  const keywordWrapper = new QueryCondition();
+  const keywordCondition = new QueryCondition();
   keywords.forEach((keyword, index) => {
     if (index !== 0) {
-      keywordWrapper.whereOr();
+      keywordCondition.whereOr();
     }
-    const perKeyword = new QueryCondition();
-    perKeyword
+    keywordCondition
       .where('pp.plan_no', 'like', `%${keyword}%`)
       .whereOr()
       .where('pp.title', 'like', `%${keyword}%`);
-    keywordWrapper.whereCondition(perKeyword);
   });
-  queryBuilder = queryBuilder.whereCondition(keywordWrapper);
+  queryBuilder = queryBuilder.whereCondition(keywordCondition);
 }
 ```
 
 ### Rules of Thumb
 
 - One `whereCondition()` call -> one parenthesized group joined to the surrounding `WHERE` with `AND`. Safe and unambiguous.
-- Multiple `whereCondition()` calls that should be `OR`'d together -> wrap them in a single outer `QueryCondition` first, then attach that one composite via a single `whereCondition()`. Never mix `whereOr()` and `whereCondition()` at the top level.
-- The same rule applies to `count()` reuse: this composite condition is just data on `options.conditions`, so the same builder still produces a correct `COUNT(*)`.
+- For "any-of-N" search filters, accumulate all `OR` clauses into **one** `QueryCondition` declared outside the loop, then attach it with **one** `whereCondition()` after the loop. Never call `queryBuilder.whereOr()` at the top level between `whereCondition()` calls -- that leaks the `OR` past your other `AND` filters because SQL evaluates `AND` before `OR`.
+- The same rule applies to `count()` reuse: this composite condition is just data on `options.conditions`, so the same builder still produces a correct `COUNT(*)` with the keyword filter intact.
 
 ## Edge Case: GROUP BY
 
