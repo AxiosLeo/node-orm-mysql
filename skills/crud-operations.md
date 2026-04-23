@@ -39,6 +39,8 @@ const total = await db.table("users").where("status", "active").count();
 // total is a number
 ```
 
+For paginated list endpoints, do NOT create a separate count builder with duplicated `where` conditions. Reuse the same builder for both `count()` and `select()` -- `count()` ignores `attrs`/`limit`/`offset`/`orderBy`, and `select()` resets the operator. See [pagination.md](pagination.md) for the full pattern.
+
 ### explain(operator)
 
 Returns the MySQL EXPLAIN result for the query.

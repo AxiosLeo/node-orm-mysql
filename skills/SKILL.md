@@ -98,6 +98,7 @@ await db.table("users").where("id", 1).delete();
 
 // COUNT
 const total = await db.table("users").where("age", ">", 18).count();
+// IMPORTANT: for paginated lists, reuse the SAME builder for count() and select() -- see pagination.md
 
 // FIND single row
 const user = await db.table("users").where("id", 1).find();
@@ -124,6 +125,7 @@ console.log(builder.values); // [18]
 | Building queries (table, join, orderBy, limit, groupBy, attr) | [query-building.md](query-building.md) |
 | Where conditions (where, whereIn, whereLike, whereBetween...) | [where-conditions.md](where-conditions.md) |
 | CRUD operations (select, find, count, insert, update, delete, incrBy, upsertRow) | [crud-operations.md](crud-operations.md) |
+| Pagination (reuse the same builder for count() and select(), avoid duplicated where clauses) | [pagination.md](pagination.md) |
 | Transactions (beginTransaction, commit, rollback, FOR UPDATE) | [transactions.md](transactions.md) |
 
 ## Hooks
