@@ -118,7 +118,7 @@ class SkillsCommand extends Command {
       printer.info(`Found ${PKG_NAME}@${source.version} in node_modules`);
     } else if (source.outdated) {
       printer.warning(`${PKG_NAME}@${source.localVersion} is installed locally but does not include skills files.`);
-      printer.warning('Skills files are available since v0.15.0. Please update:');
+      printer.warning('Skills files are available since v0.15.1. Please update:');
       printer.warning(`  npm install ${PKG_NAME}@latest`);
       printer.println();
       printer.info(`Using skills from npx ${PKG_NAME}@${source.version} instead.`);
