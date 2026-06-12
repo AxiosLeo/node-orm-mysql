@@ -334,6 +334,20 @@ class Builder {
     return null;
   }
 
+  /**
+   * Bind each array element as a single scalar value and return the matching
+   * placeholder list (e.g. "?,?,?"). Binding the whole array as one value only
+   * works with conn.query (client-side interpolation); conn.execute (prepared
+   * statement, used on the transaction path) does not expand arrays and would
+   * silently match nothing.
+   * @param {Array} values
+   * @returns {string}
+   */
+  _buildArrayPlaceholders(values) {
+    values.forEach((item) => this.values.push(item));
+    return values.map(() => '?').join(',');
+  }
+
   _buildConditionBetween(condition, isNot = false) {
     if (!Array.isArray(condition.value) || condition.value.length !== 2) {
       throw new Error('Value must be an array with two elements for "BETWEEN" condition');
@@ -353,22 +367,33 @@ class Builder {
   }
 
   _buildConditionIn(condition, isNot = false) {
-    if (Array.isArray(condition.value) && !condition.value.length) {
+    // "1,2,3" is split into an array, then goes through the same expansion path as arrays
+    let v = is.string(condition.value)
+      ? condition.value.split(',').map(s => s.trim()).filter(s => s.length)
+      : condition.value;
+    if (Array.isArray(v) && !v.length) {
       throw new Error('Value must not be empty for "IN" condition');
-    } else if (!Array.isArray(condition.value) && !(condition.value instanceof Query)) {
+    } else if (!Array.isArray(v) && !(v instanceof Query)) {
       throw new Error('Value must be an array or sub-query for "IN" condition');
     }
     if (condition.key.indexOf('->') !== -1) {
       let keys = condition.key.split('->');
       let k = `${this._buildFieldKey(keys[0])}`;
-      let res = this._buildConditionValues(condition.value);
-      let sql = res ? `JSON_CONTAINS(JSON_ARRAY(${res}), JSON_EXTRACT(${k}, '${keys[1]}'))` :
-        `JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(${k}, '${keys[1]}'))`;
+      let sql;
+      if (Array.isArray(v)) {
+        sql = `JSON_CONTAINS(JSON_ARRAY(${this._buildArrayPlaceholders(v)}), JSON_EXTRACT(${k}, '${keys[1]}'))`;
+      } else {
+        let res = this._buildConditionValues(v);
+        sql = res ? `JSON_CONTAINS(JSON_ARRAY(${res}), JSON_EXTRACT(${k}, '${keys[1]}'))` :
+          `JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(${k}, '${keys[1]}'))`;
+      }
       return isNot ? `${sql}=0` : sql;
     }
-    let v = is.string(condition.value) ? condition.value.split(',').map(v => v.trim()) : condition.value;
-    let res = this._buildConditionValues(v);
     const opt = isNot ? 'NOT IN' : 'IN';
+    if (Array.isArray(v)) {
+      return `${this._buildFieldKey(condition.key)} ${opt} (${this._buildArrayPlaceholders(v)})`;
+    }
+    let res = this._buildConditionValues(v);
     return res ? `${this._buildFieldKey(condition.key)} ${opt} (${res})` : `${this._buildFieldKey(condition.key)} ${opt} (?)`;
   }
 
@@ -376,9 +401,14 @@ class Builder {
     if (condition.key.indexOf('->') !== -1) {
       let keys = condition.key.split('->');
       let k = `${this._buildFieldKey(keys[0])}`;
-      let res = this._buildConditionValues(condition.value);
-      let sql = res ? `JSON_CONTAINS(${k}, JSON_ARRAY(${res}), '${keys[1]}')` :
-        `JSON_CONTAINS(${k}, JSON_ARRAY(?), '${keys[1]}')`;
+      let sql;
+      if (Array.isArray(condition.value)) {
+        sql = `JSON_CONTAINS(${k}, JSON_ARRAY(${this._buildArrayPlaceholders(condition.value)}), '${keys[1]}')`;
+      } else {
+        let res = this._buildConditionValues(condition.value);
+        sql = res ? `JSON_CONTAINS(${k}, JSON_ARRAY(${res}), '${keys[1]}')` :
+          `JSON_CONTAINS(${k}, JSON_ARRAY(?), '${keys[1]}')`;
+      }
       return isNot ? `${sql}=0` : sql;
     }
     let res = this._buildConditionValues(condition.value);
@@ -390,9 +420,14 @@ class Builder {
     if (condition.key.indexOf('->') !== -1) {
       let keys = condition.key.split('->');
       let k = `${this._buildFieldKey(keys[0])}`;
-      let res = this._buildConditionValues(condition.value);
-      let sql = res ? `JSON_OVERLAPS(JSON_EXTRACT(${k}, '${keys[1]}'), JSON_ARRAY(${res}))` :
-        `JSON_OVERLAPS(JSON_EXTRACT(${k}, '${keys[1]}'), JSON_ARRAY(?))`;
+      let sql;
+      if (Array.isArray(condition.value)) {
+        sql = `JSON_OVERLAPS(JSON_EXTRACT(${k}, '${keys[1]}'), JSON_ARRAY(${this._buildArrayPlaceholders(condition.value)}))`;
+      } else {
+        let res = this._buildConditionValues(condition.value);
+        sql = res ? `JSON_OVERLAPS(JSON_EXTRACT(${k}, '${keys[1]}'), JSON_ARRAY(${res}))` :
+          `JSON_OVERLAPS(JSON_EXTRACT(${k}, '${keys[1]}'), JSON_ARRAY(?))`;
+      }
       return isNot ? `${sql}=0` : sql;
     }
     let res = this._buildConditionValues(condition.value);
