@@ -429,9 +429,114 @@ describe('builder test case', () => {
       tables: [{ table: 'table1' }],
       operator: 'select'
     };
-    expect((new Builder(options)).sql).to.be.equal(
-      'SELECT * FROM `table1` WHERE `id` IN (?)'
+    const builder = new Builder(options);
+    expect(builder.sql).to.be.equal(
+      'SELECT * FROM `table1` WHERE `id` IN (?,?,?)'
     );
+    expect(builder.values).to.deep.equal([1, 2, 3]);
+  });
+
+  describe('IN condition placeholder expansion (regression for transaction/execute path)', () => {
+    const buildOptions = (conditions) => ({
+      sql: '',
+      values: [],
+      conditions,
+      tables: [{ table: 'table1' }],
+      operator: 'select'
+    });
+
+    it('should expand array value into one placeholder per element', () => {
+      const builder = new Builder(buildOptions([{ key: 'id', opt: 'in', value: [1, 2] }]));
+      expect(builder.sql).to.be.equal('SELECT * FROM `table1` WHERE `id` IN (?,?)');
+      expect(builder.values).to.deep.equal([1, 2]);
+      builder.values.forEach((v) => expect(v).to.not.be.an('array'));
+    });
+
+    it('should expand single element array', () => {
+      const builder = new Builder(buildOptions([{ key: 'id', opt: 'in', value: [42] }]));
+      expect(builder.sql).to.be.equal('SELECT * FROM `table1` WHERE `id` IN (?)');
+      expect(builder.values).to.deep.equal([42]);
+    });
+
+    it('should expand NOT IN the same way', () => {
+      const builder = new Builder(buildOptions([{ key: 'id', opt: 'not in', value: [1, 2, 3] }]));
+      expect(builder.sql).to.be.equal('SELECT * FROM `table1` WHERE `id` NOT IN (?,?,?)');
+      expect(builder.values).to.deep.equal([1, 2, 3]);
+    });
+
+    it('should split comma separated string and bind each element', () => {
+      const builder = new Builder(buildOptions([{ key: 'name', opt: 'in', value: 'a, b' }]));
+      expect(builder.sql).to.be.equal('SELECT * FROM `table1` WHERE `name` IN (?,?)');
+      expect(builder.values).to.deep.equal(['a', 'b']);
+    });
+
+    it('should throw for empty array', () => {
+      expect(() => {
+        new Builder(buildOptions([{ key: 'id', opt: 'in', value: [] }]));
+      }).to.throw('Value must not be empty for "IN" condition');
+    });
+
+    it('should throw for empty string', () => {
+      expect(() => {
+        new Builder(buildOptions([{ key: 'id', opt: 'in', value: '' }]));
+      }).to.throw('Value must not be empty for "IN" condition');
+    });
+
+    it('should throw for non-array, non-string, non-query value', () => {
+      expect(() => {
+        new Builder(buildOptions([{ key: 'id', opt: 'in', value: 1 }]));
+      }).to.throw('Value must be an array or sub-query for "IN" condition');
+    });
+
+    it('should keep sub-query behavior unchanged', () => {
+      const subQuery = new Query('select');
+      subQuery.table('table2').attr('id').where('status', 1);
+      const builder = new Builder(buildOptions([{ key: 'id', opt: 'in', value: subQuery }]));
+      expect(builder.sql).to.be.equal(
+        'SELECT * FROM `table1` WHERE `id` IN (SELECT `id` FROM `table2` WHERE `status` = ?)'
+      );
+      expect(builder.values).to.deep.equal([1]);
+    });
+
+    it('should expand array inside JSON_ARRAY for JSON path IN condition', () => {
+      const builder = new Builder(buildOptions([{ key: 'data->$.id', opt: 'in', value: [1, 2] }]));
+      expect(builder.sql).to.be.equal(
+        'SELECT * FROM `table1` WHERE JSON_CONTAINS(JSON_ARRAY(?,?), JSON_EXTRACT(`data`, \'$.id\'))'
+      );
+      expect(builder.values).to.deep.equal([1, 2]);
+    });
+
+    it('should expand array inside JSON_ARRAY for JSON path NOT IN condition', () => {
+      const builder = new Builder(buildOptions([{ key: 'data->$.id', opt: 'not in', value: [1, 2] }]));
+      expect(builder.sql).to.be.equal(
+        'SELECT * FROM `table1` WHERE JSON_CONTAINS(JSON_ARRAY(?,?), JSON_EXTRACT(`data`, \'$.id\'))=0'
+      );
+      expect(builder.values).to.deep.equal([1, 2]);
+    });
+
+    it('should expand array inside JSON_ARRAY for JSON path CONTAIN condition', () => {
+      const builder = new Builder(buildOptions([{ key: 'tags->$', opt: 'contain', value: ['a', 'b'] }]));
+      expect(builder.sql).to.be.equal(
+        'SELECT * FROM `table1` WHERE JSON_CONTAINS(`tags`, JSON_ARRAY(?,?), \'$\')'
+      );
+      expect(builder.values).to.deep.equal(['a', 'b']);
+    });
+
+    it('should expand array inside JSON_ARRAY for JSON path OVERLAPS condition', () => {
+      const builder = new Builder(buildOptions([{ key: 'data->$.tags', opt: 'overlaps', value: ['a', 'b', 'c'] }]));
+      expect(builder.sql).to.be.equal(
+        'SELECT * FROM `table1` WHERE JSON_OVERLAPS(JSON_EXTRACT(`data`, \'$.tags\'), JSON_ARRAY(?,?,?))'
+      );
+      expect(builder.values).to.deep.equal(['a', 'b', 'c']);
+    });
+
+    it('should keep scalar value behavior for JSON path CONTAIN condition', () => {
+      const builder = new Builder(buildOptions([{ key: 'tags->$', opt: 'contain', value: 'a' }]));
+      expect(builder.sql).to.be.equal(
+        'SELECT * FROM `table1` WHERE JSON_CONTAINS(`tags`, JSON_ARRAY(?), \'$\')'
+      );
+      expect(builder.values).to.deep.equal(['a']);
+    });
   });
 
   it('test condition with BETWEEN operator', () => {

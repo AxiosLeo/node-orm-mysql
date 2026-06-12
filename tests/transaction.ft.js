@@ -418,6 +418,94 @@ async function test5_transfer() {
   }
 }
 
+// 测试场景 6: 事务内 whereIn 条件（0.15.2 回归测试）
+async function test6_whereInTransaction() {
+  section('测试场景 6: 事务内 whereIn 条件（回归测试）');
+
+  const pool = mysql.createPool(config);
+  const queryHandler = new QueryHandler(pool);
+
+  try {
+    info('插入 3 个测试用户...');
+    const ts = Date.now();
+    const ids = [];
+    for (let i = 1; i <= 3; i++) {
+      const res = await queryHandler.table('users').insert({
+        name: `WhereIn User ${i}`,
+        email: `wherein_${ts}_${i}@example.com`,
+        balance: 100.00 * i
+      });
+      ids.push(res.insertId);
+    }
+    success(`用户插入成功，IDs: ${ids.join(', ')}`);
+
+    info('非事务 whereIn 查询（基准）...');
+    const baseline = await queryHandler.table('users').whereIn('id', ids).select();
+    if (baseline.length !== 3) {
+      throw new Error(`非事务 whereIn 返回 ${baseline.length} 行，预期 3 行`);
+    }
+    success(`非事务 whereIn 返回 ${baseline.length} 行`);
+
+    info('开始事务...');
+    const tx = await queryHandler.beginTransaction({ level: 'RC' });
+    try {
+      info('事务内 whereIn SELECT...');
+      const rows = await tx.table('users').whereIn('id', ids).select();
+      if (rows.length !== 3) {
+        throw new Error(`事务内 whereIn 返回 ${rows.length} 行，预期 3 行（修复前会静默返回 0 行）`);
+      }
+      success(`事务内 whereIn 返回 ${rows.length} 行（与非事务一致）`);
+
+      info('事务内 whereNotIn SELECT...');
+      const notRows = await tx.table('users')
+        .whereIn('id', ids).whereNotIn('id', [ids[0]]).select();
+      if (notRows.length !== 2) {
+        throw new Error(`事务内 whereNotIn 返回 ${notRows.length} 行，预期 2 行`);
+      }
+      success(`事务内 whereNotIn 返回 ${notRows.length} 行`);
+
+      info('事务内 where(field, "IN", array) SELECT...');
+      const optRows = await tx.table('users').where('id', 'IN', [ids[0], ids[1]]).select();
+      if (optRows.length !== 2) {
+        throw new Error(`事务内 where IN 返回 ${optRows.length} 行，预期 2 行`);
+      }
+      success(`事务内 where(field, "IN", array) 返回 ${optRows.length} 行`);
+
+      info('事务内基于 whereIn 的 UPDATE...');
+      const updateRes = await tx.table('users')
+        .whereIn('id', [ids[0], ids[1]])
+        .update({ balance: 999.99 });
+      if (updateRes.affectedRows !== 2) {
+        throw new Error(`事务内 whereIn UPDATE 影响 ${updateRes.affectedRows} 行，预期 2 行（修复前会影响 0 行）`);
+      }
+      success(`事务内 whereIn UPDATE 影响 ${updateRes.affectedRows} 行`);
+
+      info('回滚事务...');
+      await tx.rollback();
+      success('事务已回滚');
+    } catch (err) {
+      await tx.rollback();
+      throw err;
+    }
+
+    info('验证回滚后数据未变...');
+    const after = await queryHandler.table('users').whereIn('id', ids).select();
+    const changed = after.filter((u) => parseFloat(u.balance) === 999.99);
+    if (changed.length === 0) {
+      success('✓ 回滚验证成功（UPDATE 未生效）');
+    } else {
+      error('✗ 回滚验证失败');
+    }
+
+    success('✓ 测试场景 6 完成\n');
+  } catch (err) {
+    error(`测试失败: ${err.message}`);
+    throw err;
+  } finally {
+    await pool.end();
+  }
+}
+
 // 主测试函数
 async function runAllTests() {
   console.log('\n');
@@ -431,7 +519,8 @@ async function runAllTests() {
     { name: '测试场景 2: 并发事务不阻塞', fn: test2_concurrentTransactions },
     { name: '测试场景 3: 事务回滚', fn: test3_rollback },
     { name: '测试场景 4: 库存扣减场景（行锁）', fn: test4_stockDeduction },
-    { name: '测试场景 5: 转账场景（多表事务）', fn: test5_transfer }
+    { name: '测试场景 5: 转账场景（多表事务）', fn: test5_transfer },
+    { name: '测试场景 6: 事务内 whereIn 条件（回归测试）', fn: test6_whereInTransaction }
   ];
 
   let passed = 0;
@@ -492,6 +581,7 @@ module.exports = {
   test3_rollback,
   test4_stockDeduction,
   test5_transfer,
+  test6_whereInTransaction,
   runAllTests
 };
 
