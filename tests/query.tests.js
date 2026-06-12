@@ -96,15 +96,15 @@ describe('query test case', () => {
     query = handler.table('users', 'u');
     query.where('u.meta->$.id', 'in', [1, 2, 3]);
     let res = query.buildSql('select');
-    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))');
-    expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?,?,?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))');
+    expect(JSON.stringify(res.values)).to.be.equal('[1,2,3]');
 
     // opt=not in
     query = handler.table('users', 'u');
     query.where('u.meta->$.id', 'not in', [1, 2, 3]);
     res = query.buildSql('select');
-    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))=0');
-    expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE JSON_CONTAINS(JSON_ARRAY(?,?,?), JSON_EXTRACT(`u`.`meta`, \'$.id\'))=0');
+    expect(JSON.stringify(res.values)).to.be.equal('[1,2,3]');
 
     // opt=contain
     query = handler.table('users', 'u');
@@ -126,15 +126,15 @@ describe('query test case', () => {
     let query = handler.table('users', 'u');
     query.where('u.meta', 'in', [1, 2, 3]);
     let res = query.buildSql('select');
-    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` IN (?)');
-    expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` IN (?,?,?)');
+    expect(JSON.stringify(res.values)).to.be.equal('[1,2,3]');
 
     // opt=not in
     query = handler.table('users', 'u');
     query.where('u.meta', 'not in', [1, 2, 3]);
     res = query.buildSql('select');
-    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` NOT IN (?)');
-    expect(JSON.stringify(res.values)).to.be.equal('[[1,2,3]]');
+    expect(res.sql).to.be.equal('SELECT * FROM `users` AS `u` WHERE `u`.`meta` NOT IN (?,?,?)');
+    expect(JSON.stringify(res.values)).to.be.equal('[1,2,3]');
   });
 
   it('contain condition', () => {
